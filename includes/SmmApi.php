@@ -1,0 +1,133 @@
+<?php
+class SmmApi {
+
+    private string $api_url;
+    private string $api_key;
+
+    public function __construct(string $api_url = PROVIDER_API_URL, string $api_key = PROVIDER_API_KEY) {
+        $this->api_url = $api_url;
+        $this->api_key = $api_key;
+    }
+
+    /** Add order */
+    public function order(array $data): ?object {
+        $post = array_merge(['key' => $this->api_key, 'action' => 'add'], $data);
+        return json_decode((string)$this->connect($post));
+    }
+
+    /** Get single order status */
+    public function status(int $order_id): ?object {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'status',
+            'order'  => $order_id,
+        ]));
+    }
+
+    /** Get multiple orders status */
+    public function multiStatus(array $order_ids): ?object {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'status',
+            'orders' => implode(',', $order_ids),
+        ]));
+    }
+
+    /** Get all services */
+    public function services(): ?array {
+        $result = json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'services',
+        ]), true);
+        return is_array($result) ? $result : null;
+    }
+
+    /** Refill single order */
+    public function refill(int $orderId): ?object {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'refill',
+            'order'  => $orderId,
+        ]));
+    }
+
+    /** Refill multiple orders */
+    public function multiRefill(array $orderIds): ?array {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'refill',
+            'orders' => implode(',', $orderIds),
+        ]), true);
+    }
+
+    /** Get refill status */
+    public function refillStatus(int $refillId): ?object {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'refill_status',
+            'refill' => $refillId,
+        ]));
+    }
+
+    /** Get multiple refill statuses */
+    public function multiRefillStatus(array $refillIds): ?array {
+        return json_decode($this->connect([
+            'key'     => $this->api_key,
+            'action'  => 'refill_status',
+            'refills' => implode(',', $refillIds),
+        ]), true);
+    }
+
+    /** Cancel orders */
+    public function cancel(array $orderIds): ?array {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'cancel',
+            'orders' => implode(',', $orderIds),
+        ]), true);
+    }
+
+    /** Get balance from provider */
+    public function balance(): ?object {
+        return json_decode($this->connect([
+            'key'    => $this->api_key,
+            'action' => 'balance',
+        ]));
+    }
+
+    /** Test API connection */
+    public function testConnection(): array {
+        $result = $this->balance();
+        if ($result && isset($result->balance)) {
+            return ['success' => true, 'balance' => $result->balance, 'currency' => $result->currency ?? 'USD'];
+        }
+        return ['success' => false, 'error' => 'Invalid API key or connection failed'];
+    }
+
+    private function connect(array $post): string|false {
+        $_post = [];
+        foreach ($post as $name => $value) {
+            $_post[] = $name . '=' . urlencode((string)$value);
+        }
+
+        $ch = curl_init($this->api_url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HEADER         => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_POSTFIELDS     => implode('&', $_post),
+            CURLOPT_USERAGENT      => 'SMMTurk/1.0',
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+
+        $result = curl_exec($ch);
+        if (curl_errno($ch) != 0 && empty($result)) {
+            $result = json_encode(['error' => curl_error($ch)]);
+        }
+        curl_close($ch);
+        return $result;
+    }
+}
