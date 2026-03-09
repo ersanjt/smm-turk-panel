@@ -6,7 +6,7 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
-        'wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
+        'smtp_from','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
@@ -56,6 +56,15 @@ require_once __DIR__ . '/../layouts/header.php';
           <option value="1" <?= ($settings['registration_enabled']??'1')==='1'?'selected':'' ?>>Enabled</option>
           <option value="0" <?= ($settings['registration_enabled']??'1')==='0'?'selected':'' ?>>Disabled</option>
         </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">📧 Email (cPanel)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Verification emails are sent via PHP mail(). On cPanel, use an email address from your domain (e.g. noreply@yourdomain.com). Create it in cPanel → Email Accounts if needed.</p>
+      <div class="form-group">
+        <label class="form-label">Mail From (sender address)</label>
+        <input type="text" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@yourdomain.com">
       </div>
     </div>
 

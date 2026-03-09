@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `referral_code` varchar(10) DEFAULT NULL,
   `referred_by` int(11) DEFAULT NULL,
   `referral_earnings` decimal(10,4) DEFAULT 0.0000,
+  `email_verification_token` varchar(64) DEFAULT NULL,
+  `email_verification_expires` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_login` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)

@@ -12,6 +12,7 @@ define('DB_CHARSET', 'utf8mb4');
 
 define('SITE_URL', 'https://yourdomain.com');  // No trailing slash
 define('SITE_NAME', 'SMM Turk');
+define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verification emails (cPanel: use an email from your domain)
 
 // SmmFollows API - Get key from https://smmfollows.com → Account → API
 define('PROVIDER_API_URL', 'https://smmfollows.com/api/v2');

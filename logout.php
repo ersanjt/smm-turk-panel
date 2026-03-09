@@ -1,7 +1,7 @@
 <?php
 // logout.php
 require_once __DIR__ . '/app/init.php';
-session_start();
+$_SESSION = [];
 session_destroy();
 header('Location: /login.php');
 exit;

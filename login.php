@@ -9,6 +9,8 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $mode  = $_GET['mode'] ?? 'login';
 $error = '';
 $success = '';
+$db = Database::getInstance();
+$registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($mode === 'login') {
@@ -19,17 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = $result['error'];
         }
     } else {
-        $result = $auth->register(
-            trim($_POST['username'] ?? ''),
-            trim($_POST['email'] ?? ''),
-            $_POST['password'] ?? '',
-            trim($_POST['ref'] ?? '')
-        );
-        if ($result['success']) {
-            $success = '✅ Account created! Please login.';
-            $mode = 'login';
+        if (!$registrationEnabled) {
+            $error = 'Registration is currently disabled.';
         } else {
-            $error = $result['error'];
+            $result = $auth->register(
+                trim($_POST['username'] ?? ''),
+                trim($_POST['email'] ?? ''),
+                $_POST['password'] ?? '',
+                trim($_POST['ref'] ?? '')
+            );
+            if ($result['success']) {
+                $success = '✅ Account created! Check your email for the verification link, then login.';
+                $mode = 'login';
+            } else {
+                $error = $result['error'];
+            }
         }
     }
 }
@@ -73,7 +79,9 @@ body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0a0a1a 
 
   <div class="tabs">
     <a href="?mode=login" class="tab <?= $mode === 'login' ? 'active' : '' ?>">Login</a>
+    <?php if ($registrationEnabled): ?>
     <a href="?mode=register" class="tab <?= $mode === 'register' ? 'active' : '' ?>">Register</a>
+    <?php endif; ?>
   </div>
 
   <?php if ($error): ?>
@@ -118,7 +126,7 @@ body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0a0a1a 
 
   <div class="footer-link">
     <?php if ($mode === 'login'): ?>
-      Don't have an account? <a href="?mode=register">Register</a>
+      <?php if ($registrationEnabled): ?>Don't have an account? <a href="?mode=register">Register</a><?php endif; ?>
     <?php else: ?>
       Already have an account? <a href="?mode=login">Login</a>
     <?php endif; ?>

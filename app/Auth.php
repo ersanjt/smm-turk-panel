@@ -35,11 +35,16 @@ class Auth {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $ref_code = strtolower(substr(md5(uniqid()), 0, 8));
         $api_key = bin2hex(random_bytes(20));
+        $token = bin2hex(random_bytes(24));
+        $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours
 
         $id = $this->db->insert(
-            "INSERT INTO users (username, email, password, referral_code, referred_by, api_key) VALUES (?, ?, ?, ?, ?, ?)",
-            [$username, $email, $hashed, $ref_code, $referred_by, $api_key]
+            "INSERT INTO users (username, email, password, referral_code, referred_by, api_key, status, email_verification_token, email_verification_expires) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+            [$username, $email, $hashed, $ref_code, $referred_by, $api_key, $token, $expires]
         );
+
+        $mail = new Mail();
+        $mail->sendVerification($email, $username, $token);
 
         return ['success' => true, 'user_id' => $id];
     }
@@ -52,6 +57,9 @@ class Auth {
 
         if (!$user || !password_verify($password, $user['password'])) {
             return ['success' => false, 'error' => 'Invalid credentials'];
+        }
+        if (($user['status'] ?? 'active') === 'pending') {
+            return ['success' => false, 'error' => 'Please verify your email first. Check your inbox for the verification link.'];
         }
 
         $_SESSION['user_id']   = $user['id'];
