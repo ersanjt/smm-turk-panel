@@ -35,23 +35,29 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — Email Verification</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 50%,#0a0a1a 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.box{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.4);text-align:center}
-.logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:20px}
-.logo span{color:#4d4dff}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0f0f14 0%,#1e1b4b 50%,#0f0f14 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25);text-align:center}
+.box-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px}
+.box-logo img{width:40px;height:40px;border-radius:10px}
+.box-logo .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f172a}
+.box-logo .logo span{color:#6366f1}
 .msg{padding:14px;border-radius:12px;font-size:14px;margin-bottom:20px}
-.msg.ok{background:#e8ffe8;color:#007700;border:1px solid #b3ffb3}
-.msg.err{background:#ffe8e8;color:#cc0000;border:1px solid #ffb3b3}
-.btn{display:inline-block;padding:12px 24px;background:#1a1aff;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;margin-top:10px}
-.btn:hover{background:#0000cc}
+.msg.ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.msg.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.btn{display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;margin-top:10px;transition:all .2s}
+.btn:hover{background:#4f46e5;box-shadow:0 8px 24px rgba(99,102,241,.35)}
 </style>
 </head>
 <body>
 <div class="box">
-  <div class="logo">SMM<span>Turk</span></div>
+  <div class="box-logo">
+    <img src="/assets/img/logo-icon.svg" alt="" width="40" height="40">
+    <span class="logo">SMM<span>Turk</span></span>
+  </div>
   <div class="msg <?= $success ? 'ok' : 'err' ?>"><?= htmlspecialchars($message) ?></div>
   <a href="/login.php" class="btn">Go to Login</a>
 </div>

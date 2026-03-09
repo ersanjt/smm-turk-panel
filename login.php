@@ -46,35 +46,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 50%,#0a0a1a 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.4)}
-.logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;margin-bottom:6px}
-.logo span{color:#4d4dff}
-.tagline{text-align:center;color:#6b6b8a;font-size:13px;margin-bottom:28px}
-.tabs{display:flex;background:#f0f2ff;border-radius:12px;padding:4px;margin-bottom:24px}
-.tab{flex:1;padding:9px;text-align:center;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;color:#6b6b8a;text-decoration:none;transition:all .2s}
-.tab.active{background:#1a1aff;color:#fff}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0f0f14 0%,#1e1b4b 50%,#0f0f14 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.05)}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
+.auth-logo img{width:44px;height:44px;border-radius:12px}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#0f172a}
+.auth-logo .logo span{color:#6366f1}
+.tagline{text-align:center;color:#64748b;font-size:13px;margin-bottom:28px}
+.tabs{display:flex;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:24px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#64748b;text-decoration:none;transition:all .2s}
+.tab.active{background:#6366f1;color:#fff}
 .form-group{margin-bottom:14px}
-.form-label{display:block;font-size:11px;font-weight:700;color:#6b6b8a;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
-.form-control{width:100%;padding:11px 14px;border:1.5px solid #e0e4ff;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#f8f9ff}
-.form-control:focus{border-color:#1a1aff;background:#fff}
-.btn{width:100%;padding:13px;background:#1a1aff;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
-.btn:hover{background:#0000cc;transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,26,255,.3)}
+.form-label{display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.form-control{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#f8fafc}
+.form-control:focus{border-color:#6366f1;background:#fff}
+.btn{width:100%;padding:13px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
+.btn:hover{background:#4f46e5;transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,.35)}
 .alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500}
-.alert-error{background:#ffe8e8;color:#cc0000;border:1px solid #ffb3b3}
-.alert-success{background:#e8ffe8;color:#007700;border:1px solid #b3ffb3}
-.footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b6b8a}
-.footer-link a{color:#1a1aff;font-weight:600}
+.alert-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#64748b}
+.footer-link a{color:#6366f1;font-weight:600}
 </style>
 </head>
 <body>
 
 <div class="auth-box">
-  <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b6b8a;">← Back to Home</a>
-  <div class="logo">SMM<span>Turk</span></div>
+  <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#64748b;">← Back to Home</a>
+  <div class="auth-logo">
+    <img src="/assets/img/logo-icon.svg" alt="" width="44" height="44">
+    <span class="logo">SMM<span>Turk</span></span>
+  </div>
   <div class="tagline">Social Media Marketing Panel</div>
 
   <div class="tabs">

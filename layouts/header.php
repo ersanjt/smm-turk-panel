@@ -12,15 +12,18 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= h($pageTitle ?? 'Dashboard') ?> — <?= h($siteName) ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#1a1aff;--primary-dark:#0000cc;--primary-light:#4d4dff;--accent:#ff3d00;--bg:#f0f2ff;--sidebar-bg:#0a0a1a;--sidebar-text:#a0a0c0;--white:#fff;--border:#e0e4ff;--text:#0a0a1a;--text-muted:#6b6b8a;--green:#00c853;--orange:#ff9100;--red:#ff1744;--shadow:0 4px 24px rgba(26,26,255,.08)}
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;--accent:#22d3ee;--bg:#f8fafc;--sidebar-bg:#0f0f14;--sidebar-text:#94a3b8;--white:#fff;--border:#e2e8f0;--text:#0f172a;--text-muted:#64748b;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--shadow:0 4px 24px rgba(99,102,241,.06);--glow:0 0 40px rgba(99,102,241,.12)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 a{text-decoration:none;color:inherit}
 .sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;display:flex;flex-direction:column}
-.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
-.logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff}
+.sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+.sidebar-logo a{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.logo-icon{width:36px;height:36px;flex-shrink:0;border-radius:10px}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.02em}
 .logo-text span{color:var(--primary-light)}
 .sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
 .user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px}
@@ -34,7 +37,7 @@ a{text-decoration:none;color:inherit}
 .nav-item.active{background:var(--primary);color:#fff}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 .stat-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--bg);border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border)}
 .stat-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
 .si-blue{background:var(--primary)}.si-green{background:var(--green)}.si-orange{background:var(--orange)}
@@ -46,11 +49,11 @@ a{text-decoration:none;color:inherit}
 .card-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px}
 .form-group{margin-bottom:16px}
 .form-label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
-.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
 .form-control:focus{border-color:var(--primary);background:#fff}
 .btn{padding:10px 22px;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
 .btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,26,255,.25)}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(99,102,241,.35)}
 .btn-danger{background:var(--red);color:#fff}
 .btn-success{background:var(--green);color:#fff}
 .btn-block{width:100%}
@@ -83,7 +86,11 @@ a{text-decoration:none;color:inherit}
 .stat-card .sc-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
 .footer{background:var(--sidebar-bg);color:rgba(255,255,255,.35);text-align:center;padding:14px;font-size:12px}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.content>*{animation:fadeIn .3s ease}
+.content>*{animation:fadeIn .35s ease}
+.card{transition:box-shadow .25s ease, border-color .25s ease}
+.card:hover{box-shadow:0 12px 40px rgba(99,102,241,.08)}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s, box-shadow .2s}
+.topbar{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 </style>
 </head>
@@ -91,7 +98,10 @@ a{text-decoration:none;color:inherit}
 
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <a href="/index.php" class="logo-text">SMM<span>Turk</span></a>
+    <a href="/index.php">
+      <img src="/assets/img/logo-icon.svg" alt="" class="logo-icon" width="36" height="36">
+      <span class="logo-text">SMM<span>Turk</span></span>
+    </a>
   </div>
   <div class="sidebar-user">
     <div class="user-avatar"><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?></div>
