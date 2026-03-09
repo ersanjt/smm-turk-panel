@@ -55,4 +55,19 @@ class Mail {
         $body .= '<p>— ' . htmlspecialchars($siteName) . '</p>';
         return $this->send($to, $subject, strip_tags($body), $body);
     }
+
+    /** Send password reset email with link */
+    public function sendPasswordReset(string $to, string $username, string $token): bool {
+        $siteUrl = rtrim($this->db->getSetting('site_url') ?: (defined('SITE_URL') ? SITE_URL : ''), '/');
+        $siteName = $this->db->getSetting('site_name') ?: (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
+        $link = $siteUrl . '/reset-password.php?token=' . urlencode($token);
+        $subject = '[' . $siteName . '] Reset your password';
+        $body = '<p>Hi ' . htmlspecialchars($username) . ',</p>';
+        $body .= '<p>You requested a password reset. Click the link below to set a new password:</p>';
+        $body .= '<p><a href="' . htmlspecialchars($link) . '" style="display:inline-block;background:#E30A17;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;">Reset Password</a></p>';
+        $body .= '<p>Or copy this URL: ' . htmlspecialchars($link) . '</p>';
+        $body .= '<p>This link expires in 1 hour. If you did not request this, ignore this email.</p>';
+        $body .= '<p>— ' . htmlspecialchars($siteName) . '</p>';
+        return $this->send($to, $subject, strip_tags($body), $body);
+    }
 }

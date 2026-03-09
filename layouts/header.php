@@ -176,14 +176,59 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 .topbar-right .btn{padding:8px 14px;font-size:12px}
 .grid2,.grid3,.grid4{grid-template-columns:1fr}
 .card{padding:16px}
+.form-control{min-height:44px;font-size:16px}
+.form-control:focus{font-size:16px}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.table th,.table td{padding:10px 12px;font-size:12px}
+.svc-table th,.svc-table td{padding:10px 12px;font-size:12px}
+.stat-card{padding:16px}
+.stat-card .sc-value{font-size:20px}
+.alert{padding:14px;font-size:13px}
+.order-form-row{flex-direction:column;align-items:stretch}
+.order-form-row form{max-width:100%}
+.order-form-row .form-control,.order-form-row select{min-width:0;width:100%}
+.order-form-row label.checkbox-label{min-height:44px;align-items:center}
+.order-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:4px}
+.order-tab{white-space:nowrap;padding:10px 14px;font-size:12px}
+.platform-icons{gap:6px}
+.platform-btn{width:40px;height:40px;min-width:40px;min-height:40px}
+.services-toolbar{flex-direction:column;align-items:stretch}
+.services-search-row .form-control,.services-search-row .filter-select{max-width:100%;min-width:0}
+.ticket-search-wrap{flex-wrap:wrap}
+.ticket-search-wrap input{min-width:0;flex:1 1 100%}
+.ticket-search-wrap button{min-height:44px}
+.ticket-cats label{padding:10px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}
+.add-funds-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.add-funds-tabs a{white-space:nowrap;padding:12px 16px}
+.wallet-box code{font-size:11px}
+.wallet-box .btn{min-height:44px}
+.badge{padding:6px 12px;min-height:32px;display:inline-flex;align-items:center}
+input[type="file"]{min-height:44px}
+textarea.form-control{min-height:120px}
 }
 @media(max-width:480px){
 .content{padding:12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
 .topbar{padding:8px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
 .topbar .stat-pill:nth-child(2){display:none}
 .topbar .stat-pill{font-size:10px;padding:4px 8px}
-.btn{padding:8px 16px;font-size:13px}
+.btn{padding:10px 16px;font-size:13px}
 .topbar-right .icon-btn{width:38px;height:38px;min-width:38px;min-height:38px}
+.card{padding:14px}
+.table th,.table td{padding:8px 10px;font-size:11px}
+.svc-table th,.svc-table td{padding:8px 10px;font-size:11px}
+.table-wrap .table{min-width:400px}
+.form-control{padding:10px 12px}
+.price-box{flex-wrap:wrap;gap:8px}
+.price-box .amt{font-size:18px}
+.order-tab{padding:8px 12px;font-size:11px}
+.platform-btn{width:36px;height:36px;min-width:36px;min-height:36px;font-size:12px}
+.ptab{padding:6px 12px;font-size:11px}
+.ticket-pagination a,.ticket-pagination span{padding:10px 14px;min-height:44px;display:inline-flex;align-items:center}
+}
+@media(max-width:360px){
+.content{padding:10px}
+.card{padding:12px}
+.topbar-badge{font-size:10px;padding:3px 8px}
 }
 @media(max-width:768px){
 .order-grid{grid-template-columns:1fr}

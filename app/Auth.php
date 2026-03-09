@@ -139,6 +139,59 @@ class Auth {
     }
 
     /**
+     * Request password reset: create token and send email. Returns success true even if email not found (avoid enumeration).
+     */
+    public function requestPasswordReset(string $email): array {
+        $email = trim($email);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Invalid email address'];
+        }
+        $user = $this->db->fetch("SELECT id, username FROM users WHERE email = ? AND status = 'active'", [$email]);
+        if (!$user) {
+            return ['success' => true];
+        }
+        $token = bin2hex(random_bytes(24));
+        $expires = date('Y-m-d H:i:s', time() + 3600);
+        try {
+            $this->db->execute(
+                "UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?",
+                [$token, $expires, $user['id']]
+            );
+        } catch (Throwable $e) {
+            return ['success' => false, 'error' => 'Password reset is not available. Please contact support.'];
+        }
+        $mail = new Mail();
+        $mail->sendPasswordReset($email, $user['username'], $token);
+        return ['success' => true];
+    }
+
+    /**
+     * Reset password using token from email. Returns ['success' => bool, 'error' => string|null].
+     */
+    public function resetPasswordByToken(string $token, string $newPassword): array {
+        if (strlen($newPassword) < 6) {
+            return ['success' => false, 'error' => 'Password must be at least 6 characters'];
+        }
+        $token = trim($token);
+        if ($token === '') {
+            return ['success' => false, 'error' => 'Invalid reset link.'];
+        }
+        $user = $this->db->fetch(
+            "SELECT id FROM users WHERE password_reset_token = ? AND password_reset_expires > NOW()",
+            [$token]
+        );
+        if (!$user) {
+            return ['success' => false, 'error' => 'This reset link is invalid or has expired.'];
+        }
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->db->execute(
+            "UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?",
+            [$hash, $user['id']]
+        );
+        return ['success' => true];
+    }
+
+    /**
      * Login or create user from Google OAuth (email, name, google_id from Google profile).
      * Returns ['success' => bool, 'error' => string|null].
      */
