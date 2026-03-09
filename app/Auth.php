@@ -108,4 +108,33 @@ class Auth {
     public function getUserId(): int {
         return (int)($_SESSION['user_id'] ?? 0);
     }
+
+    public function updateEmail(int $userId, string $newEmail, string $currentPassword): array {
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Invalid email address'];
+        }
+        $user = $this->db->fetch("SELECT id, password, email FROM users WHERE id = ?", [$userId]);
+        if (!$user || !password_verify($currentPassword, $user['password'])) {
+            return ['success' => false, 'error' => 'Current password is incorrect'];
+        }
+        $existing = $this->db->fetch("SELECT id FROM users WHERE email = ? AND id != ?", [$newEmail, $userId]);
+        if ($existing) {
+            return ['success' => false, 'error' => 'Email already in use'];
+        }
+        $this->db->execute("UPDATE users SET email = ? WHERE id = ?", [$newEmail, $userId]);
+        return ['success' => true];
+    }
+
+    public function updatePassword(int $userId, string $currentPassword, string $newPassword): array {
+        if (strlen($newPassword) < 6) {
+            return ['success' => false, 'error' => 'New password must be at least 6 characters'];
+        }
+        $user = $this->db->fetch("SELECT password FROM users WHERE id = ?", [$userId]);
+        if (!$user || !password_verify($currentPassword, $user['password'])) {
+            return ['success' => false, 'error' => 'Current password is incorrect'];
+        }
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->db->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
+        return ['success' => true];
+    }
 }

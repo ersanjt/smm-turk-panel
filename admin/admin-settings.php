@@ -6,7 +6,7 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
-        'smtp_from','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
+        'smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
@@ -65,6 +65,10 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="form-group">
         <label class="form-label">Mail From (sender address)</label>
         <input type="text" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@yourdomain.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Email (shown in footer)</label>
+        <input type="email" name="contact_email" class="form-control" value="<?= s($settings,'contact_email') ?>" placeholder="contact@yourdomain.com">
       </div>
     </div>
 

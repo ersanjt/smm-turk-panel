@@ -63,16 +63,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 .tab.active{background:#E30A17;color:#fff}
 .form-group{margin-bottom:14px}
 .form-label{display:block;font-size:11px;font-weight:700;color:#6b4a50;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.input-wrap{display:flex;align-items:center;background:#fef8f9;border:1.5px solid #f0e6e8;border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.input-wrap:focus-within{border-color:#E30A17;background:#fff;box-shadow:0 0 0 3px rgba(227,10,23,.12)}
+.input-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#6b4a50;flex-shrink:0}
+.input-wrap:focus-within .input-icon{color:#E30A17}
+.input-wrap .form-control{border:none;border-radius:0;padding:12px 14px 12px 0;background:transparent}
+.input-wrap .form-control:focus{box-shadow:none}
 .form-control{width:100%;padding:12px 14px;border:1.5px solid #f0e6e8;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#fef8f9}
 .form-control:focus{border-color:#E30A17;background:#fff}
-.btn{width:100%;padding:13px;background:#E30A17;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
+.btn{width:100%;padding:13px;background:#E30A17;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn svg{width:18px;height:18px}
 .btn:hover{background:#B90812;transform:translateY(-1px);box-shadow:0 8px 24px rgba(227,10,23,.35)}
 .alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500}
 .alert-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
 .footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b4a50}
 .footer-link a{color:#E30A17;font-weight:600}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.auth-box{animation:fadeInUp .4s ease both}
 @media(max-width:480px){.auth-box{margin:12px;padding:24px 20px;border-radius:20px}}
+@media(prefers-reduced-motion:reduce){.auth-box{animation:none}}
 </style>
 </head>
 <body>
@@ -103,13 +113,19 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   <form method="POST">
     <div class="form-group">
       <label class="form-label">Email or Username</label>
-      <input type="text" name="email" class="form-control" placeholder="your@email.com" required autofocus>
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <input type="text" name="email" class="form-control" placeholder="your@email.com" required autofocus>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
     </div>
-    <button type="submit" class="btn">🚀 Login</button>
+    <button type="submit" class="btn">Login <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
   </form>
   <?php else: ?>
   <form method="POST">

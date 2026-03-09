@@ -127,7 +127,8 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('smtp_port', '587'),
 ('smtp_user', ''),
 ('smtp_pass', ''),
-('smtp_from', 'noreply@smm-turk.com')
+('smtp_from', 'noreply@smm-turk.com'),
+('contact_email', 'contact@smm-turk.com')
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
 -- Insert default admin user (password: Admin@123456)

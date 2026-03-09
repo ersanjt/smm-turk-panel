@@ -30,13 +30,13 @@ switch ($action) {
         $output = [];
         foreach ($services as $s) {
             $output[] = [
-                'service'  => $s['service_id'],
+                'service'  => (int)$s['service_id'],
                 'name'     => $s['name'],
-                'type'     => $s['type'],
-                'category' => $s['category'],
-                'rate'     => number_format($s['rate'] * (1 + $s['markup']/100), 5),
-                'min'      => $s['min'],
-                'max'      => $s['max'],
+                'type'     => $s['type'] ?? 'Default',
+                'category' => $s['category'] ?? '',
+                'rate'     => number_format((float)$s['rate'] * (1 + (float)($s['markup'] ?? 0) / 100), 5),
+                'min'      => (string)$s['min'],
+                'max'      => (string)$s['max'],
                 'refill'   => (bool)$s['refill'],
                 'cancel'   => (bool)$s['cancel'],
             ];
@@ -48,12 +48,15 @@ switch ($action) {
         $serviceId = (int)($_POST['service'] ?? 0);
         $link      = trim($_POST['link'] ?? '');
         $quantity  = (int)($_POST['quantity'] ?? 0);
+        $extra     = [];
+        if (isset($_POST['runs']) && $_POST['runs'] !== '') $extra['runs'] = (int)$_POST['runs'];
+        if (isset($_POST['interval']) && $_POST['interval'] !== '') $extra['interval'] = (int)$_POST['interval'];
 
         if (!$serviceId || !$link || !$quantity) {
             echo json_encode(['error' => 'Missing required parameters']); exit;
         }
 
-        $result = $om->placeOrder($user['id'], $serviceId, $link, $quantity);
+        $result = $om->placeOrder($user['id'], $serviceId, $link, $quantity, $extra);
         if ($result['success']) {
             echo json_encode(['order' => $result['order_id']]);
         } else {
@@ -63,33 +66,121 @@ switch ($action) {
 
     case 'status':
         if (isset($_POST['orders'])) {
-            $ids  = array_map('intval', explode(',', $_POST['orders']));
-            $rows = $db->fetchAll(
-                "SELECT id, status, charge, start_count, remains FROM orders WHERE id IN (" . implode(',', array_fill(0, count($ids), '?')) . ") AND user_id = ?",
-                array_merge($ids, [$user['id']])
-            );
-            $out = [];
+            $ids  = array_map('intval', array_filter(explode(',', str_replace(' ', '', $_POST['orders'] ?? ''))));
+            $ids  = array_slice(array_unique($ids), 0, 100);
+            $rows = [];
+            if (!empty($ids)) {
+                $rows = $db->fetchAll(
+                    "SELECT id, status, charge, start_count, remains FROM orders WHERE id IN (" . implode(',', array_fill(0, count($ids), '?')) . ") AND user_id = ?",
+                    array_merge($ids, [$user['id']])
+                );
+            }
+            $byId = [];
             foreach ($rows as $r) {
-                $out[$r['id']] = [
-                    'charge'      => $r['charge'],
-                    'start_count' => $r['start_count'],
+                $byId[$r['id']] = [
+                    'charge'      => number_format((float)$r['charge'], 5),
+                    'start_count' => (string)($r['start_count'] ?? '0'),
                     'status'      => $r['status'],
-                    'remains'     => $r['remains'],
+                    'remains'     => (string)($r['remains'] ?? '0'),
                     'currency'    => 'USD',
                 ];
+            }
+            $out = [];
+            foreach ($ids as $id) {
+                $out[(string)$id] = $byId[$id] ?? ['error' => 'Incorrect order ID'];
             }
             echo json_encode($out);
         } else {
             $orderId = (int)($_POST['order'] ?? 0);
             $row = $db->fetch("SELECT * FROM orders WHERE id=? AND user_id=?", [$orderId, $user['id']]);
-            if (!$row) { echo json_encode(['error' => 'Order not found']); exit; }
+            if (!$row) { echo json_encode(['error' => 'Incorrect order ID']); exit; }
             echo json_encode([
-                'charge'      => $row['charge'],
-                'start_count' => $row['start_count'],
+                'charge'      => number_format((float)$row['charge'], 5),
+                'start_count' => (string)($row['start_count'] ?? '0'),
                 'status'      => $row['status'],
-                'remains'     => $row['remains'],
+                'remains'     => (string)($row['remains'] ?? '0'),
                 'currency'    => 'USD',
             ]);
+        }
+        break;
+
+    case 'refill':
+        if (isset($_POST['orders'])) {
+            $ourIds = array_map('intval', array_filter(explode(',', str_replace(' ', '', $_POST['orders'] ?? ''))));
+            $ourIds = array_slice(array_unique($ourIds), 0, 100);
+            $orderList = [];
+            if (!empty($ourIds)) {
+                $rows = $db->fetchAll(
+                    "SELECT id, provider_order_id FROM orders WHERE id IN (" . implode(',', array_fill(0, count($ourIds), '?')) . ") AND user_id = ? AND provider_order_id IS NOT NULL",
+                    array_merge($ourIds, [$user['id']])
+                );
+                $byOur = [];
+                foreach ($rows as $r) {
+                    $byOur[(int)$r['id']] = (int)$r['provider_order_id'];
+                }
+                foreach ($ourIds as $oid) {
+                    if (isset($byOur[$oid])) {
+                        $orderList[] = ['our' => $oid, 'provider' => $byOur[$oid]];
+                    }
+                }
+            }
+            $providerIds = array_column($orderList, 'provider');
+            $resp = is_array($providerIds) && count($providerIds) > 0 ? $api->multiRefill($providerIds) : [];
+            $out = [];
+            if (is_array($resp)) {
+                foreach ($resp as $i => $item) {
+                    $ourId = isset($orderList[$i]) ? $orderList[$i]['our'] : null;
+                    if ($ourId !== null) {
+                        $refill = $item['refill'] ?? $item;
+                        if (is_array($refill) && isset($refill['error'])) {
+                            $out[] = ['order' => $ourId, 'refill' => $refill];
+                        } else {
+                            $out[] = ['order' => $ourId, 'refill' => $refill];
+                        }
+                    }
+                }
+            }
+            $foundOur = array_column($orderList, 'our');
+            foreach ($ourIds as $oid) {
+                if (!in_array($oid, $foundOur)) {
+                    $out[] = ['order' => $oid, 'refill' => ['error' => 'Incorrect order ID']];
+                }
+            }
+            echo json_encode($out);
+        } else {
+            $orderId = (int)($_POST['order'] ?? 0);
+            $row = $db->fetch("SELECT id, provider_order_id FROM orders WHERE id=? AND user_id=?", [$orderId, $user['id']]);
+            if (!$row || empty($row['provider_order_id'])) {
+                echo json_encode(['error' => 'Incorrect order ID']); exit;
+            }
+            $resp = $api->refill((int)$row['provider_order_id']);
+            if ($resp && isset($resp->refill)) {
+                echo json_encode(['refill' => (string)$resp->refill]);
+            } else {
+                echo json_encode(['error' => $resp->error ?? 'Refill failed']);
+            }
+        }
+        break;
+
+    case 'refill_status':
+        if (isset($_POST['refills'])) {
+            $refillIds = array_map('trim', array_filter(explode(',', str_replace(' ', '', $_POST['refills'] ?? ''))));
+            $refillIds = array_slice(array_unique($refillIds), 0, 100);
+            $resp = $api->multiRefillStatus($refillIds);
+            echo json_encode(is_array($resp) ? $resp : []);
+        } else {
+            $refillId = trim($_POST['refill'] ?? '');
+            if ($refillId === '') {
+                echo json_encode(['error' => 'Missing refill parameter']); exit;
+            }
+            $resp = $api->refillStatus($refillId);
+            if ($resp && isset($resp->status)) {
+                echo json_encode(['status' => $resp->status]);
+            } elseif ($resp && isset($resp->error)) {
+                echo json_encode(['status' => ['error' => $resp->error]]);
+            } else {
+                echo json_encode(['status' => ['error' => 'Refill not found']]);
+            }
         }
         break;
 

@@ -41,10 +41,12 @@ img{max-width:100%;height:auto}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.topbar-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--primary);color:#fff;margin-right:8px}
 .stat-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--bg);border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border)}
+.stat-pill .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-right:4px}
 .stat-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
 .si-blue{background:var(--primary)}.si-green{background:var(--green)}.si-orange{background:var(--orange)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
 .icon-btn{width:34px;height:34px;border-radius:9px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .2s;font-size:15px}
 .icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
 .content{padding:24px;flex:1}
@@ -87,11 +89,32 @@ img{max-width:100%;height:auto}
 .stat-card .sc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
 .stat-card .sc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:5px}
 .stat-card .sc-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
-.footer{background:var(--sidebar-bg);color:rgba(255,255,255,.35);text-align:center;padding:14px;font-size:12px}
+.footer{background:var(--sidebar-bg);color:rgba(255,255,255,.5);padding:14px 24px;font-size:12px}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.footer-copy{color:rgba(255,255,255,.5)}
+.footer-contact{color:rgba(255,255,255,.7);text-decoration:none}
+.footer-contact:hover{color:#fff}
+.footer-ticket{background:var(--orange);color:#fff;padding:8px 18px;border-radius:10px;font-weight:700;text-decoration:none;font-size:12px;transition:all .2s}
+.footer-ticket:hover{background:#fbbf24;color:#1a0a0e;transform:translateY(-1px)}
+@media(max-width:768px){.footer-inner{flex-direction:column;text-align:center}.footer-copy{order:1}.footer-contact{order:2}.footer-ticket{order:3}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.content>*{animation:fadeIn .35s ease}
-.card{transition:box-shadow .25s ease, border-color .25s ease}
-.card:hover{box-shadow:0 12px 40px rgba(227,10,23,.08)}
+@keyframes softPulse{0%,100%{opacity:1}50%{opacity:.92}}
+.content>*{animation:fadeIn .4s ease both}
+.content>*:nth-child(1){animation-delay:0s}
+.content>*:nth-child(2){animation-delay:.05s}
+.content>*:nth-child(3){animation-delay:.1s}
+.content>*:nth-child(4){animation-delay:.15s}
+.content>*:nth-child(5){animation-delay:.2s}
+.card{transition:box-shadow .3s ease, border-color .3s ease, transform .25s ease}
+.card:hover{box-shadow:0 12px 40px rgba(227,10,23,.08);transform:translateY(-2px)}
+.nav-item{transition:background .2s ease, color .2s ease, transform .15s ease}
+.nav-item:hover{transform:translateX(4px)}
+.stat-pill,.icon-btn{transition:transform .2s ease, box-shadow .2s ease}
+.stat-pill:hover,.icon-btn:hover{transform:scale(1.02)}
+@media(prefers-reduced-motion:reduce){
+.content>*,.card,.nav-item,.stat-pill,.icon-btn{animation:none!important;transition-duration:.01ms!important}
+.card:hover{transform:none}
+}
 .form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s, box-shadow .2s}
 .topbar{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
@@ -165,21 +188,38 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
       My Orders
     </a>
     <div class="nav-label">Account</div>
+    <a class="nav-item <?= $currentPage === 'account-settings' ? 'active' : '' ?>" href="/account-settings.php">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Account Settings
+    </a>
     <a class="nav-item <?= $currentPage === 'add-funds' ? 'active' : '' ?>" href="/add-funds.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       Add Funds
+    </a>
+    <div class="nav-label">Support & Info</div>
+    <a class="nav-item" href="/home.php#faq">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      FAQ
+    </a>
+    <a class="nav-item <?= $currentPage === 'api-page' ? 'active' : '' ?>" href="/api-page.php">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      API
     </a>
     <a class="nav-item <?= $currentPage === 'tickets' ? 'active' : '' ?>" href="/tickets.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Tickets
     </a>
+    <a class="nav-item <?= $currentPage === 'terms' ? 'active' : '' ?>" href="/terms.php">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Terms
+    </a>
     <a class="nav-item <?= $currentPage === 'affiliates' ? 'active' : '' ?>" href="/affiliates.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Affiliates
     </a>
-    <a class="nav-item <?= $currentPage === 'api-page' ? 'active' : '' ?>" href="/api-page.php">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-      API
+    <a class="nav-item <?= $currentPage === 'child-panel' ? 'active' : '' ?>" href="/child-panel.php">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Child Panel
     </a>
     <?php if ($auth->isAdmin()): ?>
     <div class="nav-label">Admin</div>
@@ -200,12 +240,16 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 <div class="main">
   <div class="topbar">
     <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
-    <div class="stat-pill"><div class="stat-icon si-blue">👤</div> <?= h($user['username'] ?? '') ?></div>
-    <div class="stat-pill"><div class="stat-icon si-green">💰</div> $<?= $balance ?></div>
-    <div class="stat-pill"><div class="stat-icon si-orange">📊</div> Spent: $<?= $spent ?></div>
+    <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
+    <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
+    <div class="stat-pill"><span class="stat-label">Spent</span> $<?= $spent ?></div>
     <div class="topbar-right">
-      <a href="/add-funds.php" class="btn btn-primary" style="padding:7px 16px;font-size:12px;">+ Add Funds</a>
+      <a href="/services.php" class="icon-btn" title="Search services">🔍</a>
+      <a href="/add-funds.php" class="icon-btn" title="Add Funds">💳</a>
+      <a href="/account-settings.php" class="icon-btn" title="Account Settings">⚙️</a>
+      <a href="/tickets.php" class="icon-btn" title="Support">🔔</a>
       <a href="/logout.php" class="icon-btn" title="Logout">🚪</a>
+      <a href="/add-funds.php" class="btn btn-primary" style="padding:7px 16px;font-size:12px;">+ Add Funds</a>
     </div>
   </div>
   <div class="content">

@@ -1,7 +1,15 @@
   </div><!-- end content -->
-  <div class="footer">
-    © <?= date('Y') ?> <?= h(defined('SITE_NAME') ? SITE_NAME : 'SMM Turk') ?> — <?= defined('SITE_URL') ? parse_url(SITE_URL, PHP_URL_HOST) : 'smm-turk.com' ?>
-  </div>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="footer-copy">© <?= date('Y') ?> <?= h(defined('SITE_NAME') ? SITE_NAME : 'SMM Turk') ?>. All Rights Reserved.</span>
+      <?php
+      $contactEmail = class_exists('Database') ? (Database::getInstance()->getSetting('contact_email') ?: '') : '';
+      if ($contactEmail): ?>
+      <a href="mailto:<?= h($contactEmail) ?>" class="footer-contact"><?= h($contactEmail) ?></a>
+      <?php endif; ?>
+      <a href="/tickets.php" class="footer-ticket">Open a ticket</a>
+    </div>
+  </footer>
 </div><!-- end main -->
 
 <script>
