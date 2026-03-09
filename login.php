@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
-<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
+<link rel="apple-touch-icon" href="/assets/img/logo-icon.svg?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -79,7 +80,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <div class="auth-box">
   <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Home</a>
   <div class="auth-logo">
-    <img src="/assets/img/logo-icon.svg" alt="" width="44" height="44">
+    <img src="/assets/img/logo-icon.svg?v=2" alt="" width="44" height="44">
     <span class="logo">SMM<span>Turk</span></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>

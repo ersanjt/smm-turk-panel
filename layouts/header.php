@@ -12,7 +12,8 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= h($pageTitle ?? 'Dashboard') ?> — <?= h($siteName) ?></title>
-<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
+<link rel="apple-touch-icon" href="/assets/img/logo-icon.svg?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#E30A17;--primary-dark:#B90812;--primary-light:#FF4757;--accent:#e63950;--bg:#fafafa;--sidebar-bg:#1a0a0e;--sidebar-text:#c4a5ab;--white:#fff;--border:#f0e6e8;--text:#1a0a0e;--text-muted:#6b4a50;--green:#10b981;--orange:#f59e0b;--red:#dc2626;--shadow:0 4px 24px rgba(227,10,23,.06);--glow:0 0 40px rgba(227,10,23,.08)}
@@ -135,7 +136,7 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 <aside class="sidebar" id="sidebar" role="navigation">
   <div class="sidebar-logo">
     <a href="/index.php">
-      <img src="/assets/img/logo-icon.svg" alt="" class="logo-icon" width="36" height="36">
+      <img src="/assets/img/logo-icon.svg?v=2" alt="" class="logo-icon" width="36" height="36">
       <span class="logo-text">SMM<span>Turk</span></span>
     </a>
   </div>

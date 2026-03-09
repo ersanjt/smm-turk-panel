@@ -12,15 +12,28 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? SITE_URL : '';
 $langParam = '?lang=';
 $currentPath = '/home.php';
+$canonicalUrl = rtrim($siteUrl, '/') . '/home.php';
+$logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
 ?>
 <!DOCTYPE html>
 <html lang="<?= h($lang) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= h($siteName) ?> — <?= h(__('hero_title')) ?></title>
-    <meta name="description" content="<?= h(__('hero_desc')) ?>">
-    <link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+    <title><?= h($siteName) ?> — Cheapest SMM Panel | Turkey & Worldwide</title>
+    <meta name="description" content="SMM Turk: Cheapest & fastest SMM panel. Instagram, YouTube, TikTok, Twitter growth. Reseller panel, API, 24/7 support. Prices from $0.001. Turkey & worldwide.">
+    <link rel="canonical" href="<?= h($canonicalUrl) ?>">
+    <meta name="theme-color" content="#E30A17">
+    <meta name="geo.region" content="TR">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<?= h($siteName) ?> — Cheapest SMM Panel">
+    <meta property="og:description" content="Cheapest & fastest SMM panel. Reseller panel, API, 24/7 support. Turkey & worldwide.">
+    <meta property="og:url" content="<?= h($canonicalUrl) ?>">
+    <meta property="og:image" content="<?= h($logoUrl) ?>">
+    <meta property="og:locale" content="<?= $lang === 'tr' ? 'tr_TR' : 'en_US' ?>">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
+    <link rel="apple-touch-icon" href="/assets/img/logo-icon.svg?v=2">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>"}</script>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -184,9 +197,9 @@ $currentPath = '/home.php';
 </head>
 <body>
 
-<nav class="nav">
-    <a href="<?= h($currentPath) ?>" class="nav-logo">
-        <img src="/assets/img/logo-icon.svg" alt="" width="36" height="36">
+<header class="nav" role="banner">
+    <a href="<?= h($currentPath) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
+        <img src="/assets/img/logo-icon.svg?v=2" alt="" width="36" height="36" fetchpriority="high">
         <span>SMM<span>Turk</span></span>
     </a>
     <div class="nav-links">
@@ -206,13 +219,14 @@ $currentPath = '/home.php';
         <a href="/login.php"><?= h(__('nav_sign_in')) ?></a>
         <a href="/login.php?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
     </div>
-</nav>
+</header>
 
-<section class="hero">
+<main id="main-content">
+<section class="hero" aria-labelledby="hero-title">
     <div class="hero-inner">
         <div>
             <span class="hero-badge"><?= h(__('hero_badge')) ?></span>
-            <h1><?= h(__('hero_title')) ?></h1>
+            <h1 id="hero-title"><?= h(__('hero_title')) ?></h1>
             <p class="hero-desc"><?= h(__('hero_desc')) ?></p>
         </div>
         <div class="hero-form-box">
@@ -236,9 +250,9 @@ $currentPath = '/home.php';
     </div>
 </section>
 
-<section id="benefits" class="section">
+<section id="benefits" class="section" aria-labelledby="benefits-heading">
     <div class="section-label"><?= h(__('benefit_heading')) ?></div>
-    <h2 class="section-title"><?= h(__('benefit_title')) ?></h2>
+    <h2 id="benefits-heading" class="section-title"><?= h(__('benefit_title')) ?></h2>
     <p class="section-desc"><?= h(__('benefit_intro')) ?></p>
     <div class="benefit-grid">
         <div class="benefit-card">
@@ -354,7 +368,9 @@ $currentPath = '/home.php';
     </div>
 </section>
 
-<footer class="footer">
+</main>
+
+<footer class="footer" role="contentinfo">
     <div class="footer-links">
         <a href="/login.php"><?= h(__('footer_login')) ?></a>
         <a href="/login.php?mode=register"><?= h(__('footer_signup')) ?></a>

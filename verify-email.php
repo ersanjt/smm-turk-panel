@@ -35,7 +35,7 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — Email Verification</title>
-<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -56,7 +56,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="box">
   <div class="box-logo">
-    <img src="/assets/img/logo-icon.svg" alt="" width="40" height="40">
+    <img src="/assets/img/logo-icon.svg?v=2" alt="" width="40" height="40">
     <span class="logo">SMM<span>Turk</span></span>
   </div>
   <div class="msg <?= $success ? 'ok' : 'err' ?>"><?= htmlspecialchars($message) ?></div>
