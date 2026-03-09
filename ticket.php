@@ -14,7 +14,7 @@ if (!$ticket) {
 // Reply
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply']) && csrf_verify()) {
     $msg = trim($_POST['message'] ?? '');
-    if ($msg !== '' && ($ticket['status'] === 'open' || $ticket['status'] === 'answered' || $ticket['status'] === 'New')) {
+    if ($msg !== '' && ($ticket['status'] === 'open' || $ticket['status'] === 'answered')) {
         $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 0)", [$id, $uid, $msg]);
         $db->execute("UPDATE tickets SET status = 'open', updated_at = NOW() WHERE id = ?", [$id]);
         flash('success', 'Reply sent.');

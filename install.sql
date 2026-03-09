@@ -131,7 +131,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('contact_email', 'contact@smm-turk.com')
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
--- Insert default admin user (password: Admin@123456)
+-- Insert default admin user (username: admin, password: password)
 INSERT INTO `users` (`username`, `email`, `password`, `role`, `status`, `balance`) VALUES
 ('admin', 'admin@smm-turk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active', 0.0000)
 ON DUPLICATE KEY UPDATE `role` = 'admin';

@@ -90,6 +90,7 @@ RewriteRule ^api/v2$ /api/v2.php [L]
 
 1. به آدرس `https://yourdomain.com/login.php` برو.
 2. ورود ادمین:
+   - **Username:** `admin`
    - **Email:** `admin@smm-turk.com`
    - **Password:** `password`
 3. حتماً بلافاصله پسورد را عوض کن.

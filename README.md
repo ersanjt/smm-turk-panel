@@ -40,6 +40,7 @@ define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 
 ### 5. Admin Login
 Default admin credentials:
+- **Username:** admin  
 - **Email:** admin@smm-turk.com  
 - **Password:** password  
 ⚠️ Change the password immediately after login!
