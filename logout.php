@@ -1,6 +1,6 @@
 <?php
 // logout.php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 session_start();
 session_destroy();
 header('Location: /login.php');

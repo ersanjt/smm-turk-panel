@@ -1,9 +1,9 @@
 <?php // api-page.php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'API';
 $user = $auth->getCurrentUser();
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 <div class="card" style="background:var(--sidebar-bg);color:#fff;margin-bottom:18px;">
   <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px;">⚙️ API Access</div>
@@ -39,4 +39,4 @@ require_once __DIR__ . '/includes/header.php';
     </tbody>
   </table>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

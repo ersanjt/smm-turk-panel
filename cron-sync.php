@@ -1,9 +1,9 @@
 <?php
 /**
  * Cron job: Sync order statuses from SmmFollows
- * Run every 5 minutes: */5 * * * * php /path/to/cron-sync.php
+ * Add to crontab: every 5 min -> php /path/to/cron-sync.php
  */
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 
 $om = new OrderManager();
 $updated = $om->syncOrders();

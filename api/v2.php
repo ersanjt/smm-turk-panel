@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/../app/init.php';
 
 $key    = $_POST['key'] ?? $_GET['key'] ?? '';
 $action = $_POST['action'] ?? $_GET['action'] ?? '';

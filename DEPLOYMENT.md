@@ -108,8 +108,6 @@ RewriteRule ^api/v2$ /api/v2.php [L]
 */5 * * * * php /home/YOUR_CPANEL_USER/public_html/cron-sync.php
 ```
 
-> ⚠️ توجه: فایل `cron-sync.php` در پروژه وجود ندارد؛ باید آن را بسازی یا این مرحله را فعلاً رد کنی.
-
 ---
 
 ## مشکل‌های رایج

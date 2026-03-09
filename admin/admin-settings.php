@@ -1,11 +1,12 @@
 <?php
-require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/../app/init.php';
 $auth->requireAdmin();
 $pageTitle = 'Settings';
 $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
-    $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode'];
+    $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
+        'wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
@@ -23,7 +24,7 @@ function s(array $settings, string $key): string {
     return htmlspecialchars($settings[$key] ?? '', ENT_QUOTES);
 }
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div style="max-width:700px;">
@@ -87,8 +88,37 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">₿ Crypto Wallets (for receiving deposits)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Enter your wallet addresses. Users will send crypto to these addresses to top up. Leave empty to hide that option.</p>
+      <div class="form-group">
+        <label class="form-label">Bitcoin (BTC)</label>
+        <input type="text" name="wallet_btc" class="form-control" value="<?= s($settings,'wallet_btc') ?>" placeholder="bc1... or 1...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ethereum (ETH)</label>
+        <input type="text" name="wallet_eth" class="form-control" value="<?= s($settings,'wallet_eth') ?>" placeholder="0x...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">USDT (TRC20 – Tron)</label>
+        <input type="text" name="wallet_usdt_trc20" class="form-control" value="<?= s($settings,'wallet_usdt_trc20') ?>" placeholder="T...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">USDT (ERC20 – Ethereum)</label>
+        <input type="text" name="wallet_usdt_erc20" class="form-control" value="<?= s($settings,'wallet_usdt_erc20') ?>" placeholder="0x...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">BNB (BEP20)</label>
+        <input type="text" name="wallet_bnb" class="form-control" value="<?= s($settings,'wallet_bnb') ?>" placeholder="0x...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Solana (SOL)</label>
+        <input type="text" name="wallet_sol" class="form-control" value="<?= s($settings,'wallet_sol') ?>" placeholder="...">
+      </div>
+    </div>
+
     <button type="submit" class="btn btn-primary">💾 Save Settings</button>
   </form>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

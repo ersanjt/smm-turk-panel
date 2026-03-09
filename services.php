@@ -1,6 +1,6 @@
 <?php
 // services.php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'Services';
 $db = Database::getInstance();
@@ -16,7 +16,7 @@ if ($cat)    { $where .= " AND category = ?"; $params[] = $cat; }
 $services   = $db->fetchAll("SELECT * FROM services $where ORDER BY service_id ASC LIMIT 200", $params);
 $categories = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 <style>
 .ptab{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;background:#fff;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-muted);text-decoration:none}
@@ -65,4 +65,4 @@ require_once __DIR__ . '/includes/header.php';
   </div>
 </div>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

@@ -71,35 +71,46 @@ location /api/v2 {
 ```
 smm-turk/
 ├── config.php              # Main configuration
+├── config.example.php      # Config template
 ├── install.sql             # Database schema
-├── index.php               # New Order page
+├── install-cpanel.sql      # cPanel database (no CREATE DB)
+├── index.php               # New Order / Dashboard
+├── home.php                # Landing page
+├── login.php               # Login/Register
+├── logout.php              # Logout
+├── add-funds.php           # Add funds
 ├── orders.php              # Order history
 ├── services.php            # Services list
-├── add-funds.php           # Add funds
 ├── mass-order.php          # Mass ordering
 ├── tickets.php             # Support tickets
 ├── affiliates.php          # Referral system
 ├── api-page.php            # API documentation
-├── login.php               # Login/Register
-├── logout.php              # Logout
-├── includes/
+├── cron-sync.php           # Cron: sync order statuses
+├── install-db.php          # DB setup helper (delete after use)
+│
+├── app/                    # Core application
 │   ├── init.php            # Bootstrap loader
-│   ├── Database.php        # Database class (PDO)
+│   ├── Database.php        # Database (PDO)
 │   ├── Auth.php            # Authentication
-│   ├── SmmApi.php          # SmmFollows API wrapper
-│   ├── OrderManager.php    # Order management
-│   ├── header.php          # Layout header
-│   └── footer.php          # Layout footer
-├── admin/
-│   ├── index.php           # Admin dashboard
-│   ├── admin-users.php     # Manage users + add balance
-│   ├── admin-orders.php    # Manage orders
-│   ├── admin-services.php  # Manage services
-│   ├── admin-sync.php      # Sync services from API
-│   ├── admin-tickets.php   # Manage tickets
-│   └── admin-settings.php  # Site settings
-└── api/
-    └── v2.php              # Public API endpoint
+│   ├── SmmApi.php          # SmmFollows API
+│   └── OrderManager.php    # Order logic
+│
+├── layouts/                # Layout templates
+│   ├── header.php
+│   └── footer.php
+│
+├── admin/                  # Admin panel
+│   ├── index.php
+│   ├── admin-users.php
+│   ├── admin-sync.php
+│   └── admin-settings.php
+│
+├── api/
+│   └── v2.php              # Public API
+│
+└── assets/                 # Static assets
+    ├── css/
+    └── js/
 ```
 
 ---

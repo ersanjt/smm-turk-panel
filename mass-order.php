@@ -1,5 +1,5 @@
 <?php // mass-order.php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'Mass Order';
 $om  = new OrderManager();
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         $results[] = array_merge(['line' => $line], $result);
     }
 }
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 <div class="card">
   <div class="card-title">📦 Mass Order</div>
@@ -42,4 +42,4 @@ require_once __DIR__ . '/includes/header.php';
     <button type="submit" class="btn btn-primary btn-block">🚀 Submit All Orders</button>
   </form>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/../app/init.php';
 $auth->requireAdmin();
 $pageTitle = 'Manage Users';
 $db = Database::getInstance();
@@ -33,7 +33,7 @@ $where  = $search ? "WHERE username LIKE ? OR email LIKE ?" : "";
 $params = $search ? ["%$search%", "%$search%"] : [];
 $users  = $db->fetchAll("SELECT * FROM users $where ORDER BY created_at DESC LIMIT 50", $params);
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="card" style="padding:0;overflow:hidden;">
@@ -94,4 +94,4 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

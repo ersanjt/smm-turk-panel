@@ -1,5 +1,11 @@
 <?php
-require_once __DIR__ . '/../config.php';
+/**
+ * SMM Turk - Application Bootstrap
+ * Loads config and core classes
+ */
+define('ROOT_PATH', dirname(__DIR__));
+
+require_once ROOT_PATH . '/config.php';
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/SmmApi.php';

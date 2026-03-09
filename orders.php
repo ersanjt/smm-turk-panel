@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'My Orders';
 $om  = new OrderManager();
@@ -16,7 +16,7 @@ $pages  = ceil($total / $perPage);
 
 $statuses = ['', 'Pending', 'Processing', 'In progress', 'Completed', 'Partial', 'Cancelled'];
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <div class="card" style="padding:0;overflow:hidden;">
@@ -87,4 +87,4 @@ require_once __DIR__ . '/includes/header.php';
   <?php endif; ?>
 </div>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

@@ -1,9 +1,10 @@
 <?php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
     redirect('/index.php');
 }
+$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 
 $mode  = $_GET['mode'] ?? 'login';
 $error = '';
@@ -38,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMM Turk — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
+<title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -66,6 +67,7 @@ body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0a0a1a 
 <body>
 
 <div class="auth-box">
+  <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b6b8a;">← Back to Home</a>
   <div class="logo">SMM<span>Turk</span></div>
   <div class="tagline">Social Media Marketing Panel</div>
 

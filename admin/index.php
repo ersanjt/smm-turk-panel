@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/../app/init.php';
 $auth->requireAdmin();
 $pageTitle = 'Admin Panel';
 $db  = Database::getInstance();
@@ -12,6 +12,7 @@ $totalRevenue = $db->fetch("SELECT SUM(charge) c FROM orders WHERE status='Compl
 $pendingOrders= $db->fetch("SELECT COUNT(*) c FROM orders WHERE status='Pending'")['c'];
 $openTickets  = $db->fetch("SELECT COUNT(*) c FROM tickets WHERE status='open'")['c'];
 $totalServices= $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
+$pendingDeposits = $db->fetch("SELECT COUNT(*) c FROM transactions WHERE type='deposit' AND status='pending'")['c'];
 
 // Provider balance
 $providerBalance = null;
@@ -28,7 +29,7 @@ $recentOrders = $db->fetchAll(
 // Recent users
 $recentUsers = $db->fetchAll("SELECT * FROM users ORDER BY created_at DESC LIMIT 5");
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <style>
@@ -85,6 +86,13 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="ac-value"><?= $providerBalance !== null ? '$' . number_format($providerBalance, 2) : 'N/A' ?></div>
     </div>
   </div>
+  <div class="admin-card">
+    <div class="ac-icon" style="background:#e8e0ff;">₿</div>
+    <div class="ac-info">
+      <div class="ac-label">Pending Deposits</div>
+      <div class="ac-value"><?= number_format($pendingDeposits) ?></div>
+    </div>
+  </div>
 </div>
 
 <!-- Quick Actions -->
@@ -95,6 +103,7 @@ require_once __DIR__ . '/../includes/header.php';
   <a href="admin-sync.php" class="qa-btn" style="background:#0a0a1a;color:#fff;">🔄 Sync Services</a>
   <a href="admin-settings.php" class="qa-btn" style="background:#6b6b8a;color:#fff;">⚙️ Settings</a>
   <a href="admin-tickets.php" class="qa-btn" style="background:#ff3d00;color:#fff;">🎫 Tickets</a>
+  <a href="admin-deposits.php" class="qa-btn" style="background:#9c27b0;color:#fff;">₿ Pending Deposits <?= $pendingDeposits > 0 ? '(' . $pendingDeposits . ')' : '' ?></a>
 </div>
 
 <div class="grid2">
@@ -136,4 +145,4 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

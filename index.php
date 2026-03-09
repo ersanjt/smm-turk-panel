@@ -1,6 +1,9 @@
 <?php
-require_once __DIR__ . '/includes/init.php';
-$auth->requireLogin();
+require_once __DIR__ . '/app/init.php';
+if (!$auth->isLoggedIn()) {
+    header('Location: /home.php');
+    exit;
+}
 
 $pageTitle = 'New Order';
 $db = Database::getInstance();
@@ -39,7 +42,7 @@ $services = $db->fetchAll(
     [$selectedCat]
 );
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
@@ -174,4 +177,4 @@ function calcPrice() {
 }
 </script>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

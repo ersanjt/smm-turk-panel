@@ -11,7 +11,6 @@ class Auth {
     }
 
     public function register(string $username, string $email, string $password, string $referral_code = ''): array {
-        // Validate
         if (strlen($username) < 3 || strlen($username) > 30) {
             return ['success' => false, 'error' => 'Username must be 3-30 characters'];
         }
@@ -22,13 +21,11 @@ class Auth {
             return ['success' => false, 'error' => 'Password must be at least 6 characters'];
         }
 
-        // Check existing
         $existing = $this->db->fetch("SELECT id FROM users WHERE username = ? OR email = ?", [$username, $email]);
         if ($existing) {
             return ['success' => false, 'error' => 'Username or email already exists'];
         }
 
-        // Find referrer
         $referred_by = null;
         if ($referral_code) {
             $referrer = $this->db->fetch("SELECT id FROM users WHERE referral_code = ?", [$referral_code]);

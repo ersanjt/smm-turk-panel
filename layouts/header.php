@@ -4,13 +4,14 @@ $flash   = getFlash();
 $balance = $user ? number_format((float)$user['balance'], 3) : '0.000';
 $spent   = $user ? number_format((float)$user['spent'], 3) : '0.000';
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= h($pageTitle ?? 'Dashboard') ?> — SMM Turk</title>
+<title><?= h($pageTitle ?? 'Dashboard') ?> — <?= h($siteName) ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#1a1aff;--primary-dark:#0000cc;--primary-light:#4d4dff;--accent:#ff3d00;--bg:#f0f2ff;--sidebar-bg:#0a0a1a;--sidebar-text:#a0a0c0;--white:#fff;--border:#e0e4ff;--text:#0a0a1a;--text-muted:#6b6b8a;--green:#00c853;--orange:#ff9100;--red:#ff1744;--shadow:0 4px 24px rgba(26,26,255,.08)}
@@ -70,8 +71,7 @@ a{text-decoration:none;color:inherit}
 .badge-gray{background:#f0f0f0;color:#666}
 .status-Completed{background:#e8ffe8;color:var(--green)}
 .status-Pending{background:#fff3e0;color:var(--orange)}
-.status-Processing{background:#e8e8ff;color:var(--primary)}
-.status-In-progress{background:#e8e8ff;color:var(--primary)}
+.status-Processing,.status-In-progress{background:#e8e8ff;color:var(--primary)}
 .status-Partial{background:#fff3e0;color:var(--orange)}
 .status-Cancelled{background:#ffe8e8;color:var(--red)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}

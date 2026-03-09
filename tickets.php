@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'Support Tickets';
 $db  = Database::getInstance();
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 
 $tickets = $db->fetchAll("SELECT * FROM tickets WHERE user_id=? ORDER BY updated_at DESC", [$uid]);
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <div class="grid2" style="align-items:start;">
@@ -66,4 +66,4 @@ require_once __DIR__ . '/includes/header.php';
   </div>
 </div>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>
