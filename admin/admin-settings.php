@@ -6,7 +6,8 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
-        'smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol'];
+        'smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
+        'child_panel_price','child_panel_ns1','child_panel_ns2'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
@@ -127,6 +128,25 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="form-group">
         <label class="form-label">Solana (SOL)</label>
         <input type="text" name="wallet_sol" class="form-control" value="<?= s($settings,'wallet_sol') ?>" placeholder="...">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">👥 Child Panel</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Monthly price for child panel and nameservers shown to users after order.</p>
+      <div class="grid3">
+        <div class="form-group">
+          <label class="form-label">Price per month ($)</label>
+          <input type="number" name="child_panel_price" class="form-control" value="<?= s($settings,'child_panel_price') ?: '5' ?>" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nameserver 1</label>
+          <input type="text" name="child_panel_ns1" class="form-control" value="<?= s($settings,'child_panel_ns1') ?>" placeholder="ns1.yourdomain.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nameserver 2</label>
+          <input type="text" name="child_panel_ns2" class="form-control" value="<?= s($settings,'child_panel_ns2') ?>" placeholder="ns2.yourdomain.com">
+        </div>
       </div>
     </div>
 

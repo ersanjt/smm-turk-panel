@@ -47,6 +47,19 @@ class OrderManager {
             [$userId, -$charge, $user['balance'], $balanceAfter, "Order #{$orderId}: " . substr($service['name'], 0, 60), (string)$orderId]
         );
 
+        // Referral commission
+        $buyer = $this->db->fetch("SELECT referred_by FROM users WHERE id = ?", [$userId]);
+        if (!empty($buyer['referred_by'])) {
+            $pct = (float)($this->db->getSetting('referral_commission') ?: 2);
+            if ($pct > 0) {
+                $commission = round($charge * ($pct / 100), 4);
+                $this->db->execute("UPDATE users SET referral_earnings = referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
+                try {
+                    $this->db->execute("UPDATE users SET total_referral_earnings = total_referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
+                } catch (Throwable $e) { /* column may not exist */ }
+            }
+        }
+
         return ['success' => true, 'order_id' => $orderId, 'charge' => $charge];
     }
 

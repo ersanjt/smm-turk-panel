@@ -18,8 +18,9 @@ define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verificatio
 define('PROVIDER_API_URL', 'https://smmfollows.com/api/v2');
 define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 
-// Security - Use a fixed random 32-char hex string in production
-define('SECRET_KEY', bin2hex(random_bytes(16)));
+// Security - In production use a FIXED 32-char hex (e.g. from: bin2hex(random_bytes(16)))
+// Do not use random_bytes() at runtime in production (breaks session continuity)
+define('SECRET_KEY', getenv('SMM_SECRET_KEY') ?: bin2hex(random_bytes(16)));
 define('SESSION_LIFETIME', 86400);  // 24 hours
 
 define('MARKUP_PERCENT', 10);
@@ -28,6 +29,13 @@ define('REFERRAL_COMMISSION', 2);
 
 date_default_timezone_set('UTC');
 
-// Production: set both to 0
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Development: show errors. Production: set SMM_DEBUG=0 or define('SMM_DEBUG', false) in config.php
+$isProduction = (getenv('SMM_DEBUG') === '0' || (defined('SMM_DEBUG') && SMM_DEBUG === false));
+if (!$isProduction) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+}

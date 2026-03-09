@@ -25,3 +25,7 @@ cache/
 # Backup
 *.bak
 *.backup
+
+# User uploads (keep uploads/.htaccess via negation)
+uploads/*
+!uploads/.htaccess

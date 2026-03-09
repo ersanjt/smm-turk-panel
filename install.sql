@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `ticket_replies` (
   `ticket_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `message` text NOT NULL,
-  `is_admin` tinyint(1) DEFAULT 0,
+  `is_staff` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -22,7 +22,7 @@ $method = '';
 $activeTab = isset($_GET['tab']) && $_GET['tab'] === 'history' ? 'history' : 'add';
 
 // Submit TxHash for pending crypto deposit
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_verify()) {
     $txId = trim($_POST['tx_hash'] ?? '');
     $depositId = (int) ($_POST['deposit_id'] ?? 0);
     if ($depositId > 0) {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx'])) {
 }
 
 // Main form: method + amount + consent
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['method'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['method']) && csrf_verify()) {
     $method = $_POST['method'] ?? '';
     $amount = isset($_POST['amount']) ? (float) $_POST['amount'] : 0;
     $consent = !empty($_POST['consent']);
@@ -166,6 +166,7 @@ require_once __DIR__ . '/layouts/header.php';
   <div class="card">
     <div class="card-title">Add Funds</div>
     <form method="POST" id="addFundsForm">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <div class="form-group">
         <label class="form-label">Method</label>
         <select name="method" id="methodSelect" class="form-control" required>
@@ -249,6 +250,7 @@ require_once __DIR__ . '/layouts/header.php';
     <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">After you sent the payment, paste your transaction ID (TxHash) below:</p>
     <form method="POST">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="deposit_id" value="<?= $depositId ?>">
       <input type="hidden" name="submit_tx" value="1">
       <div class="form-group">

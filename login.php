@@ -13,7 +13,10 @@ $db = Database::getInstance();
 $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($mode === 'login') {
+    $csrfOk = isset($_POST['csrf_token']) && hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '');
+    if (!$csrfOk) {
+        $error = 'Invalid request. Please try again.';
+    } elseif ($mode === 'login') {
         $result = $auth->login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
         if ($result['success']) {
             redirect('/index.php');
@@ -38,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
+// Ensure CSRF token exists for forms
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 <!DOCTYPE html>
@@ -111,6 +118,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 
   <?php if ($mode === 'login'): ?>
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
     <div class="form-group">
       <label class="form-label">Email or Username</label>
       <div class="input-wrap">
@@ -129,6 +137,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   </form>
   <?php else: ?>
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
     <div class="form-group">
       <label class="form-label">Username</label>
       <input type="text" name="username" class="form-control" placeholder="johndoe" required minlength="3">
