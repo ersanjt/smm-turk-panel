@@ -15,7 +15,7 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;--accent:#22d3ee;--bg:#f8fafc;--sidebar-bg:#0f0f14;--sidebar-text:#94a3b8;--white:#fff;--border:#e2e8f0;--text:#0f172a;--text-muted:#64748b;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--shadow:0 4px 24px rgba(99,102,241,.06);--glow:0 0 40px rgba(99,102,241,.12)}
+:root{--primary:#E30A17;--primary-dark:#B90812;--primary-light:#FF4757;--accent:#e63950;--bg:#fafafa;--sidebar-bg:#1a0a0e;--sidebar-text:#c4a5ab;--white:#fff;--border:#f0e6e8;--text:#1a0a0e;--text-muted:#6b4a50;--green:#10b981;--orange:#f59e0b;--red:#dc2626;--shadow:0 4px 24px rgba(227,10,23,.06);--glow:0 0 40px rgba(227,10,23,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 a{text-decoration:none;color:inherit}
@@ -29,7 +29,7 @@ a{text-decoration:none;color:inherit}
 .user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px}
 .user-name{color:#fff;font-size:13px;font-weight:600}
 .user-bal{color:var(--primary-light);font-size:12px;margin-top:3px;font-weight:600}
-.user-status{display:inline-block;background:rgba(26,26,255,.3);color:var(--primary-light);font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.user-status{display:inline-block;background:rgba(227,10,23,.25);color:var(--primary-light);font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 .sidebar-nav{padding:14px 12px;flex:1}
 .nav-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 8px;margin:14px 0 6px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--sidebar-text);font-size:13.5px;font-weight:500;transition:all .2s;margin-bottom:2px}
@@ -53,28 +53,28 @@ a{text-decoration:none;color:inherit}
 .form-control:focus{border-color:var(--primary);background:#fff}
 .btn{padding:10px 22px;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
 .btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(99,102,241,.35)}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(227,10,23,.35)}
 .btn-danger{background:var(--red);color:#fff}
 .btn-success{background:var(--green);color:#fff}
 .btn-block{width:100%}
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:18px;font-weight:500}
 .alert-success{background:#e8ffe8;color:#007700;border:1px solid #b3ffb3}
 .alert-error{background:#ffe8e8;color:#cc0000;border:1px solid #ffb3b3}
-.alert-info{background:#e8e8ff;color:var(--primary);border:1px solid #b3b3ff}
+.alert-info{background:#fff0f1;color:var(--primary);border:1px solid #ffc4c8}
 .alert-warning{background:#fff3e0;color:#cc6600;border:1px solid #ffcc80}
 .table{width:100%;border-collapse:collapse;font-size:13px}
 .table th{background:var(--bg);padding:11px 14px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);border-bottom:1.5px solid var(--border)}
 .table td{padding:13px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-.table tr:hover td{background:#f8f9ff}
+.table tr:hover td{background:#fff8f9}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge-blue{background:#e8e8ff;color:var(--primary)}
+.badge-blue{background:#ffe8e8;color:var(--primary)}
 .badge-green{background:#e8ffe8;color:var(--green)}
 .badge-orange{background:#fff3e0;color:var(--orange)}
 .badge-red{background:#ffe8e8;color:var(--red)}
 .badge-gray{background:#f0f0f0;color:#666}
 .status-Completed{background:#e8ffe8;color:var(--green)}
 .status-Pending{background:#fff3e0;color:var(--orange)}
-.status-Processing,.status-In-progress{background:#e8e8ff;color:var(--primary)}
+.status-Processing,.status-In-progress{background:#ffe8e8;color:var(--primary)}
 .status-Partial{background:#fff3e0;color:var(--orange)}
 .status-Cancelled{background:#ffe8e8;color:var(--red)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -88,7 +88,7 @@ a{text-decoration:none;color:inherit}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .content>*{animation:fadeIn .35s ease}
 .card{transition:box-shadow .25s ease, border-color .25s ease}
-.card:hover{box-shadow:0 12px 40px rgba(99,102,241,.08)}
+.card:hover{box-shadow:0 12px 40px rgba(227,10,23,.08)}
 .form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s, box-shadow .2s}
 .topbar{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}

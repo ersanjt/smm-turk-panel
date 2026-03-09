@@ -50,33 +50,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0f0f14 0%,#1e1b4b 50%,#0f0f14 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.05)}
 .auth-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
 .auth-logo img{width:44px;height:44px;border-radius:12px}
-.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#0f172a}
-.auth-logo .logo span{color:#6366f1}
-.tagline{text-align:center;color:#64748b;font-size:13px;margin-bottom:28px}
-.tabs{display:flex;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:24px}
-.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#64748b;text-decoration:none;transition:all .2s}
-.tab.active{background:#6366f1;color:#fff}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a0a0e}
+.auth-logo .logo span{color:#E30A17}
+.tagline{text-align:center;color:#6b4a50;font-size:13px;margin-bottom:28px}
+.tabs{display:flex;background:#fef0f1;border-radius:12px;padding:4px;margin-bottom:24px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#6b4a50;text-decoration:none;transition:all .2s}
+.tab.active{background:#E30A17;color:#fff}
 .form-group{margin-bottom:14px}
-.form-label{display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
-.form-control{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#f8fafc}
-.form-control:focus{border-color:#6366f1;background:#fff}
-.btn{width:100%;padding:13px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
-.btn:hover{background:#4f46e5;transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,.35)}
+.form-label{display:block;font-size:11px;font-weight:700;color:#6b4a50;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.form-control{width:100%;padding:12px 14px;border:1.5px solid #f0e6e8;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#fef8f9}
+.form-control:focus{border-color:#E30A17;background:#fff}
+.btn{width:100%;padding:13px;background:#E30A17;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
+.btn:hover{background:#B90812;transform:translateY(-1px);box-shadow:0 8px 24px rgba(227,10,23,.35)}
 .alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500}
 .alert-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
-.footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#64748b}
-.footer-link a{color:#6366f1;font-weight:600}
+.footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b4a50}
+.footer-link a{color:#E30A17;font-weight:600}
 </style>
 </head>
 <body>
 
 <div class="auth-box">
-  <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#64748b;">← Back to Home</a>
+  <a href="/home.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Home</a>
   <div class="auth-logo">
     <img src="/assets/img/logo-icon.svg" alt="" width="44" height="44">
     <span class="logo">SMM<span>Turk</span></span>

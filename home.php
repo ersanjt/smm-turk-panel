@@ -24,15 +24,15 @@ $currentPath = '/home.php';
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --primary-light: #818cf8;
-            --primary-soft: rgba(99, 102, 241, 0.08);
-            --accent: #22d3ee;
-            --dark: #0f172a;
-            --dark2: #1e293b;
-            --muted: #64748b;
-            --light: #f8fafc;
+            --primary: #E30A17;
+            --primary-dark: #B90812;
+            --primary-light: #FF4757;
+            --primary-soft: rgba(227, 10, 23, 0.08);
+            --accent: #e63950;
+            --dark: #1a0a0e;
+            --dark2: #2d1519;
+            --muted: #6b4a50;
+            --light: #fef8f9;
             --white: #ffffff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,7 +42,7 @@ $currentPath = '/home.php';
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: rgba(255,255,255,.96); backdrop-filter: blur(14px);
-            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            border-bottom: 1px solid rgba(227, 10, 23, 0.12);
             padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
         }
         .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); text-decoration: none; }
@@ -52,24 +52,24 @@ $currentPath = '/home.php';
         .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); transition: color .2s; }
         .nav-links a:hover { color: var(--primary); }
         .nav-lang { position: relative; }
-        .nav-lang-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid rgba(99,102,241,.2); background: var(--white); font-size: 13px; font-weight: 600; color: var(--dark); cursor: pointer; }
+        .nav-lang-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid rgba(227,10,23,.2); background: var(--white); font-size: 13px; font-weight: 600; color: var(--dark); cursor: pointer; }
         .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary); }
         .nav-lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.06); min-width: 140px; display: none; overflow: hidden; }
         .nav-lang-dropdown.open { display: block; }
         .nav-lang-dropdown a { display: block; padding: 12px 16px; font-size: 14px; color: var(--dark); }
         .nav-lang-dropdown a:hover { background: var(--primary-soft); color: var(--primary); }
         .nav-btn { background: var(--primary); color: var(--white); padding: 10px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: all .2s; }
-        .nav-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(196, 30, 58, .35); }
+        .nav-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
 
         .hero {
             min-height: 92vh; display: flex; align-items: center; padding: 100px 24px 60px;
-            background: linear-gradient(135deg, var(--light) 0%, #f1f5f9 50%, var(--light) 100%);
+            background: linear-gradient(135deg, var(--light) 0%, #fff5f6 50%, var(--light) 100%);
             position: relative;
         }
         .hero::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(ellipse 70% 40% at 20% 50%, var(--primary-soft), transparent 50%),
-                        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(34,211,238,.06), transparent 50%);
+                        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(230,57,80,.06), transparent 50%);
             pointer-events: none;
         }
         .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 48px; align-items: center; position: relative; z-index: 1; }
@@ -78,18 +78,18 @@ $currentPath = '/home.php';
         .hero h1 span { color: var(--primary); }
         .hero-desc { font-size: 16px; color: var(--muted); margin-bottom: 28px; line-height: 1.7; max-width: 520px; }
         .hero-form-box {
-            background: var(--white); border-radius: 20px; padding: 32px; box-shadow: 0 20px 60px rgba(99, 102, 241, .08); border: 1px solid rgba(99, 102, 241, .08);
+            background: var(--white); border-radius: 20px; padding: 32px; box-shadow: 0 20px 60px rgba(227, 10, 23, .08); border: 1px solid rgba(227, 10, 23, .08);
         }
         .hero-form-box .form-group { margin-bottom: 16px; }
         .hero-form-box .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-        .hero-form-box .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; outline: none; transition: border-color .2s; background: var(--light); }
+        .hero-form-box .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid #f0e6e8; border-radius: 12px; font-size: 14px; outline: none; transition: border-color .2s; background: var(--light); }
         .hero-form-box .form-control:focus { border-color: var(--primary); background: var(--white); }
         .hero-form-box .btn-login { width: 100%; padding: 14px; background: var(--primary); color: var(--white); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 8px; }
-        .hero-form-box .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99, 102, 241, .35); }
+        .hero-form-box .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
         .hero-form-box .remember { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
         .hero-form-box .forgot { font-size: 13px; color: var(--primary); font-weight: 600; }
         .hero-form-box .divider { text-align: center; margin: 20px 0; font-size: 12px; color: var(--muted); }
-        .hero-form-box .btn-google { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: var(--white); font-size: 14px; font-weight: 600; color: var(--dark); cursor: pointer; transition: all .2s; }
+        .hero-form-box .btn-google { width: 100%; padding: 12px; border: 1.5px solid #f0e6e8; border-radius: 12px; background: var(--white); font-size: 14px; font-weight: 600; color: var(--dark); cursor: pointer; transition: all .2s; }
         .hero-form-box .btn-google:hover { border-color: var(--primary); color: var(--primary); }
         .hero-form-box .register-link { text-align: center; margin-top: 18px; font-size: 14px; color: var(--muted); }
         .hero-form-box .register-link a { color: var(--primary); font-weight: 700; }
@@ -100,18 +100,18 @@ $currentPath = '/home.php';
         .section-desc { color: var(--muted); font-size: 16px; margin-bottom: 40px; max-width: 640px; line-height: 1.7; }
         .benefit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
         .benefit-card {
-            background: var(--white); border-radius: 16px; padding: 28px; border: 1px solid rgba(99, 102, 241, .08);
+            background: var(--white); border-radius: 16px; padding: 28px; border: 1px solid rgba(227, 10, 23, .08);
             transition: all .3s; display: flex; gap: 20px; align-items: flex-start;
         }
-        .benefit-card:hover { border-color: var(--primary); box-shadow: 0 16px 40px rgba(99, 102, 241, .1); transform: translateY(-4px); }
+        .benefit-card:hover { border-color: var(--primary); box-shadow: 0 16px 40px rgba(227, 10, 23, .1); transform: translateY(-4px); }
         .benefit-icon { width: 56px; height: 56px; min-width: 56px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--white); }
         .benefit-card h3 { font-size: 17px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
         .benefit-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
         .three-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
         @media (max-width: 900px) { .three-cols { grid-template-columns: 1fr; } }
-        .feature-block { background: var(--white); border-radius: 16px; padding: 28px; text-align: center; border: 1px solid rgba(99, 102, 241, .08); transition: all .3s; }
-        .feature-block:hover { border-color: var(--primary); box-shadow: 0 12px 32px rgba(99, 102, 241, .08); }
+        .feature-block { background: var(--white); border-radius: 16px; padding: 28px; text-align: center; border: 1px solid rgba(227, 10, 23, .08); transition: all .3s; }
+        .feature-block:hover { border-color: var(--primary); box-shadow: 0 12px 32px rgba(227, 10, 23, .08); }
         .feature-block .icon { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 16px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 28px; }
         .feature-block h3 { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
         .feature-block p { font-size: 13px; color: var(--muted); line-height: 1.6; }
@@ -125,14 +125,14 @@ $currentPath = '/home.php';
 
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
         @media (max-width: 700px) { .stats-row { grid-template-columns: 1fr; } }
-        .stat-item { text-align: center; padding: 28px 20px; background: var(--white); border-radius: 16px; border: 1px solid rgba(99, 102, 241, .08); }
+        .stat-item { text-align: center; padding: 28px 20px; background: var(--white); border-radius: 16px; border: 1px solid rgba(227, 10, 23, .08); }
         .stat-item .icon { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 14px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
         .faq-list { max-width: 720px; margin: 0 auto; }
-        .faq-item { background: var(--white); border: 1px solid rgba(99, 102, 241, .08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; transition: all .2s; }
-        .faq-item:hover { border-color: rgba(99, 102, 241, .2); }
+        .faq-item { background: var(--white); border: 1px solid rgba(227, 10, 23, .08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; transition: all .2s; }
+        .faq-item:hover { border-color: rgba(227, 10, 23, .2); }
         .faq-q { padding: 20px 24px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--dark); }
         .faq-q span { color: var(--primary); font-size: 20px; transition: transform .25s; }
         .faq-item.open .faq-q span { transform: rotate(45deg); }
@@ -142,7 +142,7 @@ $currentPath = '/home.php';
         .why-us-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-top: 40px; }
         @media (max-width: 900px) { .why-us-grid { grid-template-columns: 1fr; } }
         .why-us-icons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .why-us-icon { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--primary-soft); border-radius: 14px; border: 1px solid rgba(99, 102, 241, .12); }
+        .why-us-icon { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--primary-soft); border-radius: 14px; border: 1px solid rgba(227, 10, 23, .12); }
         .why-us-icon .ico { width: 48px; height: 48px; border-radius: 12px; background: var(--primary); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
         .why-us-icon span { font-weight: 700; font-size: 14px; color: var(--dark); }
 
