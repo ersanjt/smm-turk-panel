@@ -157,6 +157,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
         <input type="password" name="password" class="form-control" placeholder="••••••••" required>
       </div>
     </div>
+    <div style="margin-bottom:10px;"><a href="/forgot-password.php" style="font-size:13px;color:#E30A17;font-weight:600;">Forgot password?</a></div>
     <button type="submit" class="btn">Login <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
   </form>
   <?php else: ?>

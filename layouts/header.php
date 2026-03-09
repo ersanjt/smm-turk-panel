@@ -185,7 +185,9 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 .stat-card .sc-value{font-size:20px}
 .alert{padding:14px;font-size:13px}
 .order-form-row{flex-direction:column;align-items:stretch}
-.order-form-row form{max-width:100%}
+.order-form-row form{max-width:100%;flex-wrap:wrap}
+.order-form-row form .form-control{min-width:0}
+.order-form-row form .btn{flex:1 1 auto;min-width:120px}
 .order-form-row .form-control,.order-form-row select{min-width:0;width:100%}
 .order-form-row label.checkbox-label{min-height:44px;align-items:center}
 .order-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:4px}

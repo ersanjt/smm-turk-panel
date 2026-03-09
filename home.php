@@ -288,7 +288,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
                     </div>
                 </div>
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
-                <div style="margin-bottom:12px;"><a href="/login.php" class="forgot"><?= h(__('forgot_password')) ?></a></div>
+                <div style="margin-bottom:12px;"><a href="/forgot-password.php" class="forgot"><?= h(__('forgot_password')) ?></a></div>
                 <button type="submit" class="btn-login"><?= h(__('btn_login')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <div class="divider">— <?= h(__('login_with_google')) ?> —</div>
                 <?php $googleAuth = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) !== '' : false; ?>

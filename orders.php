@@ -33,7 +33,7 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
   </div>
 
-  <div style="overflow-x:auto;">
+  <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
