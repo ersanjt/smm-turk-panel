@@ -50,6 +50,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 .msg.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .btn{display:inline-block;padding:12px 24px;background:#E30A17;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;margin-top:10px;transition:all .2s}
 .btn:hover{background:#B90812;box-shadow:0 8px 24px rgba(227,10,23,.35)}
+@media(max-width:480px){.box{margin:12px;padding:24px 20px;border-radius:20px}}
 </style>
 </head>
 <body>

@@ -17,8 +17,10 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <style>
 :root{--primary:#E30A17;--primary-dark:#B90812;--primary-light:#FF4757;--accent:#e63950;--bg:#fafafa;--sidebar-bg:#1a0a0e;--sidebar-text:#c4a5ab;--white:#fff;--border:#f0e6e8;--text:#1a0a0e;--text-muted:#6b4a50;--green:#10b981;--orange:#f59e0b;--red:#dc2626;--shadow:0 4px 24px rgba(227,10,23,.06);--glow:0 0 40px rgba(227,10,23,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
 a{text-decoration:none;color:inherit}
+img{max-width:100%;height:auto}
+.main{min-width:0}
 .sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;display:flex;flex-direction:column}
 .sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
 .sidebar-logo a{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
@@ -92,11 +94,45 @@ a{text-decoration:none;color:inherit}
 .form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s, box-shadow .2s}
 .topbar{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px}
+.table-wrap .table{min-width:500px}
+.menu-toggle{display:none;border:1px solid var(--border)}
+@media(max-width:992px){
+.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}
+.content{padding:16px}
+}
+@media(max-width:768px){
+.sidebar{width:260px;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 24px rgba(0,0,0,.15)}
+body.sidebar-open .sidebar{transform:translateX(0)}
+body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;opacity:0;pointer-events:none;transition:opacity .2s}
+.main{margin-left:0}
+.menu-toggle{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:none;background:var(--bg);border-radius:10px;cursor:pointer;color:var(--text);font-size:20px;margin-right:8px}
+.menu-toggle:hover{background:var(--primary);color:#fff}
+.topbar{padding:10px 16px;flex-wrap:wrap;gap:8px;min-height:54px}
+.topbar .stat-pill{font-size:11px;padding:5px 10px}
+.topbar .stat-pill:nth-child(n+4){display:none}
+.topbar-right{margin-left:0;width:100%;justify-content:flex-end}
+.grid2,.grid3,.grid4{grid-template-columns:1fr}
+.card{padding:16px}
+}
+@media(max-width:480px){
+.content{padding:12px}
+.topbar .stat-pill:nth-child(2){display:none}
+.btn{padding:8px 16px;font-size:13px}
+}
+@media(max-width:768px){
+.order-grid{grid-template-columns:1fr}
+}
+@media(max-width:992px){
+.order-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+<aside class="sidebar" id="sidebar" role="navigation">
   <div class="sidebar-logo">
     <a href="/index.php">
       <img src="/assets/img/logo-icon.svg" alt="" class="logo-icon" width="36" height="36">
@@ -162,6 +198,7 @@ a{text-decoration:none;color:inherit}
 
 <div class="main">
   <div class="topbar">
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
     <div class="stat-pill"><div class="stat-icon si-blue">👤</div> <?= h($user['username'] ?? '') ?></div>
     <div class="stat-pill"><div class="stat-icon si-green">💰</div> $<?= $balance ?></div>
     <div class="stat-pill"><div class="stat-icon si-orange">📊</div> Spent: $<?= $spent ?></div>

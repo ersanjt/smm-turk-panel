@@ -158,6 +158,28 @@ $currentPath = '/home.php';
             .hero-form-box { max-width: 400px; margin: 0 auto; }
             .nav-links .hide-mob { display: none; }
         }
+        @media (max-width: 768px) {
+            .nav { padding: 12px 16px; flex-wrap: wrap; gap: 12px; }
+            .nav-logo { font-size: 18px; }
+            .nav-logo img { width: 32px; height: 32px; }
+            .hero { padding: 80px 16px 40px; min-height: auto; }
+            .hero-inner { gap: 32px; }
+            .hero h1 { font-size: clamp(26px, 5vw, 36px); }
+            .hero-desc { font-size: 15px; }
+            .hero-form-box { padding: 24px 20px; }
+            .section { padding: 48px 16px; }
+            .benefit-grid { grid-template-columns: 1fr; gap: 16px; }
+            .benefit-card { padding: 20px; flex-direction: column; align-items: center; text-align: center; }
+            .cta-block { padding: 32px 20px; margin: 32px 0; border-radius: 20px; }
+            .footer { padding: 32px 16px; }
+            .footer-links { gap: 16px; }
+        }
+        @media (max-width: 480px) {
+            .nav-links { gap: 12px; }
+            .nav-btn { padding: 8px 16px; font-size: 13px; }
+            .hero-form-box { padding: 20px 16px; }
+            .section-title { font-size: clamp(22px, 4vw, 28px); }
+        }
     </style>
 </head>
 <body>

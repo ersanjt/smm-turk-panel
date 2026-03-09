@@ -71,6 +71,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 .alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
 .footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b4a50}
 .footer-link a{color:#E30A17;font-weight:600}
+@media(max-width:480px){.auth-box{margin:12px;padding:24px 20px;border-radius:20px}}
 </style>
 </head>
 <body>
