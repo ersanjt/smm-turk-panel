@@ -59,6 +59,9 @@ Default admin credentials:
 - **Password:** password  
 ⚠️ Change the password immediately after login!
 
+### 5b. Optional: Forgot password
+To enable "Forgot password" and email reset links, run the migration `migrations/003_password_reset.sql` once (adds `password_reset_token` and `password_reset_expires` to `users`). Ensure mail (e.g. Mail From in Admin → Settings) is configured.
+
 ### 6. Sync Services
 1. Login as admin
 2. Go to **Admin → Sync Services**

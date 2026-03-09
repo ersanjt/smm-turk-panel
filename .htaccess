@@ -4,6 +4,11 @@
 </IfModule>
 # php -- END cPanel-generated handler, do not edit
 
+# Disable directory listing
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+
 # SMM Turk - API rewrite
 <IfModule mod_rewrite.c>
 RewriteEngine On

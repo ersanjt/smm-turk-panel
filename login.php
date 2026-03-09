@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/app/init.php';
+require_once __DIR__ . '/app/RateLimit.php';
 
 if ($auth->isLoggedIn()) {
     redirect('/index.php');
@@ -11,6 +12,7 @@ $error = '';
 $success = '';
 $db = Database::getInstance();
 $googleLoginEnabled = defined('GOOGLE_CLIENT_ID') && trim(GOOGLE_CLIENT_ID) !== '';
+$rateLimit = new RateLimit(5, 900);
 
 // Flash from redirect (e.g. Google callback error)
 $flash = $_SESSION['flash'] ?? null;
@@ -26,11 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$csrfOk) {
         $error = 'Invalid request. Please try again.';
     } elseif ($mode === 'login') {
-        $result = $auth->login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
-        if ($result['success']) {
-            redirect('/index.php');
+        if ($rateLimit->isLimited()) {
+            $error = 'Too many login attempts. Please try again in 15 minutes.';
         } else {
-            $error = $result['error'];
+            $result = $auth->login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
+            if ($result['success']) {
+                $rateLimit->clear();
+                redirect('/index.php');
+            } else {
+                $rateLimit->recordAttempt();
+                $error = $result['error'];
+            }
         }
     } else {
         if (!$registrationEnabled) {

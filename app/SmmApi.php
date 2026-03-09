@@ -43,9 +43,9 @@ class SmmApi {
         ]), true);
     }
 
-    public function refillStatus(int $refillId): ?object {
+    public function refillStatus(int|string $refillId): ?object {
         return json_decode($this->connect([
-            'key' => $this->api_key, 'action' => 'refill_status', 'refill' => $refillId,
+            'key' => $this->api_key, 'action' => 'refill_status', 'refill' => (string)$refillId,
         ]));
     }
 
