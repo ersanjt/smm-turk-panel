@@ -137,4 +137,66 @@ class Auth {
         $this->db->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
         return ['success' => true];
     }
+
+    /**
+     * Login or create user from Google OAuth (email, name, google_id from Google profile).
+     * Returns ['success' => bool, 'error' => string|null].
+     */
+    public function loginOrCreateFromGoogle(string $googleId, string $email, string $name): array {
+        $email = trim($email);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Invalid email from Google'];
+        }
+        $googleId = trim($googleId);
+        if ($googleId === '') {
+            return ['success' => false, 'error' => 'Missing Google ID'];
+        }
+
+        // Existing user by google_id
+        $user = $this->db->fetch("SELECT * FROM users WHERE google_id = ? AND status != 'banned'", [$googleId]);
+        if ($user) {
+            $this->setSession($user);
+            $this->db->execute("UPDATE users SET last_login = NOW(), email = ? WHERE id = ?", [$email, $user['id']]);
+            return ['success' => true];
+        }
+
+        // Existing user by email (link Google)
+        $user = $this->db->fetch("SELECT * FROM users WHERE email = ? AND status != 'banned'", [$email]);
+        if ($user) {
+            try {
+                $this->db->execute("UPDATE users SET google_id = ?, last_login = NOW() WHERE id = ?", [$googleId, $user['id']]);
+            } catch (Throwable $e) {
+                // column may not exist yet
+            }
+            $this->setSession($user);
+            return ['success' => true];
+        }
+
+        // New user: create (no email verification for Google sign-in)
+        $username = preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($name));
+        if (strlen($username) < 3) $username = 'user' . substr(uniqid(), -6);
+        $existing = $this->db->fetch("SELECT id FROM users WHERE username = ?", [$username]);
+        if ($existing) $username = $username . substr(uniqid(), -4);
+        $api_key = bin2hex(random_bytes(20));
+        $ref_code = strtolower(substr(md5(uniqid()), 0, 8));
+        $passwordHash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+
+        $id = $this->db->insert(
+            "INSERT INTO users (username, email, password, role, status, api_key, referral_code, google_id) VALUES (?, ?, ?, 'user', 'active', ?, ?, ?)",
+            [$username, $email, $passwordHash, $api_key, $ref_code, $googleId]
+        );
+        $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
+        if ($user) {
+            $this->setSession($user);
+            return ['success' => true];
+        }
+        return ['success' => false, 'error' => 'Could not create account'];
+    }
+
+    private function setSession(array $user): void {
+        $_SESSION['user_id']   = $user['id'];
+        $_SESSION['username']  = $user['username'];
+        $_SESSION['role']      = $user['role'];
+        $_SESSION['logged_in'] = true;
+    }
 }

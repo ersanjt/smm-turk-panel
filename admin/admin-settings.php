@@ -80,7 +80,7 @@ require_once __DIR__ . '/../layouts/header.php';
         <input type="text" name="api_key" class="form-control" value="<?= s($settings,'api_key') ?>" placeholder="Your API key from smmfollows.com">
       </div>
       <div style="font-size:12px;color:var(--text-muted);">
-        Get your API key from <a href="https://smmfollows.com" target="_blank" style="color:var(--primary);">smmfollows.com</a> → Account → API
+        Get your API key from <a href="https://smmfollows.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">smmfollows.com</a> → Account → API
       </div>
     </div>
 

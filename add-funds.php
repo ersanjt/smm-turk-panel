@@ -7,18 +7,13 @@ $user = $auth->getCurrentUser();
 $minDeposit = (float) ($db->getSetting('min_deposit') ?: 10);
 $minDeposit = $minDeposit >= 1 ? $minDeposit : 10;
 
-$walletKeys = ['wallet_btc' => 'Bitcoin (BTC)', 'wallet_eth' => 'Ethereum (ETH)', 'wallet_usdt_trc20' => 'USDT (TRC20)', 'wallet_usdt_erc20' => 'USDT (ERC20)', 'wallet_bnb' => 'BNB (BEP20)', 'wallet_sol' => 'Solana (SOL)'];
-$wallets = [];
-foreach ($walletKeys as $key => $label) {
-    $addr = $db->getSetting($key);
-    if ($addr !== null && trim($addr) !== '') {
-        $wallets[$key] = ['label' => $label, 'address' => trim($addr)];
-    }
-}
+// Single crypto wallet only (from config or fallback)
+$cryptoWallet = defined('CRYPTO_WALLET_ADDRESS') && trim(CRYPTO_WALLET_ADDRESS) !== ''
+    ? trim(CRYPTO_WALLET_ADDRESS)
+    : '0xE74159340aF565AF3E4e1e963d5E42427F653f79';
 
 $step = 'form';
 $amount = null;
-$method = '';
 $activeTab = isset($_GET['tab']) && $_GET['tab'] === 'history' ? 'history' : 'add';
 
 // Submit TxHash for pending crypto deposit
@@ -35,9 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_
     redirect('/add-funds.php');
 }
 
-// Main form: method + amount + consent
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['method']) && csrf_verify()) {
-    $method = $_POST['method'] ?? '';
+// Main form: amount + consent (crypto only)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_funds']) && csrf_verify()) {
     $amount = isset($_POST['amount']) ? (float) $_POST['amount'] : 0;
     $consent = !empty($_POST['consent']);
 
@@ -51,35 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['method']) && csrf_ver
     }
 
     $balanceBefore = (float) $user['balance'];
-
-    if ($method === 'crypto') {
-        if (empty($wallets)) {
-            flash('error', 'Crypto deposits are not configured. Please contact support.');
-            redirect('/add-funds.php');
-        }
-        $db->insert(
-            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference, status) VALUES (?, 'deposit', ?, ?, ?, ?, '', 'pending')",
-            [$user['id'], $amount, $balanceBefore, $balanceBefore, "Deposit \${$amount} (crypto)"]
-        );
-        $step = 'crypto_pay';
-    } elseif ($method === 'card') {
-        $db->insert(
-            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference, status) VALUES (?, 'deposit', ?, ?, ?, ?, '', 'pending')",
-            [$user['id'], $amount, $balanceBefore, $balanceBefore, 'Credit/Debit Card - Visa/Master/AmEx (submit ticket)']
-        );
-        $step = 'other';
-    } elseif ($method === 'other') {
-        $db->insert(
-            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference, status) VALUES (?, 'deposit', ?, ?, ?, ?, '', 'pending')",
-            [$user['id'], $amount, $balanceBefore, $balanceBefore, 'Other payment (submit ticket)']
-        );
-        $step = 'other';
-    } else {
-        redirect('/add-funds.php');
-    }
+    $db->insert(
+        "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference, status) VALUES (?, 'deposit', ?, ?, ?, ?, '', 'pending')",
+        [$user['id'], $amount, $balanceBefore, $balanceBefore, "Deposit \${$amount} (crypto)"]
+    );
+    $step = 'crypto_pay';
 }
 
-// Fund history for this user (all deposits)
+// Fund history
 $fundHistory = [];
 if ($activeTab === 'history') {
     $fundHistory = $db->fetchAll(
@@ -89,31 +62,28 @@ if ($activeTab === 'history') {
 }
 
 $pageTitle = 'Add Funds';
+$pageDescription = 'Deposit funds via cryptocurrency (ETH, USDT ERC20) to your SMM panel balance.';
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-.add-funds-banner { background: #e8f4fd; color: #0c5460; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; border: 1px solid #b8daff; }
+.add-funds-banner { background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%); color: #0c5460; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; border: 1px solid #b8daff; }
 .add-funds-banner a { color: var(--primary); font-weight: 600; }
 .add-funds-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
 .add-funds-tabs a { padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .2s, border-color .2s; }
 .add-funds-tabs a:hover { color: var(--text); }
 .add-funds-tabs a.active { color: var(--primary); border-bottom-color: var(--primary); }
-.method-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
-@media (max-width: 768px) { .method-cards { grid-template-columns: 1fr; } }
-.method-card { background: #fff; border: 2px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; transition: all .2s; }
-.method-card:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(227,10,23,.08); }
-.method-card.active { border-color: var(--primary); background: #fff8f9; }
-.method-card .icon { font-size: 28px; margin-bottom: 10px; }
-.method-card .title { font-weight: 700; font-size: 14px; color: var(--text); }
-.method-card .note { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.4; }
-.method-card.disabled { opacity: 0.7; cursor: not-allowed; pointer-events: none; }
+.wallet-box { background: var(--bg); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--border); transition: box-shadow .25s ease, transform .2s ease; }
+.wallet-box:hover { box-shadow: 0 8px 24px rgba(227,10,23,.06); }
+.wallet-box .wallet-label { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 8px; }
+.wallet-box code { font-size: 12px; word-break: break-all; display: block; margin-bottom: 10px; color: var(--text-muted); }
+.wallet-box .btn { padding: 8px 16px; font-size: 12px; }
 .add-funds-instructions { background: var(--bg); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; border: 1px solid var(--border); }
 .add-funds-instructions a { color: var(--primary); font-weight: 600; }
 </style>
 
 <div class="add-funds-banner">
-  Choose from multiple Card payment options. If one fails, try another payment method. Multiple attempts with the same method may lead to account suspension.
+  Deposits are <strong>crypto only</strong>. Send ETH or USDT (ERC20) to the wallet below. After sending, submit your transaction ID so we can credit your balance.
 </div>
 
 <div class="add-funds-tabs">
@@ -143,43 +113,16 @@ require_once __DIR__ . '/layouts/header.php';
       </table>
     </div>
     <?php endif; ?>
-    <div class="method-cards" style="margin-top:28px;">
-      <a href="/add-funds.php" class="method-card active">
-        <div class="icon">💳</div>
-        <div class="title">Credit Card</div>
-        <div class="note">Credit Card payment is enabled for Everyone.</div>
-        <div class="note"><strong>$<?= (int)$minDeposit ?> Minimum Payment!</strong></div>
-      </a>
-      <a href="/add-funds.php" class="method-card">
-        <div class="icon">₿</div>
-        <div class="title">Crypto Currency</div>
-        <div class="note">BTC, ETH, USDT, BNB, SOL</div>
-      </a>
-      <a href="/add-funds.php" class="method-card">
-        <div class="icon">🔗</div>
-        <div class="title">Other</div>
-        <div class="note">Open a ticket for other methods</div>
-      </a>
-    </div>
+    <p style="margin-top:16px;"><a href="/add-funds.php" class="btn btn-primary">Add Funds (Crypto)</a></p>
   </div>
 <?php elseif ($step === 'form'): ?>
   <div class="card">
-    <div class="card-title">Add Funds</div>
+    <div class="card-title">Add Funds — Crypto only</div>
     <form method="POST" id="addFundsForm">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-      <div class="form-group">
-        <label class="form-label">Method</label>
-        <select name="method" id="methodSelect" class="form-control" required>
-          <option value="card">Credit/Debit Card - Secure Checkout - Visa/Master/AmEx</option>
-          <?php if (!empty($wallets)): ?>
-          <option value="crypto">Crypto Currency - BTC, ETH, USDT, BNB, SOL</option>
-          <?php endif; ?>
-          <option value="other">Other payment methods</option>
-        </select>
-      </div>
+      <input type="hidden" name="add_funds" value="1">
       <div class="add-funds-instructions">
-        If your card is not 3D SECURE, ask your bank to allow the transaction.<br>
-        Payment not arrival automatically? Kindly <a href="/tickets.php">submit a ticket</a> to us.
+        We accept <strong>ETH</strong> and <strong>USDT (ERC20)</strong>. Send the equivalent in USD to the wallet address shown on the next step. Minimum deposit: $<?= (int)$minDeposit ?>.
       </div>
       <div class="form-group">
         <label class="form-label">Amount (USD)</label>
@@ -188,47 +131,8 @@ require_once __DIR__ . '/layouts/header.php';
       <label style="display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:18px;cursor:pointer;">
         <input type="checkbox" name="consent" value="1" required> By submitting this payment, I consent that I'm not fraudulent.
       </label>
-      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;font-size:15px;">Pay</button>
+      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;font-size:15px;">Continue to wallet address</button>
     </form>
-    <div class="method-cards">
-      <div class="method-card active" data-method="card">
-        <div class="icon">💳</div>
-        <div class="title">Credit Card</div>
-        <div class="note">Credit Card payment is enabled for Everyone.</div>
-        <div class="note"><strong>$<?= (int)$minDeposit ?> Minimum Payment!</strong></div>
-      </div>
-      <div class="method-card <?= empty($wallets) ? 'disabled' : '' ?>" data-method="crypto">
-        <div class="icon">₿</div>
-        <div class="title">Crypto Currency</div>
-        <div class="note">BTC, ETH, USDT, BNB, SOL</div>
-      </div>
-      <div class="method-card" data-method="other">
-        <div class="icon">🔗</div>
-        <div class="title">Other</div>
-        <div class="note">Open a ticket for other methods</div>
-      </div>
-    </div>
-  </div>
-  <script>
-  (function(){
-    var sel = document.getElementById('methodSelect');
-    var cards = document.querySelectorAll('.method-card[data-method]');
-    cards.forEach(function(c){
-      c.addEventListener('click', function(){
-        var m = this.getAttribute('data-method');
-        if (m === 'crypto' && this.classList.contains('disabled')) return;
-        cards.forEach(function(x){ x.classList.remove('active'); });
-        this.classList.add('active');
-        sel.value = m;
-      });
-    });
-  })();
-  </script>
-<?php elseif ($step === 'other'): ?>
-  <div class="card">
-    <div class="card-title">Card / Other payment</div>
-    <p style="color:var(--text-muted);margin-bottom:16px;">Please open a <a href="/tickets.php">support ticket</a> with the amount you want to deposit. We will guide you through the payment.</p>
-    <a href="/add-funds.php" class="btn btn-primary">← Back to Add Funds</a>
   </div>
 <?php elseif ($step === 'crypto_pay'): ?>
   <?php
@@ -237,16 +141,12 @@ require_once __DIR__ . '/layouts/header.php';
   ?>
   <div class="card">
     <div class="card-title">Pay with crypto — $<?= number_format($amount, 2) ?> USD</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Send the equivalent of <strong>$<?= number_format($amount, 2) ?></strong> in one of the currencies below. After sending, you can submit your transaction ID below.</p>
-    <?php foreach ($wallets as $key => $w): ?>
-    <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid var(--border);">
-      <div style="font-weight:700;margin-bottom:6px;"><?= h($w['label']) ?></div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <code id="addr-<?= h($key) ?>" style="font-size:11px;word-break:break-all;flex:1;min-width:0;"><?= h($w['address']) ?></code>
-        <button type="button" class="btn" style="padding:6px 12px;font-size:12px;" onclick="navigator.clipboard.writeText(document.getElementById('addr-<?= h($key) ?>').innerText);this.textContent='✓ Copied'">Copy</button>
-      </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Send the equivalent of <strong>$<?= number_format($amount, 2) ?></strong> in <strong>ETH</strong> or <strong>USDT (ERC20)</strong> to the address below.</p>
+    <div class="wallet-box">
+      <div class="wallet-label">Wallet address (ETH / USDT ERC20)</div>
+      <code id="crypto-addr"><?= h($cryptoWallet) ?></code>
+      <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('crypto-addr').innerText);this.textContent='✓ Copied'">Copy address</button>
     </div>
-    <?php endforeach; ?>
     <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">After you sent the payment, paste your transaction ID (TxHash) below:</p>
     <form method="POST">

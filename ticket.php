@@ -53,7 +53,7 @@ require_once __DIR__ . '/layouts/header.php';
   <div style="padding:14px 0;">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Attachments</div>
     <?php foreach ($attachments as $a): ?>
-    <a href="/<?= h($a['file_path']) ?>" target="_blank" rel="noopener" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
+    <a href="/<?= h($a['file_path']) ?>" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>

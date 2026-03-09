@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `referral_earnings` decimal(10,4) DEFAULT 0.0000,
   `email_verification_token` varchar(64) DEFAULT NULL,
   `email_verification_expires` datetime DEFAULT NULL,
+  `google_id` varchar(64) DEFAULT NULL UNIQUE,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_login` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)

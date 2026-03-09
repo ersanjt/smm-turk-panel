@@ -58,7 +58,7 @@ require_once __DIR__ . '/layouts/header.php';
           <td style="font-size:11px;color:var(--text-muted);"><?= date('Y-m-d H:i', strtotime($o['created_at'])) ?></td>
           <td style="max-width:220px;font-size:11.5px;"><?= h(mb_substr($o['service_name'] ?? '', 0, 70)) ?>…</td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;">
-            <a href="<?= h($o['link']) ?>" target="_blank" style="color:var(--primary);"><?= h(mb_substr($o['link'], 0, 40)) ?>…</a>
+            <a href="<?= h($o['link']) ?>" target="_blank" rel="noopener noreferrer" style="color:var(--primary);"><?= h(mb_substr($o['link'], 0, 40)) ?>…</a>
           </td>
           <td><?= number_format($o['quantity']) ?></td>
           <td><strong>$<?= number_format($o['charge'], 4) ?></strong></td>

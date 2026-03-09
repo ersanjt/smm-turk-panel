@@ -23,9 +23,16 @@ define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 define('SECRET_KEY', getenv('SMM_SECRET_KEY') ?: bin2hex(random_bytes(16)));
 define('SESSION_LIFETIME', 86400);  // 24 hours
 
+// Crypto deposit — single wallet address (ETH/ERC20/USDT etc.). Customers can only deposit via crypto.
+define('CRYPTO_WALLET_ADDRESS', '0xE74159340aF565AF3E4e1e963d5E42427F653f79');
+
 define('MARKUP_PERCENT', 10);
 define('MIN_DEPOSIT', 10);
 define('REFERRAL_COMMISSION', 2);
+
+// Google Sign-In (optional). Get credentials: https://console.cloud.google.com/apis/credentials
+define('GOOGLE_CLIENT_ID', '');
+define('GOOGLE_CLIENT_SECRET', '');
 
 date_default_timezone_set('UTC');
 

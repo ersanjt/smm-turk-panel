@@ -10,6 +10,15 @@ $mode  = $_GET['mode'] ?? 'login';
 $error = '';
 $success = '';
 $db = Database::getInstance();
+$googleLoginEnabled = defined('GOOGLE_CLIENT_ID') && trim(GOOGLE_CLIENT_ID) !== '';
+
+// Flash from redirect (e.g. Google callback error)
+$flash = $_SESSION['flash'] ?? null;
+if ($flash) {
+    unset($_SESSION['flash']);
+    if ($flash['type'] === 'error') $error = $flash['message'];
+    else $success = $flash['message'];
+}
 $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +62,10 @@ if (empty($_SESSION['csrf_token'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
+<meta name="description" content="Login or register to SMM Turk — cheapest SMM panel. Crypto deposits, API, 24/7 support.">
+<?php if (defined('SITE_URL') && SITE_URL !== ''): ?>
+<link rel="canonical" href="<?= h(rtrim(SITE_URL, '/') . '/login.php') ?>">
+<?php endif; ?>
 <link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
 <link rel="apple-touch-icon" href="/assets/img/logo-icon.svg?v=2">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -84,6 +97,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 .alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500}
 .alert-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:12px;color:#6b4a50}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border,#f0e6e8)}
+.btn-google{width:100%;padding:12px 16px;background:#fff;color:#1a0a0e;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;text-decoration:none}
+.btn-google:hover{background:#f9fafb;border-color:#E30A17;color:#E30A17;transform:translateY(-1px)}
 .footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b4a50}
 .footer-link a{color:#E30A17;font-weight:600}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -117,6 +134,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   <?php endif; ?>
 
   <?php if ($mode === 'login'): ?>
+  <?php if ($googleLoginEnabled): ?>
+  <a href="/login-google.php" class="btn-google">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Sign in with Google
+  </a>
+  <div class="auth-divider">or</div>
+  <?php endif; ?>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
     <div class="form-group">

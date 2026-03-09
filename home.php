@@ -21,13 +21,13 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($siteName) ?> — Cheapest SMM Panel | Turkey & Worldwide</title>
-    <meta name="description" content="SMM Turk: Cheapest & fastest SMM panel. Instagram, YouTube, TikTok, Twitter growth. Reseller panel, API, 24/7 support. Prices from $0.001. Turkey & worldwide.">
+    <meta name="description" content="SMM Turk: Cheapest SMM panel. Instagram, YouTube, TikTok growth. Crypto-only deposits, reseller API, 24/7 support. Turkey & worldwide.">
     <link rel="canonical" href="<?= h($canonicalUrl) ?>">
     <meta name="theme-color" content="#E30A17">
     <meta name="geo.region" content="TR">
     <meta property="og:type" content="website">
     <meta property="og:title" content="<?= h($siteName) ?> — Cheapest SMM Panel">
-    <meta property="og:description" content="Cheapest & fastest SMM panel. Reseller panel, API, 24/7 support. Turkey & worldwide.">
+    <meta property="og:description" content="Cheapest SMM panel. Crypto-only deposits, reseller API, 24/7 support. Turkey & worldwide.">
     <meta property="og:url" content="<?= h($canonicalUrl) ?>">
     <meta property="og:image" content="<?= h($logoUrl) ?>">
     <meta property="og:locale" content="<?= $lang === 'tr' ? 'tr_TR' : 'en_US' ?>">
@@ -56,23 +56,26 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: rgba(255,255,255,.96); backdrop-filter: blur(14px);
             border-bottom: 1px solid rgba(227, 10, 23, 0.12);
-            padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 24px;
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
-        .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); text-decoration: none; }
-        .nav-logo img { width: 36px; height: 36px; border-radius: 10px; transition: transform .25s ease; }
+        .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); text-decoration: none; min-height: 44px; }
+        .nav-logo img { width: 36px; height: 36px; border-radius: 10px; transition: transform .25s ease; flex-shrink: 0; }
         .nav-logo:hover img { transform: scale(1.08); }
         .nav-logo span { color: var(--primary); }
         .nav-links { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); transition: color .2s, transform .2s; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); transition: color .2s, transform .2s; padding: 8px 4px; min-height: 44px; display: inline-flex; align-items: center; }
         .nav-links a:hover { color: var(--primary); transform: translateY(-1px); }
         .nav-lang { position: relative; }
-        .nav-lang-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid rgba(227,10,23,.2); background: var(--white); font-size: 13px; font-weight: 600; color: var(--dark); cursor: pointer; }
+        .nav-lang-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; min-height: 44px; box-sizing: border-box; border-radius: 10px; border: 1.5px solid rgba(227,10,23,.2); background: var(--white); font-size: 13px; font-weight: 600; color: var(--dark); cursor: pointer; }
         .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary); }
         .nav-lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.06); min-width: 140px; display: none; overflow: hidden; }
         .nav-lang-dropdown.open { display: block; }
         .nav-lang-dropdown a { display: block; padding: 12px 16px; font-size: 14px; color: var(--dark); }
         .nav-lang-dropdown a:hover { background: var(--primary-soft); color: var(--primary); }
-        .nav-btn { background: var(--primary); color: var(--white); padding: 10px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform .25s ease, box-shadow .25s ease, background .2s; }
+        .nav-btn { background: var(--primary); color: var(--white); padding: 10px 22px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform .25s ease, box-shadow .25s ease, background .2s; }
         .nav-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
 
         .hero {
@@ -174,11 +177,16 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         .why-us-icon .ico { width: 48px; height: 48px; border-radius: 12px; background: var(--primary); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
         .why-us-icon span { font-weight: 700; font-size: 14px; color: var(--dark); }
 
-        .footer { background: var(--dark2); color: rgba(255,255,255,.7); padding: 40px 24px; text-align: center; }
+        .footer {
+            background: var(--dark2); color: rgba(255,255,255,.7); padding: 40px 24px; text-align: center;
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+        }
         .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .footer-links a { color: rgba(255,255,255,.8); font-size: 14px; }
+        .footer-links a { color: rgba(255,255,255,.8); font-size: 14px; padding: 10px 6px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
         .footer-links a:hover { color: var(--white); }
-        .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); }
+        .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); word-break: break-word; line-height: 1.5; }
 
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; text-align: center; }
@@ -187,10 +195,11 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             .nav-links .hide-mob { display: none; }
         }
         @media (max-width: 768px) {
-            .nav { padding: 12px 16px; flex-wrap: wrap; gap: 12px; }
+            .nav { padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); flex-wrap: wrap; gap: 12px; }
             .nav-logo { font-size: 18px; }
             .nav-logo img { width: 32px; height: 32px; }
-            .hero { padding: 80px 16px 40px; min-height: auto; }
+            .nav-links { justify-content: flex-end; }
+            .hero { padding: 80px 16px 40px; min-height: auto; padding-top: max(80px, env(safe-area-inset-top)); }
             .hero-inner { gap: 32px; }
             .hero h1 { font-size: clamp(26px, 5vw, 36px); }
             .hero-desc { font-size: 15px; }
@@ -199,14 +208,28 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             .benefit-grid { grid-template-columns: 1fr; gap: 16px; }
             .benefit-card { padding: 20px; flex-direction: column; align-items: center; text-align: center; }
             .cta-block { padding: 32px 20px; margin: 32px 0; border-radius: 20px; }
-            .footer { padding: 32px 16px; }
+            .footer { padding: 32px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(32px, env(safe-area-inset-bottom)); }
             .footer-links { gap: 16px; }
         }
         @media (max-width: 480px) {
-            .nav-links { gap: 12px; }
-            .nav-btn { padding: 8px 16px; font-size: 13px; }
+            .nav { padding: 10px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); gap: 10px; }
+            .nav-logo { font-size: 16px; }
+            .nav-logo img { width: 28px; height: 28px; }
+            .nav-links { gap: 8px; justify-content: center; width: 100%; }
+            .nav-links a { font-size: 13px; padding: 6px 2px; }
+            .nav-btn { padding: 10px 16px; font-size: 13px; min-height: 44px; }
+            .nav-lang-btn { min-height: 40px; padding: 6px 10px; font-size: 12px; }
             .hero-form-box { padding: 20px 16px; }
             .section-title { font-size: clamp(22px, 4vw, 28px); }
+            .footer { padding: 24px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+            .footer-links { flex-direction: column; gap: 8px; margin-bottom: 16px; }
+            .footer-links a { padding: 12px; }
+            .footer-copy { font-size: 12px; padding: 0 8px; }
+        }
+        @media (max-width: 360px) {
+            .nav-logo span { font-size: 15px; }
+            .nav-links a { font-size: 12px; }
+            .nav-btn { padding: 8px 12px; font-size: 12px; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -268,7 +291,8 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
                 <div style="margin-bottom:12px;"><a href="/login.php" class="forgot"><?= h(__('forgot_password')) ?></a></div>
                 <button type="submit" class="btn-login"><?= h(__('btn_login')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <div class="divider">— <?= h(__('login_with_google')) ?> —</div>
-                <a href="/login.php" class="btn-google"><?= h(__('login_with_google')) ?></a>
+                <?php $googleAuth = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) !== '' : false; ?>
+<a href="<?= $googleAuth ? '/login-google.php' : '/login.php' ?>" class="btn-google"><?= h(__('login_with_google')) ?></a>
                 <p class="register-link"><?= h(__('no_account')) ?> <a href="/login.php?mode=register">→ <?= h(__('register')) ?></a></p>
             </form>
         </div>

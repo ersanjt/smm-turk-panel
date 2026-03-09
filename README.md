@@ -38,6 +38,20 @@ define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 3. Copy your API key
 4. Paste it in `config.php` as `PROVIDER_API_KEY`
 
+### 4b. Payments (Crypto only)
+Customer deposits are **crypto only**. Set your wallet address in `config.php`:
+```php
+define('CRYPTO_WALLET_ADDRESS', '0xYourEthereumOrERC20Address');
+```
+Default in `config.example.php` is set; replace with your own if needed.
+
+### 4c. Google Sign-In (optional)
+To let customers log in with Google:
+1. Create OAuth credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Set redirect URI to `https://yourdomain.com/login-google-callback.php`
+3. In `config.php` set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+4. Run migration: `migrations/002_google_oauth.sql` (adds `google_id` to `users`)
+
 ### 5. Admin Login
 Default admin credentials:
 - **Username:** admin  
