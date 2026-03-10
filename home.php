@@ -59,6 +59,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             padding: 14px 24px;
             padding-left: max(24px, env(safe-area-inset-left));
             padding-right: max(24px, env(safe-area-inset-right));
+            padding-top: max(14px, env(safe-area-inset-top));
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
         .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); text-decoration: none; min-height: 44px; }
@@ -77,6 +78,24 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         .nav-lang-dropdown a:hover { background: var(--primary-soft); color: var(--primary); }
         .nav-btn { background: var(--primary); color: var(--white); padding: 10px 22px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform .25s ease, box-shadow .25s ease, background .2s; }
         .nav-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
+
+        /* Mobile menu (hamburger) - hidden on desktop */
+        .nav-mob-menu-btn { display: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: none; background: var(--light); border-radius: 10px; cursor: pointer; align-items: center; justify-content: center; font-size: 20px; color: var(--dark); transition: background .2s, color .2s; }
+        .nav-mob-menu-btn:hover { background: var(--primary-soft); color: var(--primary); }
+        .nav-mob-drawer { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26,10,14,.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s; padding-top: max(70px, calc(56px + env(safe-area-inset-top))); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-mob-drawer.open { opacity: 1; pointer-events: auto; }
+        .nav-mob-drawer-inner { background: var(--white); border-radius: 16px 16px 0 0; padding: 16px; max-height: 70vh; overflow-y: auto; box-shadow: 0 -8px 32px rgba(0,0,0,.12); }
+        .nav-mob-drawer-inner a { display: flex; align-items: center; padding: 14px 16px; font-size: 15px; font-weight: 600; color: var(--dark); border-radius: 12px; margin-bottom: 4px; min-height: 48px; transition: background .2s; }
+        .nav-mob-drawer-inner a:hover { background: var(--primary-soft); color: var(--primary); }
+        .nav-mob-drawer-inner a:last-child { margin-bottom: 0; }
+
+        /* Mobile footer bar - fixed bottom CTA (only on landing, mobile) */
+        .mob-footer-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 900; background: rgba(255,255,255,.98); backdrop-filter: blur(14px); border-top: 1px solid rgba(227,10,23,.12); padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(12px, env(safe-area-inset-bottom)); gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; box-shadow: 0 -4px 24px rgba(0,0,0,.06); }
+        .mob-footer-bar .mob-footer-btn { flex: 1; min-width: 140px; max-width: 200px; padding: 14px 20px; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; text-align: center; text-decoration: none; transition: transform .2s, box-shadow .2s; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border: none; cursor: pointer; }
+        .mob-footer-bar .mob-footer-btn-primary { background: var(--primary); color: var(--white); }
+        .mob-footer-bar .mob-footer-btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227,10,23,.35); }
+        .mob-footer-bar .mob-footer-btn-outline { background: var(--white); color: var(--primary); border: 2px solid var(--primary); }
+        .mob-footer-bar .mob-footer-btn-outline:hover { background: var(--primary-soft); transform: translateY(-2px); }
 
         .hero {
             min-height: 92vh; display: flex; align-items: center; padding: 100px 24px 60px;
@@ -188,42 +207,54 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         .footer-links a:hover { color: var(--white); }
         .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); word-break: break-word; line-height: 1.5; }
 
+
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; text-align: center; }
             .hero-desc { margin-left: auto; margin-right: auto; }
             .hero-form-box { max-width: 400px; margin: 0 auto; }
             .nav-links .hide-mob { display: none; }
         }
+        /* Mobile header & footer (768px and below) */
         @media (max-width: 768px) {
-            .nav { padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); flex-wrap: wrap; gap: 12px; }
-            .nav-logo { font-size: 18px; }
+            .nav { padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: max(12px, env(safe-area-inset-top)); flex-wrap: nowrap; gap: 10px; }
+            .nav-logo { font-size: 18px; flex: 0 0 auto; }
             .nav-logo img { width: 32px; height: 32px; }
-            .nav-links { justify-content: flex-end; }
-            .hero { padding: 80px 16px 40px; min-height: auto; padding-top: max(80px, env(safe-area-inset-top)); }
+            .nav-mob-menu-btn { display: flex; order: 1; }
+            .nav-links { order: 2; margin-left: auto; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
+            .nav-links .hide-mob { display: none; }
+            .nav-lang-btn { min-height: 44px; padding: 8px 10px; font-size: 12px; }
+            .nav-links a:not(.nav-btn) { font-size: 13px; padding: 8px 6px; }
+            .nav-btn { padding: 10px 14px; font-size: 13px; min-height: 44px; }
+            .hero { padding: 80px 16px 100px; min-height: auto; padding-top: max(80px, env(safe-area-inset-top)); padding-bottom: max(100px, env(safe-area-inset-bottom)); }
             .hero-inner { gap: 32px; }
             .hero h1 { font-size: clamp(26px, 5vw, 36px); }
             .hero-desc { font-size: 15px; }
             .hero-form-box { padding: 24px 20px; }
-            .section { padding: 48px 16px; }
+            .section { padding: 48px 16px; padding-bottom: max(100px, env(safe-area-inset-bottom)); }
             .benefit-grid { grid-template-columns: 1fr; gap: 16px; }
             .benefit-card { padding: 20px; flex-direction: column; align-items: center; text-align: center; }
             .cta-block { padding: 32px 20px; margin: 32px 0; border-radius: 20px; }
+            .mob-footer-bar { display: flex; }
             .footer { padding: 32px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(32px, env(safe-area-inset-bottom)); }
-            .footer-links { gap: 16px; }
+            .footer-links { gap: 12px; display: grid; grid-template-columns: 1fr 1fr; justify-items: center; }
+            .footer-links a { padding: 14px 12px; min-height: 48px; font-size: 14px; font-weight: 600; width: 100%; justify-content: center; border-radius: 10px; transition: background .2s; }
+            .footer-links a:hover { background: rgba(255,255,255,.08); }
         }
         @media (max-width: 480px) {
-            .nav { padding: 10px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); gap: 10px; }
+            .nav { padding: 10px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(10px, env(safe-area-inset-top)); gap: 8px; }
             .nav-logo { font-size: 16px; }
             .nav-logo img { width: 28px; height: 28px; }
-            .nav-links { gap: 8px; justify-content: center; width: 100%; }
-            .nav-links a { font-size: 13px; padding: 6px 2px; }
-            .nav-btn { padding: 10px 16px; font-size: 13px; min-height: 44px; }
-            .nav-lang-btn { min-height: 40px; padding: 6px 10px; font-size: 12px; }
+            .nav-links { gap: 6px; }
+            .nav-links a:not(.nav-btn) { font-size: 12px; padding: 6px 4px; }
+            .nav-btn { padding: 10px 12px; font-size: 12px; min-height: 44px; }
+            .nav-lang-btn { min-height: 40px; padding: 6px 10px; font-size: 11px; }
             .hero-form-box { padding: 20px 16px; }
             .section-title { font-size: clamp(22px, 4vw, 28px); }
+            .mob-footer-bar { padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); flex-direction: row; }
+            .mob-footer-bar .mob-footer-btn { min-width: 120px; padding: 12px 16px; font-size: 14px; }
             .footer { padding: 24px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-            .footer-links { flex-direction: column; gap: 8px; margin-bottom: 16px; }
-            .footer-links a { padding: 12px; }
+            .footer-links { grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; }
+            .footer-links a { padding: 14px; font-size: 13px; }
             .footer-copy { font-size: 12px; padding: 0 8px; }
         }
         @media (max-width: 360px) {
@@ -244,6 +275,9 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         <img src="/assets/img/logo-icon.svg?v=2" alt="" width="36" height="36" fetchpriority="high">
         <span>SMM<span>Turk</span></span>
     </a>
+    <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="<?= h(__('benefits')) ?>" aria-expanded="false" aria-controls="navMobDrawer">
+        ☰
+    </button>
     <div class="nav-links">
         <a href="#benefits" class="hide-mob"><?= h(__('benefits')) ?></a>
         <a href="#services" class="hide-mob"><?= h(__('services_nav')) ?></a>
@@ -262,6 +296,16 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         <a href="/login.php?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
     </div>
 </header>
+<!-- Mobile menu drawer (visible only on small screens) -->
+<div class="nav-mob-drawer" id="navMobDrawer" role="dialog" aria-label="<?= h(__('benefits')) ?>" aria-modal="true" aria-hidden="true">
+    <div class="nav-mob-drawer-inner">
+        <a href="#benefits" class="mob-drawer-link"><?= h(__('benefits')) ?></a>
+        <a href="#services" class="mob-drawer-link"><?= h(__('services_nav')) ?></a>
+        <a href="#faq" class="mob-drawer-link"><?= h(__('faq_nav')) ?></a>
+        <a href="/login.php" class="mob-drawer-link"><?= h(__('nav_sign_in')) ?></a>
+        <a href="/login.php?mode=register" class="mob-drawer-link"><?= h(__('nav_sign_up')) ?> →</a>
+    </div>
+</div>
 
 <main id="main-content">
 <section class="hero" aria-labelledby="hero-title">
@@ -419,6 +463,12 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
 
 </main>
 
+<!-- Mobile-only fixed bottom bar: quick Login / Sign up (only visible on mobile) -->
+<nav class="mob-footer-bar" aria-label="<?= h(__('footer_login')) ?>">
+    <a href="/login.php" class="mob-footer-btn mob-footer-btn-outline"><?= h(__('footer_login')) ?></a>
+    <a href="/login.php?mode=register" class="mob-footer-btn mob-footer-btn-primary"><?= h(__('footer_signup')) ?> →</a>
+</nav>
+
 <footer class="footer" role="contentinfo">
     <div class="footer-links">
         <a href="/login.php"><?= h(__('footer_login')) ?></a>
@@ -436,6 +486,17 @@ document.getElementById('langBtn').addEventListener('click', function() {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.nav-lang')) document.getElementById('langDropdown').classList.remove('open');
 });
+(function(){
+    var btn = document.getElementById('navMobMenuBtn');
+    var drawer = document.getElementById('navMobDrawer');
+    if (btn && drawer) {
+        function openDrawer() { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+        function closeDrawer() { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+        btn.addEventListener('click', function() { drawer.classList.contains('open') ? closeDrawer() : openDrawer(); });
+        drawer.addEventListener('click', function(e) { if (e.target === drawer) closeDrawer(); });
+        drawer.querySelectorAll('.mob-drawer-link').forEach(function(link) { link.addEventListener('click', closeDrawer); });
+    }
+})();
 document.querySelectorAll('.faq-q').forEach(function(el) {
     el.addEventListener('click', function() {
         var item = this.closest('.faq-item');

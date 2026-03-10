@@ -10,22 +10,30 @@
       <a href="/tickets.php" class="footer-ticket">Open a ticket</a>
     </div>
   </footer>
+  <!-- Mobile bottom navigation (visible only on small screens) -->
+  <nav class="mob-bottom-nav" aria-label="Main navigation">
+    <a href="/index.php" class="<?= ($currentPage ?? '') === 'index' ? 'active' : '' ?>"><span class="mob-nav-icon">➕</span><span>Order</span></a>
+    <a href="/orders.php" class="<?= ($currentPage ?? '') === 'orders' ? 'active' : '' ?>"><span class="mob-nav-icon">📋</span><span>Orders</span></a>
+    <a href="/add-funds.php" class="<?= ($currentPage ?? '') === 'add-funds' ? 'active' : '' ?>"><span class="mob-nav-icon">💳</span><span>Funds</span></a>
+    <a href="/tickets.php" class="<?= ($currentPage ?? '') === 'tickets' ? 'active' : '' ?>"><span class="mob-nav-icon">🎫</span><span>Tickets</span></a>
+    <button type="button" id="mobNavMenuBtn" aria-label="Open menu"><span class="mob-nav-icon">☰</span><span>Menu</span></button>
+  </nav>
 </div><!-- end main -->
 
 <script>
 (function(){
   var btn = document.getElementById('menuToggle');
+  var mobMenuBtn = document.getElementById('mobNavMenuBtn');
   var overlay = document.getElementById('sidebarOverlay');
   var sidebar = document.getElementById('sidebar');
-  if (btn && overlay) {
-    function open() { document.body.classList.add('sidebar-open'); overlay.setAttribute('aria-hidden','false'); }
-    function close() { document.body.classList.remove('sidebar-open'); overlay.setAttribute('aria-hidden','true'); }
-    function toggle() { document.body.classList.contains('sidebar-open') ? close() : open(); }
-    btn.addEventListener('click', toggle);
-    overlay.addEventListener('click', close);
-    if (sidebar) sidebar.querySelectorAll('.nav-item').forEach(function(el){ el.addEventListener('click', function(){ if (window.innerWidth <= 768) close(); }); });
-    window.addEventListener('resize', function(){ if (window.innerWidth > 768) close(); });
-  }
+  function openSidebar() { document.body.classList.add('sidebar-open'); if (overlay) overlay.setAttribute('aria-hidden','false'); }
+  function closeSidebar() { document.body.classList.remove('sidebar-open'); if (overlay) overlay.setAttribute('aria-hidden','true'); }
+  function toggleSidebar() { document.body.classList.contains('sidebar-open') ? closeSidebar() : openSidebar(); }
+  if (btn) btn.addEventListener('click', toggleSidebar);
+  if (mobMenuBtn) mobMenuBtn.addEventListener('click', openSidebar);
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+  if (sidebar) sidebar.querySelectorAll('.nav-item').forEach(function(el){ el.addEventListener('click', function(){ if (window.innerWidth <= 768) closeSidebar(); }); });
+  window.addEventListener('resize', function(){ if (window.innerWidth > 768) closeSidebar(); });
   // Scroll reveal (respects prefers-reduced-motion)
   var reveal = document.querySelectorAll('[data-reveal]');
   if (reveal.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

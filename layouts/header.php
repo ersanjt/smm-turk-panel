@@ -61,7 +61,7 @@ img{max-width:100%;height:auto}
 .nav-item.active{background:var(--primary);color:#fff}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));min-height:58px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04);flex-wrap:wrap}
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));padding-top:max(0,env(safe-area-inset-top));min-height:58px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.04);flex-wrap:wrap}
 .topbar-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--primary);color:#fff;margin-right:8px}
 .stat-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--bg);border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border)}
 .stat-pill .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-right:4px}
@@ -159,7 +159,17 @@ img{max-width:100%;height:auto}
 .content{padding:16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
 .stat-card .sc-value{font-size:18px}
 }
+/* Mobile bottom nav (dashboard) - only on small screens */
+.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(255,255,255,.98);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:8px 6px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-bottom:max(8px,env(safe-area-inset-bottom));justify-content:space-around;align-items:center;box-shadow:0 -4px 24px rgba(0,0,0,.06)}
+.mob-bottom-nav a,.mob-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 6px;min-height:52px;min-width:56px;border-radius:12px;font-size:10px;font-weight:600;color:var(--text-muted);text-decoration:none;background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;flex:1;max-width:80px;box-sizing:border-box}
+.mob-bottom-nav a:hover,.mob-bottom-nav button:hover{background:var(--primary);color:#fff}
+.mob-bottom-nav a.active,.mob-bottom-nav a:active{background:rgba(227,10,23,.1);color:var(--primary)}
+.mob-bottom-nav .mob-nav-icon{font-size:18px;line-height:1}
 @media(max-width:768px){
+.mob-bottom-nav{display:flex}
+.main{padding-bottom:max(80px,calc(72px + env(safe-area-inset-bottom)))}
+.footer{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.footer-inner .footer-ticket{min-height:48px;padding:12px 20px;font-size:13px}
 .sidebar{width:min(260px,85vw);transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 24px rgba(0,0,0,.15);padding-left:env(safe-area-inset-left)}
 body.sidebar-open .sidebar{transform:translateX(0)}
 body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
@@ -168,7 +178,7 @@ body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 .main{margin-left:0}
 .menu-toggle{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;border:none;background:var(--bg);border-radius:10px;cursor:pointer;color:var(--text);font-size:20px;margin-right:8px}
 .menu-toggle:hover{background:var(--primary);color:#fff}
-.topbar{padding:10px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));flex-wrap:wrap;gap:8px;min-height:54px}
+.topbar{padding:10px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));flex-wrap:wrap;gap:8px;min-height:54px}
 .topbar .stat-pill{font-size:11px;padding:5px 10px}
 .topbar .stat-pill:nth-child(n+4){display:none}
 .topbar-right{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:wrap;gap:6px}
