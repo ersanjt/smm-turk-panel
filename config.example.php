@@ -21,8 +21,9 @@ define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verificatio
 define('PROVIDER_API_URL', 'https://smmfollows.com/api/v2');
 define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 
-// Security - In production use a FIXED 32-char hex (e.g. from: bin2hex(random_bytes(16)))
-// Do not use random_bytes() at runtime in production (breaks session continuity)
+// Security - Session/CSRF key. In production you MUST use a fixed value:
+// 1) Set env SMM_SECRET_KEY to a 32-char hex, or 2) define a constant below.
+// Do NOT use bin2hex(random_bytes(16)) at runtime in production (sessions break on restart).
 define('SECRET_KEY', getenv('SMM_SECRET_KEY') ?: bin2hex(random_bytes(16)));
 define('SESSION_LIFETIME', 86400);  // 24 hours
 

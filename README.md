@@ -39,11 +39,7 @@ define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 4. Paste it in `config.php` as `PROVIDER_API_KEY`
 
 ### 4b. Payments (Crypto only)
-Customer deposits are **crypto only**. Set your wallet address in `config.php`:
-```php
-define('CRYPTO_WALLET_ADDRESS', '0xYourEthereumOrERC20Address');
-```
-Default in `config.example.php` is set; replace with your own if needed.
+Customer deposits are **crypto only**. You can set wallet addresses in **Admin → Settings → Crypto Wallets** (BTC, ETH, USDT TRC20/ERC20, BNB, SOL). If none are set, the panel uses `CRYPTO_WALLET_ADDRESS` from `config.php`. Deposits are approved manually in **Admin → Pending Deposits**.
 
 ### 4c. Google Sign-In (optional)
 To let customers log in with Google:

@@ -6,7 +6,7 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
-        'smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
+        'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
         'child_panel_price','child_panel_ns1','child_panel_ns2'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
@@ -61,8 +61,8 @@ require_once __DIR__ . '/../layouts/header.php';
     </div>
 
     <div class="card" style="margin-bottom:18px;">
-      <div class="card-title">📧 Email (cPanel)</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Verification emails are sent via PHP mail(). On cPanel, use an email address from your domain (e.g. noreply@yourdomain.com). Create it in cPanel → Email Accounts if needed.</p>
+      <div class="card-title">📧 Email</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Leave SMTP empty to use PHP mail() (cPanel). To use Gmail/SendGrid etc., fill SMTP Host and credentials.</p>
       <div class="form-group">
         <label class="form-label">Mail From (sender address)</label>
         <input type="text" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@yourdomain.com">
@@ -70,6 +70,29 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="form-group">
         <label class="form-label">Contact Email (shown in footer)</label>
         <input type="email" name="contact_email" class="form-control" value="<?= s($settings,'contact_email') ?>" placeholder="contact@yourdomain.com">
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <strong style="font-size:13px;">SMTP (optional)</strong>
+      </div>
+      <div class="grid2" style="margin-top:10px;">
+        <div class="form-group">
+          <label class="form-label">SMTP Host</label>
+          <input type="text" name="smtp_host" class="form-control" value="<?= s($settings,'smtp_host') ?>" placeholder="smtp.gmail.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SMTP Port</label>
+          <input type="text" name="smtp_port" class="form-control" value="<?= s($settings,'smtp_port') ?: '587' ?>" placeholder="587 or 465">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">SMTP User</label>
+          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SMTP Password</label>
+          <input type="password" name="smtp_pass" class="form-control" value="<?= s($settings,'smtp_pass') ?>" placeholder="••••••••" autocomplete="new-password">
+        </div>
       </div>
     </div>
 

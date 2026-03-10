@@ -1,7 +1,7 @@
 <?php
 /**
- * SMM Turk - Simple mail helper (cPanel / PHP mail compatible)
- * Uses PHP mail() so cPanel can deliver via local mail or forward.
+ * SMM Turk - Mail helper
+ * If Admin → Settings has smtp_host set, sends via SMTP; otherwise uses PHP mail() (cPanel).
  */
 class Mail {
     private Database $db;
@@ -10,7 +10,7 @@ class Mail {
         $this->db = Database::getInstance();
     }
 
-    /** Get From address: settings smtp_from or config SITE_URL domain */
+    /** Get From address: settings smtp_from or config */
     private function getFrom(): string {
         $from = $this->db->getSetting('smtp_from');
         if ($from !== null && trim($from) !== '') {
@@ -24,12 +24,23 @@ class Mail {
     }
 
     /**
-     * Send email (PHP mail - works with cPanel default mail)
+     * Send email. Uses SMTP when smtp_host is set, else PHP mail().
      * @return true on success, false on failure
      */
     public function send(string $to, string $subject, string $bodyPlain, string $bodyHtml = ''): bool {
         $from = $this->getFrom();
         $siteName = $this->db->getSetting('site_name') ?: (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
+        $message = $bodyHtml !== '' ? $bodyHtml : '<pre>' . htmlspecialchars($bodyPlain) . '</pre>';
+
+        $smtpHost = $this->db->getSetting('smtp_host');
+        if ($smtpHost !== null && trim($smtpHost) !== '') {
+            $ok = $this->sendSmtp(trim($smtpHost), $from, $to, $subject, $message, $siteName);
+            if (!$ok) {
+                Logger::log("SMTP send failed to {$to}: " . ($this->lastError ?? 'unknown'), 'mail');
+            }
+            return $ok;
+        }
+
         $headers = [
             'MIME-Version: 1.0',
             'Content-Type: text/html; charset=UTF-8',
@@ -37,8 +48,118 @@ class Mail {
             'Reply-To: ' . $from,
             'X-Mailer: PHP/' . PHP_VERSION,
         ];
-        $message = $bodyHtml !== '' ? $bodyHtml : '<pre>' . htmlspecialchars($bodyPlain) . '</pre>';
-        return @mail($to, $subject, $message, implode("\r\n", $headers));
+        $ok = @mail($to, $subject, $message, implode("\r\n", $headers));
+        if (!$ok) {
+            Logger::log("mail() send failed to {$to}", 'mail');
+        }
+        return $ok;
+    }
+
+    private ?string $lastError = null;
+
+    /**
+     * Send via SMTP (socket). Uses smtp_port, smtp_user, smtp_pass from settings.
+     */
+    private function sendSmtp(string $host, string $from, string $to, string $subject, string $body, string $siteName): bool {
+        $this->lastError = null;
+        $port = (int) ($this->db->getSetting('smtp_port') ?: 587);
+        $user = $this->db->getSetting('smtp_user');
+        $pass = $this->db->getSetting('smtp_pass');
+        $useTls = ($port === 587 || $port === 465);
+        $ssl = ($port === 465);
+        $target = ($ssl ? 'ssl://' : '') . $host . ':' . $port;
+
+        $errno = 0;
+        $errstr = '';
+        $fp = @stream_socket_client(
+            $target,
+            $errno,
+            $errstr,
+            15,
+            STREAM_CLIENT_CONNECT,
+            $ssl ? null : stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]])
+        );
+        if (!$fp) {
+            $this->lastError = "Connect: {$errstr} ({$errno})";
+            return false;
+        }
+
+        $read = [$fp];
+        $write = [$fp];
+        $except = null;
+        $getLine = function () use ($fp, &$read, &$write, &$except): ?string {
+            $line = @fgets($fp, 512);
+            return $line !== false ? trim($line) : null;
+        };
+        $send = function (string $cmd) use ($fp): bool {
+            return @fwrite($fp, $cmd . "\r\n") !== false;
+        };
+
+        $line = $getLine();
+        if ($line === null || (int)substr($line, 0, 3) >= 400) {
+            $this->lastError = $line ?? 'No greeting';
+            fclose($fp);
+            return false;
+        }
+
+        $send('EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+        while ($line = $getLine()) {
+            if (strlen($line) < 4 || $line[3] === ' ') break;
+        }
+
+        if ($useTls && $port === 587) {
+            $send('STARTTLS');
+            $line = $getLine();
+            if ($line === null || (int)substr($line, 0, 3) >= 400) {
+                fclose($fp);
+                return false;
+            }
+            $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
+            if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                fclose($fp);
+                return false;
+            }
+            $send('EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+            while ($line = $getLine()) {
+                if (strlen($line) < 4 || $line[3] === ' ') break;
+            }
+        }
+
+        if ($user !== null && $user !== '' && $pass !== null) {
+            $send('AUTH LOGIN');
+            $line = $getLine();
+            if ($line === null || (int)substr($line, 0, 3) >= 400) {
+                fclose($fp);
+                return false;
+            }
+            $send(base64_encode($user));
+            $line = $getLine();
+            if ($line === null || (int)substr($line, 0, 3) >= 400) {
+                fclose($fp);
+                return false;
+            }
+            $send(base64_encode($pass));
+            $line = $getLine();
+            if ($line === null || (int)substr($line, 0, 3) >= 400) {
+                $this->lastError = 'Auth failed';
+                fclose($fp);
+                return false;
+            }
+        }
+
+        $send('MAIL FROM:<' . $from . '>');
+        if ((int)substr($getLine() ?? '500', 0, 3) >= 400) { fclose($fp); return false; }
+        $send('RCPT TO:<' . $to . '>');
+        if ((int)substr($getLine() ?? '500', 0, 3) >= 400) { fclose($fp); return false; }
+        $send('DATA');
+        if ((int)substr($getLine() ?? '500', 0, 3) >= 400) { fclose($fp); return false; }
+
+        $headers = "From: {$siteName} <{$from}>\r\nTo: {$to}\r\nSubject: {$subject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
+        $send($headers . "\r\n" . $body);
+        $send('.');
+        $line = $getLine();
+        fclose($fp);
+        return $line !== null && (int)substr($line, 0, 3) <= 299;
     }
 
     /** Send verification email with link */

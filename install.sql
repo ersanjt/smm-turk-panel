@@ -129,7 +129,13 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('smtp_user', ''),
 ('smtp_pass', ''),
 ('smtp_from', 'noreply@smm-turk.com'),
-('contact_email', 'contact@smm-turk.com')
+('contact_email', 'contact@smm-turk.com'),
+('wallet_btc', ''),
+('wallet_eth', ''),
+('wallet_usdt_trc20', ''),
+('wallet_usdt_erc20', ''),
+('wallet_bnb', ''),
+('wallet_sol', '')
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
 -- Insert default admin user (username: admin, password: password)

@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id']) && csrf
                 flash('success', "Deposit approved. User balance updated by \$" . number_format($amount, 2) . ".");
             } catch (Exception $e) {
                 $db->getConnection()->rollBack();
+                Logger::log("Deposit approve failed tx#{$tid}: " . $e->getMessage(), 'deposits');
                 if (defined('SMM_DEBUG') && SMM_DEBUG) {
                     flash('error', 'Failed to approve: ' . $e->getMessage());
                 } else {
