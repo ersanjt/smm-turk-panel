@@ -1,8 +1,23 @@
 <?php
 $user    = $auth->getCurrentUser();
 $flash   = getFlash();
-$balance = $user ? number_format((float)$user['balance'], 3) : '0.000';
-$spent   = $user ? number_format((float)$user['spent'], 3) : '0.000';
+// Always fetch latest balance/spent from DB so sidebar and topbar show current values
+$balance = '0.000';
+$spent   = '0.000';
+if ($user && !empty($user['id'])) {
+    $db = Database::getInstance();
+    $row = $db->fetch("SELECT balance, spent FROM users WHERE id = ?", [(int)$user['id']]);
+    if ($row !== null) {
+        $balance = number_format((float)$row['balance'], 3);
+        $spent   = number_format((float)$row['spent'], 3);
+    } else {
+        $balance = number_format((float)($user['balance'] ?? 0), 3);
+        $spent   = number_format((float)($user['spent'] ?? 0), 3);
+    }
+} elseif ($user) {
+    $balance = number_format((float)($user['balance'] ?? 0), 3);
+    $spent   = number_format((float)($user['spent'] ?? 0), 3);
+}
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
@@ -70,7 +85,8 @@ img{max-width:100%;height:auto}
 .logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .logo-text span{color:var(--primary-light);letter-spacing:-.02em}
 .sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
-.user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px}
+.user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px;overflow:hidden;flex-shrink:0}
+.user-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .user-name{color:#fff;font-size:13px;font-weight:600}
 .user-bal{color:var(--primary-light);font-size:12px;margin-top:3px;font-weight:600}
 .user-status{display:inline-block;background:rgba(227,10,23,.25);color:var(--primary-light);font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
@@ -85,9 +101,9 @@ img{max-width:100%;height:auto}
 .topbar{background:linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(255,252,253,.95) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 4px 20px rgba(26,10,14,.04);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));padding-top:max(0,env(safe-area-inset-top));min-height:60px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary) 30%,var(--primary-dark) 50%,var(--primary) 70%,transparent);background-size:200% 100%;opacity:.6;pointer-events:none;animation:topbarShine 4s ease-in-out infinite}
 .topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.topbar-mob-logo{display:none;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--text);flex-shrink:0}
-.topbar-mob-logo img{width:44px;height:44px;border-radius:12px;object-fit:contain}
-.topbar-mob-logo .topbar-mob-logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.1;text-transform:uppercase}
+.topbar-mob-logo{display:none;flex-direction:row;align-items:center;gap:8px;text-decoration:none;color:var(--text);flex-shrink:0;min-width:0}
+.topbar-mob-logo img{width:32px;height:32px;border-radius:10px;object-fit:contain;flex-shrink:0}
+.topbar-mob-logo .topbar-mob-logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:-.03em;line-height:1.1;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar-mob-logo .topbar-mob-logo-text b{color:var(--primary)}
 .topbar-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:#fff;margin-right:8px;box-shadow:0 2px 8px rgba(227,10,23,.25)}
 .topbar-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -185,7 +201,14 @@ img{max-width:100%;height:auto}
 .menu-toggle svg{width:20px;height:20px;display:block}
 @media(max-width:768px){
 .topbar-mob-logo{display:flex}
+.topbar-mob-logo img{width:30px;height:30px;border-radius:8px}
+.topbar-mob-logo .topbar-mob-logo-text{font-size:13px}
 .topbar-left{gap:8px}
+}
+@media(max-width:480px){
+.topbar-mob-logo img{width:28px;height:28px}
+.topbar-mob-logo .topbar-mob-logo-text{font-size:12px}
+.topbar-mob-logo{gap:6px}
 }
 @media(max-width:992px){
 .grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}
@@ -320,10 +343,10 @@ textarea.form-control{min-height:120px}
     </a>
   </div>
   <div class="sidebar-user">
-    <div class="user-avatar"><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?></div>
+    <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="user-name"><?= h($user['username'] ?? '') ?></div>
     <div class="user-bal">Balance: $<?= $balance ?></div>
-    <span class="user-status">Active</span>
+    <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-label">Orders</div>
@@ -397,7 +420,7 @@ textarea.form-control{min-height:120px}
   <div class="topbar">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
       <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
       <div class="topbar-stats">
         <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>

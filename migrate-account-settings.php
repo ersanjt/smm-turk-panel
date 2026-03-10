@@ -11,6 +11,7 @@ $columns = [
     'timezone' => "ALTER TABLE users ADD COLUMN timezone VARCHAR(64) DEFAULT 'UTC'",
     'two_factor_enabled' => "ALTER TABLE users ADD COLUMN two_factor_enabled TINYINT(1) NOT NULL DEFAULT 0",
     'api_key_created_at' => "ALTER TABLE users ADD COLUMN api_key_created_at DATETIME NULL",
+    'avatar' => "ALTER TABLE users ADD COLUMN avatar VARCHAR(255) DEFAULT NULL",
 ];
 
 foreach ($columns as $name => $sql) {
