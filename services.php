@@ -1,5 +1,5 @@
 <?php
-// services.php – Services listing (SMMFollows-style layout)
+// services.php – Services listing (modern card-based layout)
 require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $pageTitle = 'Services';
@@ -25,7 +25,6 @@ if ($sort === 'id')   $orderBy = 'service_id ' . ($dir === 'desc' ? 'DESC' : 'AS
 $services   = $db->fetchAll("SELECT * FROM services $where ORDER BY $orderBy LIMIT 500", $params);
 $categories = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
 
-// Platform icons (same as index)
 $platformIcons = [
     'YouTube' => '▶', 'Instagram' => '📷', 'TikTok' => '🎵', 'Twitter' => '𝕏', 'Facebook' => 'f', 'LinkedIn' => 'in',
     'Telegram' => '✈', 'Spotify' => '♫', 'SoundCloud' => '🔊', 'Twitch' => '🎮', 'Discord' => '💬', 'Tumblr' => 't',
@@ -41,132 +40,540 @@ function platformIcon($category, $map) {
 }
 
 $newCutoff = date('Y-m-d H:i:s', time() - 7*24*3600);
+$sortLinks = [];
+$q = $_GET;
+foreach (['id' => 'ID', 'rate' => 'Price', 'min' => 'Min', 'max' => 'Max'] as $col => $label) {
+    $q2 = $q;
+    $q2['sort'] = $col;
+    $q2['dir'] = ($sort === $col && $dir === 'asc') ? 'desc' : 'asc';
+    $sortLinks[$col] = ['url' => path('services.php') . '?' . http_build_query($q2), 'label' => $label];
+}
+
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-.services-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:18px}
-.platform-row{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:6px 0;flex:1;min-width:0;-webkit-overflow-scrolling:touch}
-.platform-row::-webkit-scrollbar{height:6px}
-.platform-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fff;border:1.5px solid var(--border);font-size:12px;font-weight:600;white-space:nowrap;text-decoration:none;color:var(--text-muted);transition:all .2s;flex-shrink:0}
-.platform-chip:hover,.platform-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
-.services-search-row{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-.services-search-row .form-control{max-width:320px}
-.filter-select{min-width:180px}
-.new-services-banner{background:linear-gradient(135deg, rgba(227,10,23,.12), rgba(227,10,23,.06));border:1px solid rgba(227,10,23,.2);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px}
-.svc-table{width:100%;border-collapse:collapse;font-size:13px}
-.svc-table th{background:var(--bg);padding:12px 14px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);border-bottom:1.5px solid var(--border);white-space:nowrap}
-.svc-table th a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
-.svc-table th a:hover{color:var(--primary)}
-.svc-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-.svc-table tr:hover td{background:#fff8f9}
-.svc-id{display:flex;align-items:center;gap:8px}
-.svc-star{color:var(--border);font-size:16px;cursor:pointer;text-decoration:none;transition:color .2s}
-.svc-star:hover,.svc-star.fav{color:var(--orange)}
-.svc-name{font-size:12px;line-height:1.5;max-width:420px;color:var(--text)}
-.svc-name .svc-tag{display:inline-block;background:rgba(227,10,23,.1);color:var(--primary);font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px;margin-bottom:4px}
-.svc-rate{font-weight:700;color:var(--primary)}
-.svc-min{background:#fff5f6;border:1px solid rgba(227,10,23,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);min-width:70px;text-align:center}
-.svc-max{background:#f5f4ff;border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);min-width:70px;text-align:center}
-.svc-time{font-size:12px;color:var(--text-muted)}
-.svc-order{padding:6px 14px;font-size:12px;border-radius:8px}
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--border)}
+/* ---- Services page: modern layout ---- */
+.svc-page-hero {
+  background: linear-gradient(135deg, rgba(227,10,23,.08) 0%, rgba(227,10,23,.02) 50%, rgba(255,255,255,.6) 100%);
+  border: 1px solid rgba(227,10,23,.12);
+  border-radius: 20px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.svc-page-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(227,10,23,.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.svc-hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+.svc-hero-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.55;
+}
+
+/* Toolbar: search + sort + filters */
+.svc-toolbar-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.svc-search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  max-width: 420px;
+}
+.svc-search-form .form-control {
+  flex: 1;
+  min-width: 140px;
+  background: #fff;
+}
+.svc-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.svc-sort-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+.svc-sort-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.svc-sort-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.svc-sort-links a:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(227,10,23,.06);
+}
+.svc-sort-links a.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Category pills (horizontal scroll) */
+.svc-cats-wrap {
+  margin-bottom: 24px;
+}
+.svc-cats-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 0 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-height: 6px;
+}
+.svc-cats-scroll::-webkit-scrollbar { height: 6px; }
+.svc-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.svc-cat-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(227,10,23,.06);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(227,10,23,.12);
+}
+.svc-cat-pill.active {
+  background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(227,10,23,.3);
+}
+.svc-cat-pill .pill-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Results count */
+.svc-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.svc-results-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.svc-results-count strong { color: var(--text); }
+
+/* Service cards grid */
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+@media (max-width: 380px) {
+  .svc-grid { grid-template-columns: 1fr; }
+}
+
+.svc-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.svc-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.svc-card:hover {
+  border-color: rgba(227,10,23,.25);
+  box-shadow: 0 12px 32px rgba(227,10,23,.1);
+  transform: translateY(-4px);
+}
+.svc-card:hover::after { opacity: 1; }
+
+.svc-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.svc-card-id-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(227,10,23,.12), rgba(227,10,23,.06));
+  border: 1px solid rgba(227,10,23,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.svc-card-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.svc-card-cat .cat-icon { font-size: 13px; }
+
+.svc-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.9em;
+}
+
+.svc-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.svc-card-rate {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.svc-card-rate span { font-size: 12px; font-weight: 600; opacity: .85; }
+.svc-card-minmax {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.svc-card-minmax span {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.svc-card-minmax .min {
+  background: rgba(227,10,23,.08);
+  border: 1px solid rgba(227,10,23,.2);
+}
+.svc-card-minmax .max {
+  background: rgba(99,102,241,.08);
+  border: 1px solid rgba(99,102,241,.2);
+}
+
+.svc-card-cta {
+  margin-top: auto;
+  padding-top: 4px;
+}
+.svc-card-cta .btn {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 16px;
+  font-size: 13px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.svc-card-new {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 10px rgba(227,10,23,.35);
+}
+
+/* List view (optional compact) */
+.svc-list-view .svc-grid {
+  grid-template-columns: 1fr;
+}
+.svc-list-view .svc-card {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+}
+.svc-list-view .svc-card-header { flex: 0 0 auto; }
+.svc-list-view .svc-card-name {
+  flex: 1 1 280px;
+  min-height: 0;
+  -webkit-line-clamp: 1;
+}
+.svc-list-view .svc-card-meta { flex: 0 0 auto; margin-left: auto; }
+.svc-list-view .svc-card-cta { margin-top: 0; padding-top: 0; flex: 0 0 auto; }
+.svc-list-view .svc-card-cta .btn { width: auto; }
+
+/* View toggle */
+.svc-view-toggle {
+  display: flex;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+.svc-view-toggle button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.svc-view-toggle button:hover { color: var(--primary); }
+.svc-view-toggle button.active {
+  background: #fff;
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+/* Empty state */
+.svc-empty {
+  text-align: center;
+  padding: 56px 24px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  border-style: dashed;
+}
+.svc-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+.svc-empty-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.svc-empty-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.svc-empty .btn { min-width: 160px; }
+
+@media (max-width: 768px) {
+  .svc-page-hero { padding: 22px 20px; margin-bottom: 22px; }
+  .svc-toolbar-wrap { flex-direction: column; align-items: stretch; }
+  .svc-search-form { max-width: none; }
+  .svc-sort-wrap { justify-content: flex-start; }
+  .svc-sort-links { flex: 1; }
+  .svc-sort-links a { padding: 10px 12px; min-height: 44px; }
+  .svc-cat-pill { padding: 10px 14px; font-size: 12px; }
+  .svc-card { padding: 16px; }
+  .svc-card-name { font-size: 13px; }
+  .svc-card-rate { font-size: 16px; }
+  .svc-results-bar { flex-direction: column; align-items: flex-start; }
+  .svc-view-toggle button { min-height: 44px; padding: 10px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svc-card, .svc-cat-pill, .svc-sort-links a { transition: none; }
+  .svc-card:hover { transform: none; }
+  .svc-cat-pill:hover { transform: none; }
+}
 </style>
 
-<div class="services-toolbar">
-  <div class="platform-row">
-    <a class="platform-chip <?= !$cat ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>">Everything</a>
+<!-- Hero -->
+<section class="svc-page-hero" data-reveal>
+  <h1 class="svc-hero-title">Services</h1>
+  <p class="svc-hero-desc">Browse all SMM services by category. Filter, sort, and order in one click. New services added regularly.</p>
+</section>
+
+<!-- Search + Sort -->
+<div class="svc-toolbar-wrap" data-reveal>
+  <form method="GET" class="svc-search-form" role="search">
+    <?php if ($cat): ?><input type="hidden" name="cat" value="<?= h($cat) ?>"><?php endif; ?>
+    <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search services…" aria-label="Search services">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+  <div class="svc-sort-wrap">
+    <span class="svc-sort-label">Sort</span>
+    <div class="svc-sort-links">
+      <?php foreach ($sortLinks as $col => $info): ?>
+      <a href="<?= h($info['url']) ?>" class="<?= $sort === $col ? 'active' : '' ?>"><?= h($info['label']) ?> <?= $sort === $col ? ($dir === 'asc' ? '↑' : '↓') : '' ?></a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</div>
+
+<!-- Category pills -->
+<div class="svc-cats-wrap" data-reveal>
+  <div class="svc-cats-scroll" role="tablist">
+    <a class="svc-cat-pill <?= !$cat ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>">All</a>
     <?php foreach ($categories as $c):
       $icon = platformIcon($c['category'], $platformIcons);
     ?>
-    <a class="platform-chip <?= $cat === $c['category'] ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>?cat=<?= urlencode($c['category']) ?>"><?= h($icon) ?> <?= h($c['category']) ?></a>
+    <a class="svc-cat-pill <?= $cat === $c['category'] ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>?cat=<?= urlencode($c['category']) ?>"><span class="pill-icon"><?= h($icon) ?></span> <?= h($c['category']) ?></a>
     <?php endforeach; ?>
   </div>
-  <form method="GET" style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-    <?php if ($cat): ?><input type="hidden" name="cat" value="<?= h($cat) ?>"><?php endif; ?>
-    <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search" style="width:160px;">
-    <select name="cat" class="form-control filter-select" onchange="this.form.submit()">
-      <option value="">Filter By Category</option>
-      <?php foreach ($categories as $c): ?>
-      <option value="<?= h($c['category']) ?>" <?= $cat === $c['category'] ? 'selected' : '' ?>><?= h($c['category']) ?></option>
-      <?php endforeach; ?>
-    </select>
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
 </div>
 
-<div class="services-search-row">
-  <form method="GET" style="display:flex;gap:8px;">
-    <?php if ($cat): ?><input type="hidden" name="cat" value="<?= h($cat) ?>"><?php endif; ?>
-    <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search services by name…">
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
-</div>
-
-<div class="card" style="padding:0;overflow:hidden;">
-  <div class="table-wrap">
-    <table class="svc-table">
-      <thead>
-        <tr>
-          <?php
-$q = $_GET;
-$sortUrl = function($col) use ($q, $sort, $dir) {
-  $q['sort'] = $col;
-  $q['dir'] = ($sort === $col && $dir === 'asc') ? 'desc' : 'asc';
-  return path('services.php') . '?' . http_build_query($q);
-};
-?>
-          <th><a href="<?= $sortUrl('id') ?>">ID ▼</a></th>
-          <th>Service</th>
-          <th><a href="<?= $sortUrl('rate') ?>">Rate per 1000 ▼</a></th>
-          <th><a href="<?= $sortUrl('min') ?>">Min order ▼</a></th>
-          <th><a href="<?= $sortUrl('max') ?>">Max order ▼</a></th>
-          <th title="Completion time varies by service">Average completion time <span style="opacity:.6;">?</span></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $displayedNew = false;
-        foreach ($services as $s):
-          $displayRate = $s['rate'] * (1 + $s['markup']/100);
-          $isNew = isset($s['updated_at']) && $s['updated_at'] >= $newCutoff;
-          if ($isNew && !$displayedNew) {
-            echo '<tr><td colspan="7" class="new-services-banner" style="margin:0;border-radius:0;">🆕 New Added Services</td></tr>';
-            $displayedNew = true;
-          }
-          $orderUrl = path('index.php') . '?cat=' . urlencode($s['category']) . '&service=' . $s['service_id'];
-        ?>
-        <tr>
-          <td>
-            <div class="svc-id">
-              <a href="<?= h($orderUrl) ?>" class="svc-star" title="Order this service">★</a>
-              <strong><?= $s['service_id'] ?></strong>
-            </div>
-          </td>
-          <td>
-            <div class="svc-name">
-              <span class="svc-tag"><?= h($s['category']) ?></span>
-              <?= h(mb_substr($s['name'], 0, 200)) ?>
-            </div>
-          </td>
-          <td class="svc-rate">$<?= number_format($displayRate, 2) ?></td>
-          <td><span class="svc-min"><?= number_format($s['min']) ?></span></td>
-          <td><span class="svc-max"><?= number_format($s['max']) ?></span></td>
-          <td class="svc-time">—</td>
-          <td><a href="<?= h($orderUrl) ?>" class="btn btn-primary svc-order">Order</a></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+<!-- Results count + view toggle -->
+<div class="svc-results-bar" data-reveal>
+  <p class="svc-results-count"><strong><?= count($services) ?></strong> service<?= count($services) !== 1 ? 's' : '' ?></p>
+  <?php if (!empty($services)): ?>
+  <div class="svc-view-toggle" role="group" aria-label="View mode">
+    <button type="button" class="svc-view-btn active" data-view="grid" aria-pressed="true">Grid</button>
+    <button type="button" class="svc-view-btn" data-view="list" aria-pressed="false">List</button>
   </div>
+  <?php endif; ?>
 </div>
 
-<?php if (empty($services)): ?>
-<div class="card" style="text-align:center;padding:48px;">
-  <p style="color:var(--text-muted);margin-bottom:12px;">No services match your filters.</p>
-  <a href="<?= h(path('services.php')) ?>" class="btn btn-primary">Show all</a>
+<?php if (!empty($services)): ?>
+<div class="svc-list-container" id="svcListContainer">
+<div class="svc-grid" id="svcGrid">
+  <?php
+  $displayedNew = false;
+  foreach ($services as $s):
+    $displayRate = $s['rate'] * (1 + $s['markup']/100);
+    $isNew = isset($s['updated_at']) && $s['updated_at'] >= $newCutoff;
+    $orderUrl = path('index.php') . '?cat=' . urlencode($s['category']) . '&service=' . $s['service_id'];
+    $icon = platformIcon($s['category'], $platformIcons);
+  ?>
+  <article class="svc-card" data-reveal>
+    <?php if ($isNew): ?><span class="svc-card-new">New</span><?php endif; ?>
+    <div class="svc-card-header">
+      <span class="svc-card-id-badge">#<?= $s['service_id'] ?></span>
+      <span class="svc-card-cat"><span class="cat-icon"><?= h($icon) ?></span> <?= h($s['category']) ?></span>
+    </div>
+    <h2 class="svc-card-name"><?= h(mb_substr($s['name'], 0, 200)) ?></h2>
+    <div class="svc-card-meta">
+      <span class="svc-card-rate">$<?= number_format($displayRate, 2) ?> <span>/ 1K</span></span>
+      <div class="svc-card-minmax">
+        <span class="min">Min <?= number_format($s['min']) ?></span>
+        <span class="max">Max <?= number_format($s['max']) ?></span>
+      </div>
+    </div>
+    <div class="svc-card-cta">
+      <a href="<?= h($orderUrl) ?>" class="btn btn-primary">Order now</a>
+    </div>
+  </article>
+  <?php endforeach; ?>
+</div>
+</div>
+<?php else: ?>
+<div class="svc-empty" data-reveal>
+  <div class="svc-empty-icon">🔍</div>
+  <h2 class="svc-empty-title">No services found</h2>
+  <p class="svc-empty-desc">Try changing filters or search term to see more services.</p>
+  <a href="<?= h(path('services.php')) ?>" class="btn btn-primary">Show all services</a>
 </div>
 <?php endif; ?>
+
+<script>
+(function() {
+  var container = document.getElementById('svcListContainer');
+  if (!container) return;
+  var btns = document.querySelectorAll('.svc-view-btn');
+  btns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var view = this.getAttribute('data-view');
+      btns.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+      this.classList.add('active'); this.setAttribute('aria-pressed', 'true');
+      if (view === 'list') container.classList.add('svc-list-view');
+      else container.classList.remove('svc-list-view');
+    });
+  });
+})();
+</script>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>
