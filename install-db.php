@@ -90,7 +90,7 @@ ini_set(\'display_errors\', 1);
 ';
             $path = __DIR__ . '/config.php';
             if (file_put_contents($path, $config)) {
-                echo '<div class="msg ok">✅ config.php ذخیره شد. الان برو به <a href="/login.php" style="color:#4ade80">login.php</a> — بعد این فایل install-db.php را حذف کن!</div>';
+                echo '<div class="msg ok">✅ config.php ذخیره شد. الان برو به <a href="login.php" style="color:#4ade80">login.php</a> — بعد این فایل install-db.php را حذف کن!</div>';
             } else {
                 echo '<div class="msg err">❌ خطا در نوشتن config.php — دسترسی فایل را چک کن.</div>';
             }

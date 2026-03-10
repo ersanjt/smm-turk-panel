@@ -95,37 +95,45 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-.ticket-banner { background: #fff3e0; color: #b45309; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; border: 1px solid #fcd34d; }
-.ticket-banner a { color: var(--primary); font-weight: 600; }
+.ticket-banner { display: flex; align-items: flex-start; gap: 12px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: #92400e; padding: 14px 18px; border-radius: 12px; margin-bottom: 24px; font-size: 13px; border: 1px solid #fde68a; box-shadow: 0 1px 3px rgba(245,158,11,.08); }
+.ticket-banner-icon { flex-shrink: 0; width: 22px; height: 22px; margin-top: 1px; color: #d97706; }
+.ticket-banner a { color: var(--primary); font-weight: 600; text-underline-offset: 2px; }
+.ticket-card-title-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.ticket-card-title-wrap .card-title { margin-bottom: 0; }
+.ticket-card-title-wrap svg { width: 22px; height: 22px; color: var(--primary); flex-shrink: 0; }
 .ticket-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .ticket-cats input { display: none; }
-.ticket-cats label { display: inline-block; padding: 8px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
-.ticket-cats label:hover { border-color: var(--primary); }
-.ticket-cats input:checked + label { border-color: var(--primary); background: #fff8f9; color: var(--primary); }
+.ticket-cats label { display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .2s, background .2s, color .2s; background: #fff; }
+.ticket-cats label:hover { border-color: var(--primary-light); background: #fffafb; }
+.ticket-cats input:checked + label { border-color: var(--primary); background: linear-gradient(180deg, #fff8f9 0%, #ffeff1 100%); color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 .ticket-subcats { display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .ticket-subcats.visible { display: flex; }
-.ticket-history-card { background: #fff; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
-.ticket-search-wrap { display: flex; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); }
-.ticket-search-wrap input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; }
-.ticket-search-wrap button { padding: 10px 18px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
-.ticket-item { display: block; padding: 14px 18px; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; transition: background .1s; }
+.ticket-history-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.ticket-search-wrap { display: flex; gap: 10px; padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
+.ticket-search-wrap input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; }
+.ticket-search-wrap input:focus { border-color: var(--primary); outline: none; }
+.ticket-search-wrap button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 13px; transition: transform .2s, box-shadow .2s; }
+.ticket-search-wrap button:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(227,10,23,.25); }
+.ticket-search-wrap button svg { width: 16px; height: 16px; flex-shrink: 0; }
+.ticket-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; transition: background .15s; }
 .ticket-item:hover { background: #fff8f9; }
 .ticket-item:last-child { border-bottom: 0; }
-.ticket-item-id { font-weight: 700; color: var(--text); }
-.ticket-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-.ticket-item-status { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-left: 8px; }
+.ticket-item-id { font-weight: 700; color: var(--text); flex: 1 1 100%; }
+.ticket-item-meta { font-size: 12px; color: var(--text-muted); }
+.ticket-item-status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-left: auto; }
 .ticket-item-status.new, .ticket-item-status.open { background: #e0f2fe; color: #0369a1; }
 .ticket-item-status.answered { background: #dcfce7; color: #166534; }
 .ticket-item-status.closed { background: #f3f4f6; color: #6b7280; }
-.ticket-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; flex-wrap: wrap; }
-.ticket-pagination a, .ticket-pagination span { padding: 8px 12px; border-radius: 8px; font-size: 13px; text-decoration: none; color: var(--text); border: 1px solid var(--border); }
+.ticket-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; flex-wrap: wrap; }
+.ticket-pagination a, .ticket-pagination span { padding: 8px 14px; border-radius: 10px; font-size: 13px; text-decoration: none; color: var(--text); border: 1.5px solid var(--border); transition: all .2s; }
 .ticket-pagination a:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .ticket-pagination .current { background: var(--primary); color: #fff; border-color: var(--primary); }
 .attach-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 </style>
 
 <div class="ticket-banner">
-  To get a quicker response to your inquiries or issues, please refer to our <a href="<?= h(path('home.php')) ?>#faq">FAQs page</a> before submitting a ticket.
+  <span class="ticket-banner-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+  <span>To get a quicker response to your inquiries or issues, please refer to our <a href="<?= h(path('home.php')) ?>#faq">FAQs page</a> before submitting a ticket.</span>
 </div>
 
 <div class="grid2" style="align-items: start; gap: 24px;">
@@ -173,15 +181,15 @@ require_once __DIR__ . '/layouts/header.php';
         <div class="attach-hint">Max 5MB per file. Allowed: images, PDF, TXT, DOC.</div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;">Submit ticket</button>
+      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Submit ticket</button>
     </form>
   </div>
 
   <div class="ticket-history-card">
     <div class="card-title" style="margin:0;padding:18px 18px 0;">Tickets History</div>
     <form method="GET" class="ticket-search-wrap">
-      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search">
-      <button type="submit">🔍 Search</button>
+      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search tickets…" aria-label="Search tickets">
+      <button type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Search</button>
     </form>
     <?php if (empty($tickets)): ?>
     <div style="padding:40px 18px;text-align:center;color:var(--text-muted);">

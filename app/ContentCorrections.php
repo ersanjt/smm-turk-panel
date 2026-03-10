@@ -51,6 +51,9 @@ class ContentCorrections {
 
     /** Avoid double-encoding: store & not &amp; so h() outputs &amp; once */
     private static function decodeAmp(string $s): string {
-        return str_replace('&amp;', '&', $s);
+        while (str_contains($s, '&amp;')) {
+            $s = str_replace('&amp;', '&', $s);
+        }
+        return $s;
     }
 }

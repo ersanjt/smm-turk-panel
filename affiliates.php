@@ -7,7 +7,7 @@ $user = $auth->getCurrentUser();
 
 $baseUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $refCode = $user['referral_code'] ?? '';
-$refLink = $refCode ? $baseUrl . '/c/' . $refCode : $baseUrl . '/login.php?mode=register';
+$refLink = $refCode ? ($baseUrl ?: '') . path('c/' . $refCode) : ($baseUrl ?: '') . path('login.php') . '?mode=register';
 $commission = (float)($db->getSetting('referral_commission') ?: 2);
 $minPayout  = (float)($db->getSetting('referral_min_payout') ?: 10);
 

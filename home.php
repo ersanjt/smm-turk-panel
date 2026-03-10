@@ -13,7 +13,7 @@ $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $langParam = '?lang=';
 $currentPath = 'home.php';
 $canonicalUrl = $siteUrl ? $siteUrl . '/' . $currentPath : '';
-$logoUrl = $siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=2') : path('assets/img/logo-icon.svg?v=2');
+$logoUrl = $siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=3') : path('assets/img/logo-icon.svg?v=3');
 $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 ?>
 <!DOCTYPE html>
@@ -45,8 +45,8 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
     <?php foreach (array_diff(Lang::allowed(), [$lang]) as $alt): $loc = $alt === 'tr' ? 'tr_TR' : ($alt === 'de' ? 'de_DE' : ($alt === 'fr' ? 'fr_FR' : 'en_US')); ?>
     <meta property="og:locale:alternate" content="<?= h($loc) ?>">
     <?php endforeach; ?>
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
-    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl ?: path('')) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>","address":{"@type":"PostalAddress","addressCountry":"<?= h($geoRegion) ?>"}}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,7 +143,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             min-height: 64px; padding: 10px 0;
         }
         .nav-logo {
-            display: flex; align-items: center; gap: 14px; font-family: 'Syne', sans-serif; font-size: 23px; font-weight: 800;
+            display: flex; align-items: center; gap: 14px; font-family: 'Syne', sans-serif; font-size: 23px; font-weight: 800; letter-spacing: -0.04em;
             color: var(--dark); text-decoration: none; min-height: 44px; letter-spacing: -0.03em;
             transition: opacity .2s, transform .2s;
         }
@@ -163,7 +163,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .nav-logo:hover .nav-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.2) inset; }
         .nav-logo:hover .nav-logo-icon::after { transform: translateX(100%); }
         .nav-logo img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
-        .nav-logo span { color: var(--primary); }
+        .nav-logo span { color: var(--primary); letter-spacing: -0.02em; }
         .nav-logo-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-left: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
         .nav-links { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .nav-links a {
@@ -572,7 +572,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 <header class="nav" role="banner">
     <div class="nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>" alt="" width="24" height="24" fetchpriority="high"></span>
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="24" height="24" fetchpriority="high"></span>
             <span>SMM<span>Turk</span></span><span class="nav-logo-tag">SMM Panel</span>
         </a>
         <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="Menu" aria-expanded="false" aria-controls="navMobDrawer">☰</button>

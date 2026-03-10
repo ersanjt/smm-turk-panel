@@ -38,16 +38,18 @@ if (empty($_SESSION['csrf_token'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — Set new password</title>
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
 .auth-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
-.auth-logo img{width:44px;height:44px;border-radius:12px}
-.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a0a0e}
-.auth-logo .logo span{color:#E30A17}
+.auth-logo img{width:44px;height:44px;border-radius:12px;flex-shrink:0}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a0a0e;letter-spacing:-.04em}
+.auth-logo .logo span{color:#E30A17;letter-spacing:-.02em}
 .tagline{text-align:center;color:#6b4a50;font-size:13px;margin-bottom:28px}
 .form-group{margin-bottom:14px}
 .form-label{display:block;font-size:11px;font-weight:700;color:#6b4a50;margin-bottom:5px;text-transform:uppercase}
@@ -65,7 +67,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="auth-box">
   <div class="auth-logo">
-    <img src="/assets/img/logo-icon.svg?v=2" alt="" width="44" height="44">
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44">
     <span class="logo">SMM<span>Turk</span></span>
   </div>
   <div class="tagline">Set your new password</div>

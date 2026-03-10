@@ -9,7 +9,7 @@ $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $canonicalPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $canonicalUrl = $siteUrl ? $siteUrl . $canonicalPath : '';
 $pageDesc = $pageDescription ?? 'SMM Turk — Cheapest SMM panel. Instagram, YouTube, TikTok growth. Reseller API, crypto deposits, 24/7 support.';
-$pageImg  = $pageImage ?? ($siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=2') : path('assets/img/logo-icon.svg?v=2'));
+$pageImg  = $pageImage ?? ($siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=3') : path('assets/img/logo-icon.svg?v=3'));
 $pageOgTitle = $pageTitle ?? 'Dashboard';
 $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 ?>
@@ -39,8 +39,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 <meta name="twitter:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta name="twitter:description" content="<?= h($pageDesc) ?>">
 <meta name="twitter:image" content="<?= h($pageImg) ?>">
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"<?= h($pageDesc) ?>"}</script>
 <style>
@@ -53,14 +55,19 @@ a{text-decoration:none;color:inherit}
 img{max-width:100%;height:auto}
 .main{min-width:0;overflow-x:hidden}
 .sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom)}
-.sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 100%)}
+.sidebar-close{display:none;position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:10px;border:none;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;align-items:center;justify-content:center;transition:background .2s,transform .2s;z-index:2}
+.sidebar-close:hover{background:rgba(255,255,255,.18)}
+.sidebar-close svg{width:20px;height:20px}
+.sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 100%);position:relative}
+.sidebar-mob-balance{display:none;padding:12px 18px;background:rgba(227,10,23,.15);border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--primary-light);font-weight:700}
+.sidebar-mob-balance span{opacity:.9;font-weight:600}
 .sidebar-logo a{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;transition:opacity .2s}
 .sidebar-logo a:hover{opacity:.92}
 .logo-icon{width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--primary),var(--primary-dark));box-shadow:0 4px 14px rgba(227,10,23,.3),0 1px 0 rgba(255,255,255,.15) inset;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
 .sidebar-logo:hover .logo-icon{transform:scale(1.06) rotate(-3deg);box-shadow:0 6px 20px rgba(227,10,23,.4),0 1px 0 rgba(255,255,255,.15) inset}
 .logo-icon img{width:22px;height:22px;filter:brightness(0) invert(1)}
-.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.03em}
-.logo-text span{color:var(--primary-light)}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.04em}
+.logo-text span{color:var(--primary-light);letter-spacing:-.02em}
 .sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
 .user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px}
 .user-name{color:#fff;font-size:13px;font-weight:600}
@@ -76,14 +83,24 @@ img{max-width:100%;height:auto}
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0;max-width:100%}
 .topbar{background:linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(255,252,253,.95) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 4px 20px rgba(26,10,14,.04);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));padding-top:max(0,env(safe-area-inset-top));min-height:60px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary) 30%,var(--primary-dark) 50%,var(--primary) 70%,transparent);background-size:200% 100%;opacity:.6;pointer-events:none;animation:topbarShine 4s ease-in-out infinite}
+.topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.topbar-mob-logo{display:none;align-items:center;gap:8px;text-decoration:none;color:var(--text);flex-shrink:0}
+.topbar-mob-logo img{width:32px;height:32px;border-radius:10px}
+.topbar-mob-logo span{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em}
+.topbar-mob-logo span b{color:var(--primary)}
 .topbar-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:#fff;margin-right:8px;box-shadow:0 2px 8px rgba(227,10,23,.25)}
+.topbar-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stat-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.8);border-radius:12px;font-size:12px;font-weight:600;border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .stat-pill .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-right:4px;letter-spacing:.5px}
 .stat-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
 .si-blue{background:var(--primary)}.si-green{background:var(--green)}.si-orange{background:var(--orange)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px;border-radius:10px;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .2s;font-size:15px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.icon-btn svg{width:18px;height:18px;flex-shrink:0}
 .icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(227,10,23,.25)}
+.topbar-add-funds{display:inline-flex;align-items:center;gap:6px}
+.topbar-add-funds .icon-btn{width:auto;min-width:36px;padding:0 10px}
+.topbar-add-funds .icon-btn svg{width:16px;height:16px}
 .content{padding:24px;flex:1}
 .card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out),border-color var(--motion-duration) ease}
 .card:hover{box-shadow:0 16px 48px rgba(227,10,23,.1);transform:translateY(-4px)}
@@ -166,6 +183,11 @@ img{max-width:100%;height:auto}
 .table th,.table td{word-break:break-word}
 .svc-table th,.svc-table td{word-break:break-word}
 .menu-toggle{display:none;border:1px solid var(--border)}
+.menu-toggle svg{width:20px;height:20px;display:block}
+@media(max-width:768px){
+.topbar-mob-logo{display:flex}
+.topbar-left{gap:8px}
+}
 @media(max-width:992px){
 .grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}
 .content{padding:16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
@@ -177,28 +199,37 @@ img{max-width:100%;height:auto}
 .mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(255,255,255,.98);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:8px 6px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-bottom:max(8px,env(safe-area-inset-bottom));justify-content:space-around;align-items:center;box-shadow:0 -4px 24px rgba(0,0,0,.06)}
 .mob-bottom-nav a,.mob-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 6px;min-height:52px;min-width:56px;border-radius:12px;font-size:10px;font-weight:600;color:var(--text-muted);text-decoration:none;background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;flex:1;max-width:80px;box-sizing:border-box}
 .mob-bottom-nav a:hover,.mob-bottom-nav button:hover{background:var(--primary);color:#fff}
-.mob-bottom-nav a.active,.mob-bottom-nav a:active{background:rgba(227,10,23,.1);color:var(--primary)}
-.mob-bottom-nav .mob-nav-icon{font-size:18px;line-height:1}
+.mob-bottom-nav a.active{background:linear-gradient(180deg,rgba(227,10,23,.12) 0%,rgba(227,10,23,.06) 100%);color:var(--primary);border-radius:12px}
+.mob-bottom-nav a.active .mob-nav-icon,.mob-bottom-nav a.active .mob-nav-icon svg{color:inherit}
+.mob-bottom-nav button{color:inherit}
+.mob-bottom-nav .mob-nav-icon{font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+.mob-bottom-nav .mob-nav-icon svg{width:22px;height:22px;flex-shrink:0}
+.mob-bottom-nav a.active .mob-nav-icon,.mob-bottom-nav a.active .mob-nav-icon svg{color:var(--primary)}
 @media(max-width:768px){
 .mob-bottom-nav{display:flex}
 .main{padding-bottom:max(80px,calc(72px + env(safe-area-inset-bottom)))}
 .footer{padding-bottom:max(20px,env(safe-area-inset-bottom))}
 .footer-inner .footer-ticket{min-height:48px;padding:12px 20px;font-size:13px}
-.sidebar{width:min(260px,85vw);transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 24px rgba(0,0,0,.15);padding-left:env(safe-area-inset-left)}
+.sidebar{width:min(280px,88vw);transform:translateX(-100%);transition:transform .3s var(--ease-out);box-shadow:4px 0 32px rgba(0,0,0,.2);padding-left:env(safe-area-inset-left);padding-top:env(safe-area-inset-top)}
 body.sidebar-open .sidebar{transform:translateX(0)}
 body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
 body.sidebar-open{overflow:hidden;touch-action:none}
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
-.sidebar .nav-item{min-height:44px;padding:12px 14px}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:99;opacity:0;pointer-events:none;transition:opacity .25s;cursor:pointer}
+.sidebar .nav-item{min-height:48px;padding:12px 14px;font-size:14px}
+.sidebar-close{display:flex}
+.sidebar-mob-balance{display:block}
 .main{margin-left:0}
-.menu-toggle{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;border:none;background:var(--bg);border-radius:10px;cursor:pointer;color:var(--text);font-size:20px;margin-right:8px}
+.menu-toggle{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;border:none;background:var(--bg);border-radius:12px;cursor:pointer;color:var(--text);margin-right:4px;transition:background .2s,color .2s}
 .menu-toggle:hover{background:var(--primary);color:#fff}
-.topbar{padding:10px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));flex-wrap:wrap;gap:8px;min-height:54px}
-.topbar .stat-pill{font-size:11px;padding:5px 10px}
-.topbar .stat-pill:nth-child(n+4){display:none}
-.topbar-right{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:wrap;gap:6px}
+.menu-toggle svg{width:22px;height:22px}
+.topbar{padding:10px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));flex-wrap:wrap;gap:8px;min-height:56px}
+.topbar-left{flex:0 1 auto;min-width:0}
+.topbar .stat-pill{font-size:11px;padding:6px 10px}
+.topbar .topbar-stats .stat-pill:nth-child(n+3){display:none}
+.topbar-right{margin-left:auto;width:auto;justify-content:flex-end;flex-wrap:nowrap;gap:6px}
 .topbar-right .icon-btn{width:40px;height:40px;min-width:40px;min-height:40px}
-.topbar-right .btn{padding:8px 14px;font-size:12px}
+.topbar-right .icon-btn svg{width:20px;height:20px}
+.topbar-right .btn{padding:8px 14px;font-size:12px;min-height:40px}
 .grid2,.grid3,.grid4{grid-template-columns:1fr}
 .admin-grid{grid-template-columns:1fr;gap:12px}
 .admin-card{flex-direction:row;padding:16px;gap:12px}
@@ -281,9 +312,11 @@ textarea.form-control{min-height:120px}
 
 <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 <aside class="sidebar" id="sidebar" role="navigation">
+  <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <div class="sidebar-mob-balance" aria-hidden="true">Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>" alt="" width="22" height="22"></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="22" height="22"></span>
       <span class="logo-text">SMM<span>Turk</span></span>
     </a>
   </div>
@@ -363,16 +396,21 @@ textarea.form-control{min-height:120px}
 
 <div class="main">
   <div class="topbar">
-    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
-    <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
-    <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
-    <div class="stat-pill"><span class="stat-label">Spent</span> $<?= $spent ?></div>
+    <div class="topbar-left">
+      <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt=""><span>SMM<b>Turk</b></span></a>
+      <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
+      <div class="topbar-stats">
+        <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
+        <div class="stat-pill"><span class="stat-label">Spent</span> $<?= $spent ?></div>
+      </div>
+    </div>
     <div class="topbar-right">
-      <a href="<?= h(path('services.php')) ?>" class="icon-btn" title="Search services">🔍</a>
-      <a href="<?= h(path('add-funds.php')) ?>" class="icon-btn" title="Add Funds">💳</a>
-      <a href="<?= h(path('account-settings.php')) ?>" class="icon-btn" title="Account Settings">⚙️</a>
-      <a href="<?= h(path('tickets.php')) ?>" class="icon-btn" title="Support">🔔</a>
-      <a href="<?= h(path('logout.php')) ?>" class="icon-btn" title="Logout">🚪</a>
+      <a href="<?= h(path('services.php')) ?>" class="icon-btn" title="Search services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></a>
+      <a href="<?= h(path('add-funds.php')) ?>" class="icon-btn" title="Add Funds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></a>
+      <a href="<?= h(path('account-settings.php')) ?>" class="icon-btn" title="Account Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
+      <a href="<?= h(path('tickets.php')) ?>" class="icon-btn" title="Support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
+      <a href="<?= h(path('logout.php')) ?>" class="icon-btn" title="Logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
       <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary" style="padding:7px 16px;font-size:12px;">+ Add Funds</a>
     </div>
   </div>

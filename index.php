@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/app/init.php';
 if (!$auth->isLoggedIn()) {
-    header('Location: ' . url('home.php'));
+    header('Location: ' . url('home.php'), true, 302);
     exit;
 }
 
@@ -53,22 +53,27 @@ if ($preselectServiceId) {
         $catParam = trim($preselect['category'] ?? '');
     }
 }
-// When no category in URL: show all services and only "All" (+ ) is active
+// When no category in URL: show all services and only "All" (+ ) is active (limit when "All" to avoid huge page)
 $selectedCat = ($catParam !== null && $catParam !== '') ? $catParam : '';
 if ($selectedCat !== '') {
     $services = $db->fetchAll(
         "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? ORDER BY service_id",
         [$selectedCat]
     );
+    $showAllLimitHint = false;
 } else {
-    $services = $db->fetchAll("SELECT * FROM services WHERE status='active' ORDER BY service_id");
+    $totalServicesCount = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
+    $services = $db->fetchAll("SELECT * FROM services WHERE status='active' ORDER BY service_id LIMIT 1500");
+    $showAllLimitHint = $totalServicesCount > 1500;
 }
 $searchQ = trim($_GET['q'] ?? '');
-if ($searchQ) {
+if ($searchQ !== '') {
     $services = array_filter($services, function($s) use ($searchQ) {
         return stripos($s['name'], $searchQ) !== false;
     });
+    $services = array_values($services);
 }
+$hasServices = count($services) > 0;
 
 // Platform icons (category slug or name => emoji/label for circular icon)
 $platformIcons = [
@@ -89,6 +94,7 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .order-tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:0}
 .order-tab{padding:10px 18px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;text-decoration:none;color:var(--text-muted);transition:all .2s}
 .order-tab:hover{color:var(--primary);background:var(--bg)}
@@ -133,13 +139,15 @@ require_once __DIR__ . '/layouts/header.php';
 
 <!-- Search & category row -->
 <div class="order-form-row">
-  <form method="GET" style="display:flex;gap:8px;flex:1;max-width:400px;">
+  <form method="GET" style="display:flex;gap:8px;flex:1;max-width:400px;" role="search" aria-label="Filter services by name">
     <?php if ($selectedCat): ?><input type="hidden" name="cat" value="<?= h($selectedCat) ?>"><?php endif; ?>
-    <input type="text" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search My Service" style="flex:1;">
+    <label for="search-service" class="sr-only">Search services</label>
+    <input type="search" id="search-service" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search My Service" style="flex:1;" autocomplete="off">
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <select class="form-control" style="width:auto;min-width:180px;" onchange="location.href='<?= h(path('index.php')) ?>?cat='+encodeURIComponent(this.value)">
+    <label for="cat-select" class="sr-only">Category</label>
+    <select id="cat-select" class="form-control" style="width:auto;min-width:180px;" onchange="location.href='<?= h(path('index.php')) ?>'+(this.value ? '?cat='+encodeURIComponent(this.value) : '')">
       <option value="" <?= $selectedCat === '' ? 'selected' : '' ?>>Search By Category</option>
       <?php foreach ($categories as $c): ?>
       <option value="<?= h($c['category']) ?>" <?= $c['category'] === $selectedCat ? 'selected' : '' ?>><?= h($c['category']) ?></option>
@@ -162,18 +170,25 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <?php if ($error): ?>
-<div class="alert alert-error">❌ <?= h($error) ?></div>
+<div class="alert alert-error"><?= h($error) ?></div>
+<?php endif; ?>
+
+<?php if ($showAllLimitHint): ?>
+<div class="alert alert-info" style="margin-bottom:12px;">Showing first 1,500 services. Select a category above to narrow down.</div>
+<?php endif; ?>
+<?php if (!$hasServices): ?>
+<div class="alert alert-warning">No services match your filter. Try another category or clear the search. <a href="<?= h(path('index.php')) ?>">Show all categories</a></div>
 <?php endif; ?>
 
 <div class="order-grid">
   <div class="card">
-    <div class="card-title">📦 New Order</div>
-    <form method="POST">
-      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+    <div class="card-title">New Order</div>
+    <form method="POST" action="<?= h(path('index.php')) ?>" id="order-form">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
       <div class="form-group">
-        <label class="form-label">Service</label>
-        <select name="service_id" id="service-select" class="form-control" onchange="updateDesc()" required>
+        <label class="form-label" for="service-select">Service</label>
+        <select name="service_id" id="service-select" class="form-control" onchange="updateDesc()" required aria-required="true" <?= !$hasServices ? 'disabled' : '' ?>>
           <option value="">— Select a service —</option>
           <?php foreach ($services as $s):
             $updatedAt = isset($s['updated_at']) ? strtotime($s['updated_at']) : 0;
@@ -193,15 +208,15 @@ require_once __DIR__ . '/layouts/header.php';
       </div>
 
       <div class="form-group">
-        <label class="form-label">Link</label>
-        <input type="url" name="link" id="order-link" class="form-control" placeholder="https://..." required>
+        <label class="form-label" for="order-link">Link</label>
+        <input type="url" name="link" id="order-link" class="form-control" placeholder="https://..." required aria-required="true">
       </div>
 
       <div class="form-group">
-        <label class="form-label">Quantity</label>
+        <label class="form-label" for="order-qty">Quantity</label>
         <input type="number" name="quantity" id="order-qty" class="form-control"
-               placeholder="Enter quantity" oninput="calcPrice()" required min="1">
-        <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;" id="qty-hint">—</div>
+               placeholder="Enter quantity" oninput="calcPrice()" required min="1" aria-describedby="qty-hint">
+        <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;" id="qty-hint" aria-live="polite">—</div>
       </div>
 
       <div class="form-group">
@@ -221,7 +236,7 @@ require_once __DIR__ . '/layouts/header.php';
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block">Submit</button>
+      <button type="submit" class="btn btn-primary btn-block" <?= !$hasServices ? 'disabled' : '' ?>>Submit</button>
     </form>
   </div>
 
@@ -233,83 +248,89 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <script>
-const services = <?= json_encode(array_column($services, null, 'service_id')) ?>;
-const preselectServiceId = <?= $preselectServiceId ? (int)$preselectServiceId : 0 ?>;
-
 (function(){
+  var preselectServiceId = <?= $preselectServiceId ? (int)$preselectServiceId : 0 ?>;
   if (preselectServiceId) {
     var sel = document.getElementById('service-select');
-    if (sel && sel.querySelector('option[value="' + preselectServiceId + '"]')) {
+    if (sel && !sel.disabled && sel.querySelector('option[value="' + preselectServiceId + '"]')) {
       sel.value = preselectServiceId;
-      updateDesc();
+      if (typeof updateDesc === 'function') updateDesc();
     }
   }
 })();
 
 function updateDesc() {
-  const sel = document.getElementById('service-select');
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt.value) return;
-
-  const rate   = parseFloat(opt.dataset.rate);
-  const min    = parseInt(opt.dataset.min);
-  const max    = parseInt(opt.dataset.max);
-  const markup = parseFloat(opt.dataset.markup || 0);
-  const markup_rate = rate * (1 + markup/100);
-  const refill = opt.dataset.refill;
-
-  document.getElementById('rate-display').textContent = '$' + markup_rate.toFixed(5);
-  document.getElementById('qty-hint').textContent = 'Min: ' + min.toLocaleString() + ' — Max: ' + max.toLocaleString();
-  document.getElementById('order-qty').min = min;
-  document.getElementById('order-qty').max = max;
-  document.getElementById('order-qty').placeholder = 'Min: ' + min.toLocaleString() + ' — Max: ' + max.toLocaleString();
-
-  const cat = (opt.dataset.category || '').toLowerCase();
-  const exampleLinks = cat.indexOf('youtube') !== -1
+  var sel = document.getElementById('service-select');
+  var descEl = document.getElementById('desc-content');
+  var rateEl = document.getElementById('rate-display');
+  var qtyHint = document.getElementById('qty-hint');
+  var orderQty = document.getElementById('order-qty');
+  if (!sel || !descEl || !rateEl || !qtyHint || !orderQty || sel.disabled) return;
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) {
+    descEl.textContent = 'Select a service to see details.';
+    rateEl.textContent = '—';
+    qtyHint.textContent = '—';
+    return;
+  }
+  var rate   = parseFloat(opt.dataset.rate) || 0;
+  var min    = parseInt(opt.dataset.min, 10) || 0;
+  var max    = parseInt(opt.dataset.max, 10) || 0;
+  var markup = parseFloat(opt.dataset.markup) || 0;
+  var markup_rate = rate * (1 + markup/100);
+  var refill = opt.dataset.refill || 'No';
+  rateEl.textContent = '$' + markup_rate.toFixed(5);
+  qtyHint.textContent = 'Min: ' + min.toLocaleString() + ' — Max: ' + max.toLocaleString();
+  orderQty.min = min;
+  orderQty.max = max;
+  orderQty.placeholder = 'Min: ' + min.toLocaleString() + ' — Max: ' + max.toLocaleString();
+  var cat = (opt.dataset.category || '').toLowerCase();
+  var exampleLinks = cat.indexOf('youtube') !== -1
     ? 'https://www.youtube.com/watch?v=xxxxxxx\nhttps://youtu.be/xxxxxx'
     : cat.indexOf('instagram') !== -1
     ? 'https://www.instagram.com/username/\nhttps://www.instagram.com/p/xxxxx/'
     : 'https://example.com/your-link';
-  document.getElementById('desc-content').innerHTML = `
-    <div class="desc-item"><strong>Quality:</strong> High Quality</div>
-    <div class="desc-item"><strong>Start:</strong> 0-6 Hours</div>
-    <div class="desc-item"><strong>Speed:</strong> Up to service limit</div>
-    <div class="desc-item"><strong>Refill:</strong> ${refill}</div>
-    <div class="desc-item"><strong>Min:</strong> ${min.toLocaleString()} — <strong>Max:</strong> ${max.toLocaleString()}</div>
-    <div class="desc-item"><strong>Rate per 1000:</strong> $${markup_rate.toFixed(5)}</div>
-    <div style="margin-top:12px;"><strong style="color:var(--text);">Example links:</strong><pre style="font-size:11px;background:var(--bg);padding:10px;border-radius:8px;margin-top:6px;white-space:pre-wrap;word-break:break-all;">${exampleLinks}</pre></div>
-    <div class="desc-item" style="margin-top:8px;">Possible engagements (likes, comments, subscribers) depend on the service.</div>
-    <ul class="desc-notes" style="list-style:none;padding:0;margin:0;">
-      <li><span class="asterisk">*</span> Content must be PUBLIC and open for all countries.</li>
-      <li><span class="asterisk">*</span> Check the link format before placing the order.</li>
-      <li><span class="asterisk">*</span> Do not change your post link, username, or account setting after ordering.</li>
-      <li><span class="asterisk">*</span> If you set account to private or delete it, the order may be marked completed without refund.</li>
-    </ul>
-  `;
+  descEl.innerHTML = '<div class="desc-item"><strong>Quality:</strong> High Quality</div>' +
+    '<div class="desc-item"><strong>Start:</strong> 0-6 Hours</div>' +
+    '<div class="desc-item"><strong>Speed:</strong> Up to service limit</div>' +
+    '<div class="desc-item"><strong>Refill:</strong> ' + (refill === 'Yes' ? 'Yes' : 'No') + '</div>' +
+    '<div class="desc-item"><strong>Min:</strong> ' + min.toLocaleString() + ' — <strong>Max:</strong> ' + max.toLocaleString() + '</div>' +
+    '<div class="desc-item"><strong>Rate per 1000:</strong> $' + markup_rate.toFixed(5) + '</div>' +
+    '<div style="margin-top:12px;"><strong style="color:var(--text);">Example links:</strong><pre style="font-size:11px;background:var(--bg);padding:10px;border-radius:8px;margin-top:6px;white-space:pre-wrap;word-break:break-all;">' + exampleLinks.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div>' +
+    '<div class="desc-item" style="margin-top:8px;">Possible engagements (likes, comments, subscribers) depend on the service.</div>' +
+    '<ul class="desc-notes" style="list-style:none;padding:0;margin:0;">' +
+    '<li><span class="asterisk">*</span> Content must be PUBLIC and open for all countries.</li>' +
+    '<li><span class="asterisk">*</span> Check the link format before placing the order.</li>' +
+    '<li><span class="asterisk">*</span> Do not change your post link, username, or account setting after ordering.</li>' +
+    '<li><span class="asterisk">*</span> If you set account to private or delete it, the order may be marked completed without refund.</li></ul>';
   calcPrice();
 }
 
 function filterNew() {
-  const check = document.getElementById('newOnlyCheck');
-  const sel = document.getElementById('service-select');
-  const cutoff = (Date.now()/1000) - (7*24*60*60);
-  for (let i = 1; i < sel.options.length; i++) {
-    const opt = sel.options[i];
-    const updated = parseInt(opt.dataset.updated || 0, 10);
+  var check = document.getElementById('newOnlyCheck');
+  var sel = document.getElementById('service-select');
+  if (!check || !sel || sel.disabled) return;
+  var cutoff = (Date.now()/1000) - (7*24*60*60);
+  for (var i = 1; i < sel.options.length; i++) {
+    var opt = sel.options[i];
+    var updated = parseInt(opt.dataset.updated || 0, 10);
     opt.style.display = check.checked && updated < cutoff ? 'none' : '';
   }
 }
 
 function calcPrice() {
-  const sel    = document.getElementById('service-select');
-  const opt    = sel.options[sel.selectedIndex];
-  if (!opt.value) return;
-  const rate   = parseFloat(opt.dataset.rate || 0);
-  const markup = parseFloat(opt.dataset.markup || 0);
-  const markup_rate = rate * (1 + markup/100);
-  const qty    = parseFloat(document.getElementById('order-qty').value) || 0;
-  const price  = (qty / 1000) * markup_rate;
-  document.getElementById('price-display').textContent = '$' + price.toFixed(4);
+  var sel = document.getElementById('service-select');
+  var priceEl = document.getElementById('price-display');
+  var orderQty = document.getElementById('order-qty');
+  if (!sel || !priceEl || !orderQty || sel.disabled) return;
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) { priceEl.textContent = '$0.0000'; return; }
+  var rate   = parseFloat(opt.dataset.rate) || 0;
+  var markup = parseFloat(opt.dataset.markup) || 0;
+  var markup_rate = rate * (1 + markup/100);
+  var qty    = parseFloat(orderQty.value, 10) || 0;
+  var price  = (qty / 1000) * markup_rate;
+  priceEl.textContent = '$' + price.toFixed(4);
 }
 </script>
 

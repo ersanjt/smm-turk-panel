@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#E30A17"/>
-      <stop offset="100%" stop-color="#C41E3A"/>
+      <stop offset="100%" stop-color="#B90812"/>
     </linearGradient>
   </defs>
-  <rect width="40" height="40" rx="10" fill="url(#g)"/>
-  <!-- Stylized S -->
-  <path d="M26 11 A 7 6 0 0 0 14 20 A 7 6 0 0 1 26 29" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <rect width="40" height="40" rx="10" fill="url(#bg)"/>
+  <!-- S for SMM - clean double arc -->
+  <path d="M26 11.5 A 7 6.5 0 0 0 14 20 A 7 6.5 0 0 1 26 28.5" stroke="white" stroke-width="3.8" stroke-linecap="round" fill="none"/>
 </svg>
