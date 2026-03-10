@@ -69,6 +69,46 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             --shadow-sm: 0 2px 8px rgba(26, 10, 14, 0.06);
             --shadow-md: 0 12px 40px rgba(26, 10, 14, 0.08);
             --shadow-lg: 0 24px 64px rgba(26, 10, 14, 0.1);
+            /* Motion design tokens */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --duration-fast: 0.2s;
+            --duration-normal: 0.35s;
+            --duration-slow: 0.6s;
+        }
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.9; transform: scale(1.05) translate(2%, 1%); }
+        }
+        @keyframes floatBlob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(8px, -12px) scale(1.02); }
+            66% { transform: translate(-5px, 8px) scale(0.98); }
+        }
+        @keyframes floatBlob2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-10px, -8px); }
+        }
+        @keyframes heroReveal {
+            from { opacity: 0; transform: translateY(28px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes btnPulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+            50% { box-shadow: 0 4px 28px rgba(255,255,255,.35), 0 0 0 1px rgba(255,255,255,.2); }
+        }
+        @keyframes navLineShine {
+            0% { background-position: -100% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes logoShine {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+        }
+        @keyframes statFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -91,7 +131,9 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .nav::after {
             content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
             background: linear-gradient(90deg, transparent 0%, var(--primary) 20%, var(--primary-dark) 50%, var(--primary) 80%, transparent 100%);
+            background-size: 200% 100%;
             opacity: 0.85;
+            animation: navLineShine 8s ease-in-out infinite;
         }
         .nav-inner {
             max-width: 1280px; margin: 0 auto;
@@ -109,9 +151,15 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(145deg, var(--primary), var(--primary-dark));
             box-shadow: 0 4px 14px rgba(227, 10, 23, .25), 0 1px 0 rgba(255,255,255,.2) inset;
-            transition: transform .25s ease, box-shadow .25s ease;
+            transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-smooth);
+            position: relative; overflow: hidden;
         }
-        .nav-logo:hover .nav-logo-icon { transform: scale(1.05); box-shadow: 0 6px 20px rgba(227, 10, 23, .35), 0 1px 0 rgba(255,255,255,.2) inset; }
+        .nav-logo-icon::after {
+            content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,.25) 45%, transparent 55%);
+            transform: translateX(-100%); transition: transform 0.6s ease;
+        }
+        .nav-logo:hover .nav-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.2) inset; }
+        .nav-logo:hover .nav-logo-icon::after { transform: translateX(100%); }
         .nav-logo img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
         .nav-logo span { color: var(--primary); }
         .nav-logo-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-left: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -155,7 +203,22 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .nav-btn:hover { background: linear-gradient(145deg, var(--primary-dark), #9a0610); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.1) inset; }
         .nav-btn:active { transform: translateY(0); }
 
+        /* Theme toggle (oval, light/dark) */
+        .nav-theme-toggle {
+            width: 52px; height: 32px; border-radius: 20px; border: 1.5px solid var(--border);
+            background: var(--light); cursor: pointer; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06); transition: border-color .2s, background .2s;
+        }
+        .nav-theme-toggle:hover { border-color: var(--primary); background: rgba(227,10,23,.08); }
+        .nav-theme-toggle .theme-icon { font-size: 14px; line-height: 1; opacity: .5; transition: opacity .2s; }
+        .nav-theme-toggle .theme-icon-dark { opacity: 0; }
+        body.theme-dark .nav-theme-toggle { background: var(--dark2); border-color: rgba(255,255,255,.15); }
+        body.theme-dark .nav-theme-toggle .theme-icon-light { opacity: 0; }
+        body.theme-dark .nav-theme-toggle .theme-icon-dark { opacity: .9; }
+        .nav-lang-compact { margin-left: 4px; }
+
         /* Mobile menu (hamburger) - hidden on desktop */
+        .nav-theme-toggle .theme-icon-light { opacity: .85; }
         .nav-mob-menu-btn { display: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: none; background: var(--light); border-radius: 10px; cursor: pointer; align-items: center; justify-content: center; font-size: 20px; color: var(--dark); transition: background .2s, color .2s; }
         .nav-mob-menu-btn:hover { background: var(--primary-soft); color: var(--primary); }
         .nav-mob-drawer { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26,10,14,.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s; padding-top: max(70px, calc(56px + env(safe-area-inset-top))); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
@@ -184,28 +247,44 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
                         radial-gradient(ellipse 70% 60% at 85% 70%, rgba(230,57,80,.08), transparent 50%),
                         radial-gradient(circle at 50% 100%, rgba(255,245,246,.9), transparent 40%);
             pointer-events: none;
+            animation: gradientShift 12s ease-in-out infinite;
         }
         .hero::after {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
             pointer-events: none; opacity: 0.6;
         }
+        .hero-orb {
+            position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+            animation: floatBlob 18s ease-in-out infinite;
+        }
+        .hero-orb-1 { width: 280px; height: 280px; top: 10%; right: 5%; background: radial-gradient(circle, rgba(227,10,23,.12) 0%, transparent 70%); animation-duration: 20s; animation-delay: 0s; }
+        .hero-orb-2 { width: 180px; height: 180px; bottom: 20%; left: 8%; background: radial-gradient(circle, rgba(230,57,80,.1) 0%, transparent 70%); animation: floatBlob2 14s ease-in-out infinite; animation-delay: -3s; }
+        .hero-orb-3 { width: 120px; height: 120px; top: 50%; left: 50%; background: radial-gradient(circle, rgba(227,10,23,.08) 0%, transparent 70%); animation-duration: 15s; animation-delay: -5s; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes ctaGlow { 0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,.15); } 50% { box-shadow: 0 8px 32px rgba(255,255,255,.25); } }
         .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 48px; align-items: center; position: relative; z-index: 1; }
-        .hero-inner > div:first-child { animation: fadeInUp .55s ease both; }
+        .hero-copy .hero-badge { animation: heroReveal 0.7s var(--ease-out-expo) 0.1s both; }
+        .hero-copy h1 { animation: heroReveal 0.75s var(--ease-out-expo) 0.2s both; }
+        .hero-copy .hero-desc:nth-of-type(1) { animation: heroReveal 0.7s var(--ease-out-expo) 0.35s both; }
+        .hero-copy .hero-desc:nth-of-type(2) { animation: heroReveal 0.7s var(--ease-out-expo) 0.45s both; }
+        .hero-copy .hero-desc:nth-of-type(3) { animation: heroReveal 0.7s var(--ease-out-expo) 0.55s both; }
         .hero-form-box {
             background: var(--white); border-radius: 24px; padding: 40px; box-shadow: var(--shadow-lg), 0 0 0 1px rgba(227, 10, 23, .06), 0 32px 64px -16px rgba(227, 10, 23, .12); border: 1px solid rgba(227, 10, 23, .1);
-            animation: fadeInUp .5s ease .12s both; position: relative;
+            animation: heroReveal 0.8s var(--ease-out-expo) 0.25s both; position: relative;
+            transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-slow) var(--ease-smooth);
         }
+        .hero-form-box:hover { transform: translateY(-4px); box-shadow: 0 32px 64px rgba(227, 10, 23, .15), 0 0 0 1px rgba(227, 10, 23, .08); }
         .hero-form-box::before {
             content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px; background: linear-gradient(135deg, rgba(227,10,23,.2), transparent 50%, rgba(227,10,23,.1)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
         }
         .hero-form-box .form-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); margin-bottom: 26px; letter-spacing: -.03em; }
         .hero-badge { display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: var(--white); font-size: 11px; font-weight: 700; letter-spacing: 1.8px; padding: 8px 16px; border-radius: 24px; margin-bottom: 18px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(227, 10, 23, .25); }
-        .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(32px, 4.5vw, 50px); font-weight: 800; line-height: 1.12; margin-bottom: 22px; letter-spacing: -.03em; color: var(--dark); }
-        .hero h1 span { color: var(--primary); }
-        .hero-desc { font-size: 16px; color: var(--muted-dark); margin-bottom: 28px; line-height: 1.75; max-width: 520px; font-weight: 500; }
+        .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 44px); font-weight: 800; line-height: 1.15; margin-bottom: 18px; letter-spacing: -.03em; color: var(--dark); }
+        .hero h1 .hero-title-2 { display: block; font-size: clamp(32px, 4.5vw, 52px); color: var(--primary); margin-top: 4px; }
+        .hero-desc { font-size: 15px; color: var(--muted-dark); margin-bottom: 14px; line-height: 1.7; max-width: 520px; font-weight: 500; }
+        .hero-desc:last-of-type { margin-bottom: 28px; }
+        .hero-desc strong { color: var(--primary); font-weight: 700; }
         .hero-form-box .form-group { margin-bottom: 16px; }
         .hero-form-box .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
         .hero-form-box .input-wrap { display: flex; align-items: center; gap: 0; background: var(--light); border: 1.5px solid #f0e6e8; border-radius: 12px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
@@ -241,13 +320,13 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .benefit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
         .benefit-card {
             background: var(--white); border-radius: 20px; padding: 30px; border: 1px solid rgba(227, 10, 23, .08);
-            transition: transform .35s ease, box-shadow .35s ease, border-color .3s ease; display: flex; gap: 22px; align-items: flex-start;
-            animation: fadeInUp .45s ease both; box-shadow: var(--shadow-sm);
+            transition: transform var(--duration-slow) var(--ease-spring), box-shadow var(--duration-slow) var(--ease-smooth), border-color var(--duration-normal) var(--ease-smooth); display: flex; gap: 22px; align-items: flex-start;
+            animation: fadeInUp 0.6s var(--ease-out-expo) both; box-shadow: var(--shadow-sm);
         }
-        .benefit-card:nth-child(1){animation-delay:.05s}.benefit-card:nth-child(2){animation-delay:.1s}.benefit-card:nth-child(3){animation-delay:.15s}.benefit-card:nth-child(4){animation-delay:.2s}.benefit-card:nth-child(5){animation-delay:.25s}.benefit-card:nth-child(6){animation-delay:.3s}
-        .benefit-card:hover { border-color: var(--primary); box-shadow: 0 20px 48px rgba(227, 10, 23, .14), 0 0 0 1px rgba(227, 10, 23, .06); transform: translateY(-6px); }
-        .benefit-icon { width: 58px; height: 58px; min-width: 58px; border-radius: 18px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--white); box-shadow: 0 6px 20px rgba(227, 10, 23, .28), 0 1px 0 rgba(255,255,255,.2) inset; transition: transform .3s ease; }
-        .benefit-card:hover .benefit-icon { transform: scale(1.05); }
+        .benefit-card:nth-child(1){animation-delay:.06s}.benefit-card:nth-child(2){animation-delay:.12s}.benefit-card:nth-child(3){animation-delay:.18s}.benefit-card:nth-child(4){animation-delay:.24s}.benefit-card:nth-child(5){animation-delay:.3s}.benefit-card:nth-child(6){animation-delay:.36s}
+        .benefit-card:hover { border-color: var(--primary); box-shadow: 0 24px 56px rgba(227, 10, 23, .16), 0 0 0 1px rgba(227, 10, 23, .08); transform: translateY(-8px) scale(1.01); }
+        .benefit-icon { width: 58px; height: 58px; min-width: 58px; border-radius: 18px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--white); box-shadow: 0 6px 20px rgba(227, 10, 23, .28), 0 1px 0 rgba(255,255,255,.2) inset; transition: transform var(--duration-normal) var(--ease-spring); }
+        .benefit-card:hover .benefit-icon { transform: scale(1.1) rotate(5deg); }
         .benefit-card h3 { font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 8px; font-family: 'Syne', sans-serif; letter-spacing: -.02em; }
         .benefit-card p { font-size: 14px; color: var(--muted-dark); line-height: 1.65; font-weight: 500; }
 
@@ -265,26 +344,26 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .cta-block .section-label { color: rgba(255,255,255,.85); }
         .cta-block .section-title { color: var(--white); text-shadow: 0 1px 2px rgba(0,0,0,.1); }
         .cta-block .section-desc { color: rgba(255,255,255,.92); margin-bottom: 30px; }
-        .cta-block .btn-cta { display: inline-block; background: var(--white); color: var(--primary); padding: 18px 40px; border-radius: 14px; font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; transition: transform .25s ease, box-shadow .25s ease; animation: ctaGlow 3s ease-in-out infinite; box-shadow: 0 4px 20px rgba(0,0,0,.2); position: relative; z-index: 1; }
-        .cta-block .btn-cta:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 14px 40px rgba(0,0,0,.3); animation: none; }
+        .cta-block .btn-cta { display: inline-block; background: var(--white); color: var(--primary); padding: 18px 40px; border-radius: 14px; font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-smooth); animation: btnPulse 2.5s ease-in-out infinite; box-shadow: 0 4px 20px rgba(0,0,0,.2); position: relative; z-index: 1; }
+        .cta-block .btn-cta:hover { transform: translateY(-6px) scale(1.04); box-shadow: 0 16px 48px rgba(0,0,0,.35); animation: none; }
 
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
         @media (max-width: 700px) { .stats-row { grid-template-columns: 1fr; } }
-        .stat-item { text-align: center; padding: 32px 24px; background: var(--white); border-radius: 20px; border: 1px solid rgba(227, 10, 23, .08); box-shadow: var(--shadow-sm); transition: transform .25s ease, box-shadow .25s ease; }
-        .stat-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .stat-item { text-align: center; padding: 32px 24px; background: var(--white); border-radius: 20px; border: 1px solid rgba(227, 10, 23, .08); box-shadow: var(--shadow-sm); transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-smooth); }
+        .stat-item:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
         .stat-item .icon { width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 16px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; }
         .stat-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--primary); letter-spacing: -.02em; }
         .stat-label { font-size: 14px; color: var(--muted-dark); margin-top: 6px; font-weight: 500; }
 
         .faq-list { max-width: 720px; margin: 0 auto; }
-        .faq-item { background: var(--white); border: 1px solid rgba(227, 10, 23, .08); border-radius: 16px; margin-bottom: 14px; overflow: hidden; transition: all .25s; box-shadow: var(--shadow-sm); }
+        .faq-item { background: var(--white); border: 1px solid rgba(227, 10, 23, .08); border-radius: 16px; margin-bottom: 14px; overflow: hidden; transition: border-color var(--duration-normal) var(--ease-smooth), box-shadow var(--duration-normal) var(--ease-smooth); box-shadow: var(--shadow-sm); }
         .faq-item:hover { border-color: rgba(227, 10, 23, .18); box-shadow: var(--shadow-sm); }
         .faq-item.open { border-color: var(--primary); box-shadow: 0 8px 24px rgba(227, 10, 23, .1); }
-        .faq-q { padding: 22px 26px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--dark); transition: color .2s; }
+        .faq-q { padding: 22px 26px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--dark); transition: color var(--duration-fast) var(--ease-smooth); }
         .faq-item.open .faq-q { color: var(--primary); }
-        .faq-q span { color: var(--primary); font-size: 22px; transition: transform .25s; flex-shrink: 0; margin-left: 12px; }
+        .faq-q span { color: var(--primary); font-size: 22px; transition: transform var(--duration-normal) var(--ease-spring); flex-shrink: 0; margin-left: 12px; }
         .faq-item.open .faq-q span { transform: rotate(45deg); }
-        .faq-a { padding: 0 26px; font-size: 14px; color: var(--muted-dark); line-height: 1.75; max-height: 0; overflow: hidden; transition: max-height .35s ease; font-weight: 500; }
+        .faq-a { padding: 0 26px; font-size: 14px; color: var(--muted-dark); line-height: 1.75; max-height: 0; overflow: hidden; transition: max-height var(--duration-slow) var(--ease-out-expo); font-weight: 500; }
         .faq-item.open .faq-a { padding: 0 26px 22px 26px; max-height: 320px; }
 
         .why-us-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-top: 40px; }
@@ -308,11 +387,39 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); word-break: break-word; line-height: 1.6; }
 
 
+        /* Dark theme (body.theme-dark) */
+        body.theme-dark { background: #0f0809; color: #e8dcdd; }
+        body.theme-dark .nav { background: linear-gradient(180deg, rgba(26,10,14,.98) 0%, rgba(26,10,14,.95) 100%); border-bottom-color: rgba(227,10,23,.2); box-shadow: 0 4px 24px rgba(0,0,0,.3); }
+        body.theme-dark .nav::after { opacity: 0.5; }
+        body.theme-dark .nav-logo { color: #fff; }
+        body.theme-dark .nav-links a:not(.nav-btn) { color: rgba(255,255,255,.85); }
+        body.theme-dark .nav-links a:not(.nav-btn):hover { color: var(--primary-light); background: rgba(227,10,23,.15); }
+        body.theme-dark .nav-lang-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: #fff; }
+        body.theme-dark .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary-light); }
+        body.theme-dark .hero { background: linear-gradient(160deg, #0f0809 0%, #1a0a0e 35%, #1f0d11 70%, #0f0809 100%); }
+        body.theme-dark .hero::before { background: radial-gradient(ellipse 80% 50% at 15% 40%, rgba(227,10,23,.12), transparent 55%), radial-gradient(ellipse 70% 60% at 85% 70%, rgba(230,57,80,.06), transparent 50%); }
+        body.theme-dark .hero h1 { color: #fff; }
+        body.theme-dark .hero h1 .hero-title-2 { color: var(--primary-light); }
+        body.theme-dark .hero-desc { color: rgba(255,255,255,.75); }
+        body.theme-dark .hero-desc strong { color: var(--primary-light); }
+        body.theme-dark .section-benefits { background: linear-gradient(180deg, #1a0a0e 0%, #15080b 100%); }
+        body.theme-dark .section-label { color: var(--primary-light); }
+        body.theme-dark .section-title { color: #fff; }
+        body.theme-dark .section-desc { color: rgba(255,255,255,.7); }
+        body.theme-dark .footer { background: #0a0506; }
+        body.theme-dark .mob-footer-bar { background: rgba(26,10,14,.98); border-top-color: rgba(227,10,23,.2); }
+        body.theme-dark .nav-mob-drawer-inner { background: var(--dark2); }
+        body.theme-dark .nav-mob-drawer-inner a { color: #fff; }
+        body.theme-dark .nav-mob-drawer-inner a:hover { background: rgba(227,10,23,.2); color: var(--primary-light); }
+
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; text-align: center; }
             .hero-desc { margin-left: auto; margin-right: auto; }
             .hero-form-box { max-width: 400px; margin: 0 auto; }
-            .nav-links .hide-mob { display: none; }
+            .hero-copy { text-align: left; }
+        }
+        @media (max-width: 900px) and (min-width: 769px) {
+            .hero-copy { text-align: center; }
         }
         /* Mobile header & footer (768px and below) */
         @media (max-width: 768px) {
@@ -369,7 +476,8 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-            .cta-block .btn-cta { animation: none; }
+            .cta-block .btn-cta, .nav::after, .hero::before, .hero-orb { animation: none !important; }
+            .stat-item:hover { animation: none !important; }
         }
     </style>
 </head>
@@ -381,35 +489,33 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>" alt="" width="24" height="24" fetchpriority="high"></span>
             <span>SMM<span>Turk</span></span><span class="nav-logo-tag">SMM Panel</span>
         </a>
-        <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="<?= h(__('benefits')) ?>" aria-expanded="false" aria-controls="navMobDrawer">
-            ☰
-        </button>
+        <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="Menu" aria-expanded="false" aria-controls="navMobDrawer">☰</button>
         <div class="nav-links">
-            <a href="#benefits" class="hide-mob"><?= h(__('benefits')) ?></a>
-            <a href="#services" class="hide-mob"><?= h(__('services_nav')) ?></a>
-            <a href="#faq" class="hide-mob"><?= h(__('faq_nav')) ?></a>
-            <div class="nav-lang">
+            <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
+            <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('nav_sign_up')) ?></a>
+            <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
+            <button type="button" class="nav-theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+                <span class="theme-icon theme-icon-light" aria-hidden="true">☀</span>
+                <span class="theme-icon theme-icon-dark" aria-hidden="true">🌙</span>
+            </button>
+            <div class="nav-lang nav-lang-compact">
                 <div class="nav-lang-dropdown" id="langDropdown">
                     <?php foreach (Lang::allowed() as $l): ?>
                     <a href="<?= h(path('home.php') . $langParam . $l) ?>"><?= $l === 'en' ? 'English' : ($l === 'tr' ? 'Türkçe' : ($l === 'de' ? 'Deutsch' : 'Français')) ?></a>
                     <?php endforeach; ?>
                 </div>
-                <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
-                    <?= strtoupper($lang) ?>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
+                <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false"><?= strtoupper($lang) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
             </div>
-            <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
             <a href="<?= h(path('login.php')) ?>?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
         </div>
     </div>
 </header>
-<!-- Mobile menu drawer (visible only on small screens) -->
-<div class="nav-mob-drawer" id="navMobDrawer" role="dialog" aria-label="<?= h(__('benefits')) ?>" aria-modal="true" aria-hidden="true">
+<div class="nav-mob-drawer" id="navMobDrawer" role="dialog" aria-label="Menu" aria-modal="true" aria-hidden="true">
     <div class="nav-mob-drawer-inner">
         <a href="#benefits" class="mob-drawer-link"><?= h(__('benefits')) ?></a>
         <a href="#services" class="mob-drawer-link"><?= h(__('services_nav')) ?></a>
         <a href="#faq" class="mob-drawer-link"><?= h(__('faq_nav')) ?></a>
+        <a href="<?= h(path('terms.php')) ?>" class="mob-drawer-link"><?= h(__('nav_terms')) ?></a>
         <a href="<?= h(path('login.php')) ?>" class="mob-drawer-link"><?= h(__('nav_sign_in')) ?></a>
         <a href="<?= h(path('login.php')) ?>?mode=register" class="mob-drawer-link"><?= h(__('nav_sign_up')) ?> →</a>
     </div>
@@ -417,11 +523,16 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 
 <main id="main-content">
 <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+    <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+    <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
     <div class="hero-inner">
-        <div>
+        <div class="hero-copy">
             <span class="hero-badge"><?= h(__('hero_badge')) ?></span>
-            <h1 id="hero-title"><?= h(__('hero_title')) ?></h1>
-            <p class="hero-desc"><?= h(__('hero_desc')) ?></p>
+            <h1 id="hero-title"><?= h(__('hero_title')) ?><br><span class="hero-title-2"><?= h(__('hero_title_2')) ?></span></h1>
+            <p class="hero-desc"><?= __('hero_desc_1') ?></p>
+            <p class="hero-desc"><?= __('hero_desc_2') ?></p>
+            <p class="hero-desc"><?= __('hero_desc_3') ?></p>
         </div>
         <div class="hero-form-box">
             <h2 class="form-title"><?= h(__('nav_sign_in')) ?></h2>
@@ -582,6 +693,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
     <div class="footer-links">
         <a href="<?= h(path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
         <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('footer_signup')) ?></a>
+        <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
         <a href="<?= h(path('api-page.php')) ?>"><?= h(__('footer_api')) ?></a>
         <a href="<?= h(path('tickets.php')) ?>"><?= h(__('footer_support')) ?></a>
     </div>
@@ -589,6 +701,16 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 </footer>
 
 <script>
+(function() {
+    var themeKey = 'smmturk_theme';
+    var dark = localStorage.getItem(themeKey) === 'dark' || (!localStorage.getItem(themeKey) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.body.classList.add('theme-dark');
+    var btn = document.getElementById('themeToggle');
+    if (btn) btn.addEventListener('click', function() {
+        document.body.classList.toggle('theme-dark');
+        localStorage.setItem(themeKey, document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+    });
+})();
 document.getElementById('langBtn').addEventListener('click', function() {
     document.getElementById('langDropdown').classList.toggle('open');
 });

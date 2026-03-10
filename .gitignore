@@ -1,5 +1,6 @@
 # Config (contains passwords & API keys - NEVER commit!)
 config.php
+deploy-secret.txt
 
 # IDE / Editor
 .idea/

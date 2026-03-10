@@ -196,6 +196,11 @@ RewriteRule ^api/v2$ /api/v2.php [L]
 - بعد از هر rsync دسترسی فایل‌ها خودکار **755** (پوشه‌ها) و **644** (فایل‌ها) می‌شود تا خطای 403 برای `.htaccess` پیش نیاید.
 - روی سرور فقط `~/deploy-smm.sh` را اجرا کن (بعد از `git pull` در رپو از لپ‌تاپ). push را فقط از سیستم خودت بزن.
 
+**اتصال کامل لوکال + Git + cPanel و دیپلوی خودکار:**
+- **شروع از اینجا (چک‌لیست یک‌صفحه‌ای):** [docs/CHECKLIST-DEPLOY.md](docs/CHECKLIST-DEPLOY.md) — برای سرور 92.205.182.143 با مقادیر آماده.
+- **راهنمای گام‌به‌گام با توضیح:** [docs/SETUP-SERVER-92.205.182.143.md](docs/SETUP-SERVER-92.205.182.143.md).
+- **راهنمای کلی Git + دیپلوی:** [docs/GIT-DEPLOY-SETUP.md](docs/GIT-DEPLOY-SETUP.md).
+
 ---
 
 ## مشکل‌های رایج

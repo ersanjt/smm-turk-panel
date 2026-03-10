@@ -53,7 +53,19 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-/* ---- Services page: modern layout ---- */
+/* ---- Services page: motion + layout ---- */
+:root {
+  --svc-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --svc-duration: 0.35s;
+}
+@keyframes svcHeroPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+@keyframes svcCardReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .svc-page-hero {
   background: linear-gradient(135deg, rgba(227,10,23,.08) 0%, rgba(227,10,23,.02) 50%, rgba(255,255,255,.6) 100%);
   border: 1px solid rgba(227,10,23,.12);
@@ -62,6 +74,11 @@ require_once __DIR__ . '/layouts/header.php';
   margin-bottom: 28px;
   position: relative;
   overflow: hidden;
+  transition: box-shadow var(--svc-duration) ease, transform var(--svc-duration) var(--svc-ease);
+}
+.svc-page-hero:hover {
+  box-shadow: 0 12px 40px rgba(227,10,23,.08);
+  transform: translateY(-2px);
 }
 .svc-page-hero::before {
   content: '';
@@ -73,6 +90,7 @@ require_once __DIR__ . '/layouts/header.php';
   background: radial-gradient(circle, rgba(227,10,23,.15) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
+  animation: svcHeroPulse 8s ease-in-out infinite;
 }
 .svc-hero-title {
   font-family: 'Syne', sans-serif;
@@ -178,7 +196,7 @@ require_once __DIR__ . '/layouts/header.php';
   white-space: nowrap;
   text-decoration: none;
   color: var(--text-muted);
-  transition: all 0.25s ease;
+  transition: transform var(--svc-duration) var(--svc-ease), box-shadow var(--svc-duration) ease, border-color var(--svc-duration) ease, background var(--svc-duration) ease, color var(--svc-duration) ease;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
@@ -186,8 +204,8 @@ require_once __DIR__ . '/layouts/header.php';
   border-color: var(--primary);
   color: var(--primary);
   background: rgba(227,10,23,.06);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(227,10,23,.12);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(227,10,23,.15);
 }
 .svc-cat-pill.active {
   background: linear-gradient(145deg, var(--primary), var(--primary-dark));
@@ -231,14 +249,16 @@ require_once __DIR__ . '/layouts/header.php';
   border-radius: 16px;
   border: 1px solid var(--border);
   padding: 20px;
-  transition: all 0.3s ease;
+  transition: transform var(--svc-duration) var(--svc-ease), box-shadow var(--svc-duration) ease, border-color var(--svc-duration) ease;
   box-shadow: 0 2px 12px rgba(0,0,0,.04);
   display: flex;
   flex-direction: column;
   gap: 14px;
   position: relative;
   overflow: hidden;
+  animation: svcCardReveal 0.5s var(--svc-ease) both;
 }
+.svc-card:nth-child(1){animation-delay:0.02s}.svc-card:nth-child(2){animation-delay:0.05s}.svc-card:nth-child(3){animation-delay:0.08s}.svc-card:nth-child(4){animation-delay:0.11s}.svc-card:nth-child(5){animation-delay:0.14s}.svc-card:nth-child(6){animation-delay:0.17s}.svc-card:nth-child(7){animation-delay:0.2s}.svc-card:nth-child(8){animation-delay:0.23s}.svc-card:nth-child(9){animation-delay:0.26s}.svc-card:nth-child(n+10){animation-delay:0.29s}
 .svc-card::after {
   content: '';
   position: absolute;
@@ -248,14 +268,21 @@ require_once __DIR__ . '/layouts/header.php';
   height: 3px;
   background: linear-gradient(90deg, var(--primary), var(--primary-light));
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--svc-duration) ease;
 }
 .svc-card:hover {
-  border-color: rgba(227,10,23,.25);
-  box-shadow: 0 12px 32px rgba(227,10,23,.1);
-  transform: translateY(-4px);
+  border-color: rgba(227,10,23,.3);
+  box-shadow: 0 20px 48px rgba(227,10,23,.14), 0 0 0 1px rgba(227,10,23,.08);
+  transform: translateY(-6px);
 }
 .svc-card:hover::after { opacity: 1; }
+.svc-card-cta .btn {
+  transition: transform var(--svc-duration) var(--svc-ease), box-shadow var(--svc-duration) ease;
+}
+.svc-card:hover .svc-card-cta .btn {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(227,10,23,.3);
+}
 
 .svc-card-header {
   display: flex;
@@ -466,9 +493,10 @@ require_once __DIR__ . '/layouts/header.php';
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .svc-card, .svc-cat-pill, .svc-sort-links a { transition: none; }
-  .svc-card:hover { transform: none; }
+  .svc-card, .svc-cat-pill, .svc-sort-links a, .svc-page-hero { transition: none; animation: none; }
+  .svc-card:hover, .svc-page-hero:hover { transform: none; }
   .svc-cat-pill:hover { transform: none; }
+  .svc-page-hero::before { animation: none; }
 }
 </style>
 
