@@ -77,53 +77,64 @@ if (empty($_SESSION['csrf_token'])) {
 <?php endif; ?>
 <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{--primary:#E30A17;--primary-dark:#B90812;--muted:#6b4a50;--dark:#1a0a0e;--light:#fef8f9;--white:#fff}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.05)}
-.auth-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
-.auth-logo img{width:44px;height:44px;border-radius:12px}
-.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a0a0e}
-.auth-logo .logo span{color:#E30A17}
-.tagline{text-align:center;color:#6b4a50;font-size:13px;margin-bottom:28px}
-.tabs{display:flex;background:#fef0f1;border-radius:12px;padding:4px;margin-bottom:24px}
-.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#6b4a50;text-decoration:none;transition:all .2s}
-.tab.active{background:#E30A17;color:#fff}
-.form-group{margin-bottom:14px}
-.form-label{display:block;font-size:11px;font-weight:700;color:#6b4a50;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
-.input-wrap{display:flex;align-items:center;background:#fef8f9;border:1.5px solid #f0e6e8;border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.input-wrap:focus-within{border-color:#E30A17;background:#fff;box-shadow:0 0 0 3px rgba(227,10,23,.12)}
-.input-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#6b4a50;flex-shrink:0}
-.input-wrap:focus-within .input-icon{color:#E30A17}
-.input-wrap .form-control{border:none;border-radius:0;padding:12px 14px 12px 0;background:transparent}
-.input-wrap .form-control:focus{box-shadow:none}
-.form-control{width:100%;padding:12px 14px;border:1.5px solid #f0e6e8;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#fef8f9}
-.form-control:focus{border-color:#E30A17;background:#fff}
-.btn{width:100%;padding:13px;background:#E30A17;color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn svg{width:18px;height:18px}
-.btn:hover{background:#B90812;transform:translateY(-1px);box-shadow:0 8px 24px rgba(227,10,23,.35)}
-.alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-weight:500}
+body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased}
+.auth-wrap{width:100%;max-width:440px}
+.auth-box{background:var(--white);border-radius:24px;padding:40px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.06)}
+.auth-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
+.auth-back:hover{color:var(--primary)}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
+.auth-logo img{width:48px;height:48px;border-radius:14px}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--dark);letter-spacing:-.03em}
+.auth-logo .logo span{color:var(--primary)}
+.tagline{text-align:center;color:var(--muted);font-size:14px;margin-bottom:28px;font-weight:500}
+.tabs{display:flex;background:rgba(227,10,23,.08);border-radius:14px;padding:5px;margin-bottom:26px}
+.tab{flex:1;padding:12px 16px;text-align:center;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);text-decoration:none;transition:all .25s;font-family:'Plus Jakarta Sans',sans-serif}
+.tab:hover{color:var(--dark)}
+.tab.active{background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:var(--white);box-shadow:0 4px 14px rgba(227,10,23,.3)}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.input-wrap{display:flex;align-items:center;background:var(--light);border:1.5px solid #f0e6e8;border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.input-wrap:focus-within{border-color:var(--primary);background:var(--white);box-shadow:0 0 0 3px rgba(227,10,23,.12)}
+.input-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.input-wrap:focus-within .input-icon{color:var(--primary)}
+.input-wrap .form-control{border:none;border-radius:0;padding:14px 16px 14px 0;background:transparent;font-size:15px}
+.input-wrap .form-control:focus{box-shadow:none;outline:none}
+.form-control{width:100%;padding:14px 16px;border:1.5px solid #f0e6e8;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s;background:var(--light)}
+.form-control:focus{border-color:var(--primary);background:var(--white)}
+.btn{width:100%;padding:16px 20px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:var(--white);border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;letter-spacing:.02em;cursor:pointer;transition:all .25s;margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 14px rgba(227,10,23,.3),0 1px 0 rgba(255,255,255,.15) inset}
+.btn svg{width:20px;height:20px;flex-shrink:0}
+.btn:hover{background:linear-gradient(145deg,var(--primary-dark),#9a0610);transform:translateY(-2px);box-shadow:0 8px 28px rgba(227,10,23,.4)}
+.btn:active{transform:translateY(0)}
+.btn-register{font-size:15px}
+.alert{padding:14px 16px;border-radius:12px;font-size:14px;margin-bottom:16px;font-weight:500}
 .alert-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .alert-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:12px;color:#6b4a50}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border,#f0e6e8)}
-.btn-google{width:100%;padding:12px 16px;background:#fff;color:#1a0a0e;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;text-decoration:none}
-.btn-google:hover{background:#f9fafb;border-color:#E30A17;color:#E30A17;transform:translateY(-1px)}
-.footer-link{text-align:center;margin-top:18px;font-size:12.5px;color:#6b4a50}
-.footer-link a{color:#E30A17;font-weight:600}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.auth-box{animation:fadeInUp .4s ease both}
-@media(max-width:480px){.auth-box{margin:12px;padding:24px 20px;border-radius:20px}}
-@media(prefers-reduced-motion:reduce){.auth-box{animation:none}}
+.auth-divider{display:flex;align-items:center;gap:14px;margin:20px 0;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#f0e6e8}
+.btn-google{width:100%;padding:14px 16px;background:var(--white);color:var(--dark);border:2px solid #e5e7eb;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:all .25s;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif}
+.btn-google:hover{background:#f9fafb;border-color:var(--primary);color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 12px rgba(227,10,23,.15)}
+.footer-link{text-align:center;margin-top:22px;padding-top:20px;border-top:1px solid rgba(227,10,23,.1);font-size:14px;color:var(--muted)}
+.footer-link a{color:var(--primary);font-weight:700;transition:color .2s}
+.footer-link a:hover{color:var(--primary-dark)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.auth-box{animation:fadeInUp .45s ease both}
+@media(max-width:480px){.auth-box{padding:28px 22px;border-radius:20px}.auth-logo .logo{font-size:24px}.auth-logo img{width:40px;height:40px}}
+@media(prefers-reduced-motion:reduce){.auth-box{animation:none}.btn:hover{transform:none}}
 </style>
 </head>
 <body>
 
+<div class="auth-wrap">
 <div class="auth-box">
-  <a href="<?= h(path('home.php')) ?>" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Home</a>
+  <a href="<?= h(path('home.php')) ?>" class="auth-back">← Back to Home</a>
   <div class="auth-logo">
-    <img src="/assets/img/logo-icon.svg?v=2" alt="" width="44" height="44">
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>" alt="" width="48" height="48">
     <span class="logo">SMM<span>Turk</span></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>
@@ -166,28 +177,37 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
         <input type="password" name="password" class="form-control" placeholder="••••••••" required>
       </div>
     </div>
-    <div style="margin-bottom:10px;"><a href="<?= h(path('forgot-password.php')) ?>" style="font-size:13px;color:#E30A17;font-weight:600;">Forgot password?</a></div>
-    <button type="submit" class="btn">Login <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+    <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" style="font-size:14px;color:var(--primary);font-weight:600;text-decoration:none;">Forgot password?</a></div>
+    <button type="submit" class="btn">Sign in to Dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
   </form>
   <?php else: ?>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
     <div class="form-group">
       <label class="form-label">Username</label>
-      <input type="text" name="username" class="form-control" placeholder="johndoe" required minlength="3">
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <input type="text" name="username" class="form-control" placeholder="johndoe" required minlength="3">
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+        <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+      </div>
     </div>
     <?php if (isset($_GET['ref'])): ?>
     <input type="hidden" name="ref" value="<?= htmlspecialchars($_GET['ref']) ?>">
     <?php endif; ?>
-    <button type="submit" class="btn">✅ Create Account</button>
+    <button type="submit" class="btn btn-register">Create Account</button>
   </form>
   <?php endif; ?>
 
@@ -198,6 +218,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
       Already have an account? <a href="?mode=login">Login</a>
     <?php endif; ?>
   </div>
+</div>
 </div>
 
 </body>

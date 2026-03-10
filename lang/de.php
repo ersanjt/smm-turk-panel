@@ -12,6 +12,7 @@ return [
     'remember_me' => 'Angemeldet bleiben',
     'forgot_password' => 'Passwort vergessen?',
     'btn_login' => 'Anmelden',
+    'btn_login_dashboard' => 'Zum Dashboard',
     'login_with_google' => 'Mit G anmelden',
     'no_account' => 'Noch kein Konto?',
     'register' => 'Registrieren',

@@ -1,20 +1,28 @@
 <?php
 /**
- * Simple file-based rate limit (e.g. for login attempts per IP).
+ * Simple file-based rate limit (e.g. for login attempts per IP or API per key).
  * Uses tmp/rate_limit/ - ensure this directory exists and is writable.
+ * @param int $maxAttempts Max requests per window
+ * @param int $windowSeconds Window in seconds
+ * @param string|null $customKey If set, rate limit by this key (e.g. API key); otherwise by IP
  */
 class RateLimit {
     private string $dir;
     private int $maxAttempts;
     private int $windowSeconds;
+    private ?string $customKey;
 
-    public function __construct(int $maxAttempts = 5, int $windowSeconds = 900) {
+    public function __construct(int $maxAttempts = 5, int $windowSeconds = 900, ?string $customKey = null) {
         $this->dir = defined('ROOT_PATH') ? ROOT_PATH . '/tmp/rate_limit' : __DIR__ . '/../tmp/rate_limit';
         $this->maxAttempts = $maxAttempts;
         $this->windowSeconds = $windowSeconds;
+        $this->customKey = $customKey !== null && $customKey !== '' ? $customKey : null;
     }
 
     private function key(): string {
+        if ($this->customKey !== null) {
+            return 'api_' . md5($this->customKey);
+        }
         $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $ip = trim(explode(',', $ip)[0]);
         return md5($ip);
@@ -44,7 +52,7 @@ class RateLimit {
         return (int)$data['count'] >= $this->maxAttempts;
     }
 
-    /** Record a failed attempt. Call this after a failed login. */
+    /** Record an attempt (e.g. failed login or API request). */
     public function recordAttempt(): void {
         $path = $this->filePath();
         $data = ['start' => time(), 'count' => 1];

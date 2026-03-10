@@ -23,7 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id']) && csrf
                 flash('success', "Deposit approved. User balance updated by \$" . number_format($amount, 2) . ".");
             } catch (Exception $e) {
                 $db->getConnection()->rollBack();
-                flash('error', 'Failed to approve: ' . $e->getMessage());
+                if (defined('SMM_DEBUG') && SMM_DEBUG) {
+                    flash('error', 'Failed to approve: ' . $e->getMessage());
+                } else {
+                    flash('error', 'Failed to approve. Please try again or contact support.');
+                }
             }
         } else {
             flash('error', 'User not found.');

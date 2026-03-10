@@ -48,6 +48,8 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
     <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
     <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl ?: path('')) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>","address":{"@type":"PostalAddress","addressCountry":"<?= h($geoRegion) ?>"}}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -63,7 +65,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             --white: #ffffff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
         a { text-decoration: none; color: inherit; }
 
         /* ——— Header (Landing) ——— */
@@ -179,9 +181,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 48px; align-items: center; position: relative; z-index: 1; }
         .hero-inner > div:first-child { animation: fadeInUp .55s ease both; }
         .hero-form-box {
-            background: var(--white); border-radius: 20px; padding: 32px; box-shadow: 0 20px 60px rgba(227, 10, 23, .08); border: 1px solid rgba(227, 10, 23, .08);
+            background: var(--white); border-radius: 20px; padding: 36px; box-shadow: 0 20px 60px rgba(227, 10, 23, .08), 0 0 0 1px rgba(227, 10, 23, .06); border: 1px solid rgba(227, 10, 23, .08);
             animation: fadeInUp .5s ease .12s both;
         }
+        .hero-form-box .form-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 24px; letter-spacing: -.02em; }
         .hero-badge { display: inline-block; background: var(--primary); color: var(--white); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 16px; text-transform: uppercase; }
         .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(32px, 4.5vw, 48px); font-weight: 800; line-height: 1.15; margin-bottom: 20px; letter-spacing: -.02em; color: var(--dark); }
         .hero h1 span { color: var(--primary); }
@@ -196,16 +199,18 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .hero-form-box .input-wrap .form-control:focus { box-shadow: none; }
         .hero-form-box .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid #f0e6e8; border-radius: 12px; font-size: 14px; outline: none; transition: border-color .2s; background: var(--light); }
         .hero-form-box .form-control:focus { border-color: var(--primary); background: var(--white); }
-        .hero-form-box .btn-login { width: 100%; padding: 14px; background: var(--primary); color: var(--white); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .hero-form-box .btn-login svg { width: 18px; height: 18px; }
-        .hero-form-box .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
+        .hero-form-box .btn-login { width: 100%; padding: 16px 20px; background: linear-gradient(145deg, var(--primary), var(--primary-dark)); color: var(--white); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .02em; cursor: pointer; transition: all .25s ease; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 14px rgba(227, 10, 23, .3), 0 1px 0 rgba(255,255,255,.15) inset; }
+        .hero-form-box .btn-login svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .hero-form-box .btn-login:hover { background: linear-gradient(145deg, var(--primary-dark), #9a0610); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.1) inset; }
+        .hero-form-box .btn-login:active { transform: translateY(0); }
         .hero-form-box .remember { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
         .hero-form-box .forgot { font-size: 13px; color: var(--primary); font-weight: 600; }
         .hero-form-box .divider { text-align: center; margin: 20px 0; font-size: 12px; color: var(--muted); }
         .hero-form-box .btn-google { width: 100%; padding: 12px; border: 1.5px solid #f0e6e8; border-radius: 12px; background: var(--white); font-size: 14px; font-weight: 600; color: var(--dark); cursor: pointer; transition: all .2s; }
         .hero-form-box .btn-google:hover { border-color: var(--primary); color: var(--primary); }
-        .hero-form-box .register-link { text-align: center; margin-top: 18px; font-size: 14px; color: var(--muted); }
-        .hero-form-box .register-link a { color: var(--primary); font-weight: 700; }
+        .hero-form-box .register-link { text-align: center; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(227, 10, 23, .1); font-size: 14px; color: var(--muted); }
+        .hero-form-box .register-link a { color: var(--primary); font-weight: 700; transition: color .2s; }
+        .hero-form-box .register-link a:hover { color: var(--primary-dark); }
 
         .section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
         .section-benefits { background: linear-gradient(180deg, #fef5f6 0%, #fafafa 100%); border-radius: 0; }
@@ -390,6 +395,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             <p class="hero-desc"><?= h(__('hero_desc')) ?></p>
         </div>
         <div class="hero-form-box">
+            <h2 class="form-title"><?= h(__('nav_sign_in')) ?></h2>
             <form method="POST" action="<?= h(path('login.php')) ?>">
                 <div class="form-group">
                     <label class="form-label"><?= h(__('login_username')) ?></label>
@@ -407,7 +413,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
                 </div>
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
                 <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" class="forgot"><?= h(__('forgot_password')) ?></a></div>
-                <button type="submit" class="btn-login"><?= h(__('btn_login')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+                <button type="submit" class="btn-login"><?= h(__('btn_login_dashboard')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <div class="divider">— <?= h(__('login_with_google')) ?> —</div>
                 <?php $googleAuth = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) !== '' : false; ?>
 <a href="<?= h($googleAuth ? path('login-google.php') : path('login.php')) ?>" class="btn-google"><?= h(__('login_with_google')) ?></a>

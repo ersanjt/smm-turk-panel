@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/../app/init.php';
+require_once __DIR__ . '/../app/RateLimit.php';
 
 $key    = $_POST['key'] ?? $_GET['key'] ?? '';
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -19,6 +20,16 @@ if (!$user) {
     echo json_encode(['error' => 'Invalid API key']);
     exit;
 }
+
+// Rate limit: 120 requests per minute per API key
+$apiRateLimit = new RateLimit(120, 60, $key);
+if ($apiRateLimit->isLimited()) {
+    header('HTTP/1.1 429 Too Many Requests');
+    header('Retry-After: 60');
+    echo json_encode(['error' => 'Rate limit exceeded. Try again later.']);
+    exit;
+}
+$apiRateLimit->recordAttempt();
 
 $om  = new OrderManager();
 $api = new SmmApi();

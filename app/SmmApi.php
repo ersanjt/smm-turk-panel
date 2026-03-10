@@ -78,13 +78,15 @@ class SmmApi {
         foreach ($post as $name => $value) {
             $_post[] = $name . '=' . urlencode((string)$value);
         }
+        $isDebug = (getenv('SMM_DEBUG') === '1' || (defined('SMM_DEBUG') && SMM_DEBUG === true));
+        $verifySsl = !$isDebug;
         $ch = curl_init($this->api_url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_HEADER => false,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => $verifySsl,
+            CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : false,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_POSTFIELDS => implode('&', $_post),
             CURLOPT_USERAGENT => 'SMMTurk/1.0',

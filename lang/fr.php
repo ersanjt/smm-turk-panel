@@ -12,6 +12,7 @@ return [
     'remember_me' => 'Se souvenir de moi',
     'forgot_password' => 'Mot de passe oublié ?',
     'btn_login' => 'Connexion',
+    'btn_login_dashboard' => 'Accéder au tableau de bord',
     'login_with_google' => 'Connexion avec G',
     'no_account' => 'Pas encore de compte ?',
     'register' => 'S\'inscrire',

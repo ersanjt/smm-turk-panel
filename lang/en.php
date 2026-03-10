@@ -12,6 +12,7 @@ return [
     'remember_me' => 'Remember me',
     'forgot_password' => 'Forgot password?',
     'btn_login' => 'Login',
+    'btn_login_dashboard' => 'Sign in to Dashboard',
     'login_with_google' => 'Login with G',
     'no_account' => "Don't have an account?",
     'register' => 'Register',

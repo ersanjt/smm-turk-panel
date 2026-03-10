@@ -196,6 +196,9 @@ RewriteRule ^api/v2$ /api/v2.php [L]
 ## امنیت در Production
 
 - [ ] پسورد ادمین را عوض کن
-- [ ] در `config.php` قرار بده: `error_reporting(0); ini_set('display_errors', 0);`
+- [ ] در `config.php` قرار بده: `error_reporting(0); ini_set('display_errors', 0);` و برای پروداکشن `define('SMM_DEBUG', false);`
+- [ ] **SECRET_KEY:** در پروداکشن یک مقدار ثابت ۳۲ کاراکتر (مثلاً `bin2hex(random_bytes(16))` یک بار تولید کن) در `config.php` یا env قرار بده تا session پایدار بماند
 - [ ] حتماً از HTTPS استفاده کن
 - [ ] دسترسی `config.php` را روی 640 بگذار
+- [ ] **API:** روی هر کلید API حداکثر ۱۲۰ درخواست در دقیقه اعمال می‌شود؛ پوشه `tmp/rate_limit/` باید قابل نوشتن باشد
+- [ ] **واریز:** آدرس کیف‌پول‌ها از Admin → Settings خوانده می‌شود؛ در صورت خالی بودن از `CRYPTO_WALLET_ADDRESS` در config استفاده می‌شود

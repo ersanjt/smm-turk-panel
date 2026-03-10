@@ -12,6 +12,7 @@ return [
     'remember_me' => 'Beni hatırla',
     'forgot_password' => 'Şifremi unuttum?',
     'btn_login' => 'Giriş Yap',
+    'btn_login_dashboard' => 'Panele Giriş',
     'login_with_google' => 'G ile Giriş',
     'no_account' => 'Hesabınız yok mu?',
     'register' => 'Kayıt Ol',

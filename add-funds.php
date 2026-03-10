@@ -7,10 +7,28 @@ $user = $auth->getCurrentUser();
 $minDeposit = (float) ($db->getSetting('min_deposit') ?: 10);
 $minDeposit = $minDeposit >= 1 ? $minDeposit : 10;
 
-// Single crypto wallet only (from config or fallback)
-$cryptoWallet = defined('CRYPTO_WALLET_ADDRESS') && trim(CRYPTO_WALLET_ADDRESS) !== ''
-    ? trim(CRYPTO_WALLET_ADDRESS)
-    : '0xE74159340aF565AF3E4e1e963d5E42427F653f79';
+// Wallets from admin settings (DB); fallback to single config wallet
+$walletKeys = [
+    'wallet_eth' => 'ETH',
+    'wallet_usdt_erc20' => 'USDT (ERC20)',
+    'wallet_usdt_trc20' => 'USDT (TRC20)',
+    'wallet_btc' => 'BTC',
+    'wallet_bnb' => 'BNB',
+    'wallet_sol' => 'SOL',
+];
+$cryptoWallets = [];
+foreach ($walletKeys as $key => $label) {
+    $addr = $db->getSetting($key);
+    if ($addr !== null && trim($addr) !== '') {
+        $cryptoWallets[] = ['label' => $label, 'address' => trim($addr)];
+    }
+}
+if (empty($cryptoWallets) && defined('CRYPTO_WALLET_ADDRESS') && trim(CRYPTO_WALLET_ADDRESS) !== '') {
+    $cryptoWallets[] = ['label' => 'ETH / USDT ERC20', 'address' => trim(CRYPTO_WALLET_ADDRESS)];
+}
+if (empty($cryptoWallets)) {
+    $cryptoWallets[] = ['label' => 'ETH / USDT ERC20', 'address' => '0xE74159340aF565AF3E4e1e963d5E42427F653f79'];
+}
 
 $step = 'form';
 $amount = null;
@@ -83,7 +101,7 @@ require_once __DIR__ . '/layouts/header.php';
 </style>
 
 <div class="add-funds-banner">
-  Deposits are <strong>crypto only</strong>. Send ETH or USDT (ERC20) to the wallet below. After sending, submit your transaction ID so we can credit your balance.
+  Deposits are <strong>crypto only</strong>. Send to one of the wallet addresses below (use the network that matches the address). After sending, submit your transaction ID so we can credit your balance.
 </div>
 
 <div class="add-funds-tabs">
@@ -122,7 +140,7 @@ require_once __DIR__ . '/layouts/header.php';
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="add_funds" value="1">
       <div class="add-funds-instructions">
-        We accept <strong>ETH</strong> and <strong>USDT (ERC20)</strong>. Send the equivalent in USD to the wallet address shown on the next step. Minimum deposit: $<?= (int)$minDeposit ?>.
+        We accept <strong>ETH</strong>, <strong>USDT (ERC20/TRC20)</strong>, <strong>BTC</strong>, <strong>BNB</strong>, <strong>SOL</strong>. Send the equivalent in USD to one of the wallet addresses on the next step. Minimum deposit: $<?= (int)$minDeposit ?>.
       </div>
       <div class="form-group">
         <label class="form-label">Amount (USD)</label>
@@ -141,12 +159,14 @@ require_once __DIR__ . '/layouts/header.php';
   ?>
   <div class="card">
     <div class="card-title">Pay with crypto — $<?= number_format($amount, 2) ?> USD</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Send the equivalent of <strong>$<?= number_format($amount, 2) ?></strong> in <strong>ETH</strong> or <strong>USDT (ERC20)</strong> to the address below.</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Send the equivalent of <strong>$<?= number_format($amount, 2) ?></strong> to one of the addresses below (use the correct network).</p>
+    <?php foreach ($cryptoWallets as $i => $w): ?>
     <div class="wallet-box">
-      <div class="wallet-label">Wallet address (ETH / USDT ERC20)</div>
-      <code id="crypto-addr"><?= h($cryptoWallet) ?></code>
-      <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('crypto-addr').innerText);this.textContent='✓ Copied'">Copy address</button>
+      <div class="wallet-label"><?= h($w['label']) ?></div>
+      <code class="crypto-addr" id="crypto-addr-<?= $i ?>"><?= h($w['address']) ?></code>
+      <button type="button" class="btn btn-primary" onclick="var el=document.getElementById('crypto-addr-<?= $i ?>');navigator.clipboard.writeText(el.innerText);this.textContent='✓ Copied'">Copy address</button>
     </div>
+    <?php endforeach; ?>
     <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">After you sent the payment, paste your transaction ID (TxHash) below:</p>
     <form method="POST">
