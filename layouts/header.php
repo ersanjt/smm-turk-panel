@@ -76,21 +76,22 @@ img{max-width:100%;height:auto}
 .sidebar-close svg{width:18px;height:18px}
 .sidebar-mob-balance{display:none;flex-direction:row;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(135deg,rgba(227,10,23,.2),rgba(227,10,23,.12));border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:#fff;font-weight:700;letter-spacing:.02em}
 .sidebar-mob-balance svg{flex-shrink:0;opacity:.95}
-.sidebar-logo{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 100%);position:relative}
-.sidebar-logo a{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:inherit;transition:opacity .2s}
+.sidebar-logo{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 100%);position:relative}
+.sidebar-logo a{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:inherit;transition:opacity .2s;width:100%;min-width:0}
 .sidebar-logo a:hover{opacity:.95}
-.logo-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
-.sidebar-logo:hover .logo-icon{transform:scale(1.05);box-shadow:0 8px 24px rgba(227,10,23,.3)}
-.logo-icon img{width:48px;height:48px;object-fit:contain;display:block}
-.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1.15;text-transform:uppercase}
+.logo-icon{width:36px;height:36px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
+.sidebar-logo:hover .logo-icon{transform:scale(1.05);box-shadow:0 6px 18px rgba(227,10,23,.3)}
+.logo-icon img{width:36px;height:36px;object-fit:contain;display:block}
+.logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1.1;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .logo-text span{color:var(--primary-light);letter-spacing:-.02em}
-.sidebar-user{padding:20px;margin:16px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px}
-.user-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;margin-bottom:12px;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(227,10,23,.25)}
+.sidebar-user{padding:14px 16px;margin:12px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px;display:flex;flex-direction:row;align-items:center;gap:12px}
+.user-avatar{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(227,10,23,.25)}
 .user-avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.user-name{color:#fff;font-size:14px;font-weight:700;letter-spacing:.01em}
-.user-bal{color:rgba(255,255,255,.75);font-size:12px;margin-top:6px;font-weight:600;display:flex;align-items:center;gap:6px}
+.sidebar-user-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.user-name{color:#fff;font-size:13px;font-weight:700;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-bal{color:rgba(255,255,255,.75);font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
 .user-bal strong{color:var(--primary-light);font-weight:700}
-.user-status{display:inline-flex;align-items:center;margin-top:10px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.user-status{display:inline-flex;align-items:center;align-self:flex-start;margin-top:6px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
 .sidebar-user .user-status{background:rgba(227,10,23,.22);color:var(--primary-light);border:1px solid rgba(227,10,23,.35)}
 .sidebar-nav{padding:12px 14px;flex:1}
 .nav-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.35);padding:0 12px;margin:20px 0 8px;display:flex;align-items:center;gap:8px}
@@ -306,7 +307,7 @@ textarea.form-control{min-height:120px}
 @media(max-width:480px){
 .content{padding:12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
 .topbar{padding:8px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));min-height:52px}
-.topbar .topbar-stats,.topbar .stat-pill{display:none!important}
+.topbar .topbar-stats .stat-pill:nth-child(2){display:none!important}
 .content .form-control[style*="width"],.content select.form-control[style*="width"],.card .form-control[style*="width"],.card select[style*="width"]{width:100%!important;max-width:100%!important;min-width:0!important}
 .btn{padding:10px 16px;font-size:13px}
 .topbar-right .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px}
@@ -347,15 +348,17 @@ textarea.form-control{min-height:120px}
   <div class="sidebar-mob-balance" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44"></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="36" height="36"></span>
       <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
   <div class="sidebar-user">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
-    <div class="user-name"><?= h($user['username'] ?? '') ?></div>
-    <div class="user-bal">Balance <strong>$<?= $balance ?></strong></div>
-    <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
+    <div class="sidebar-user-info">
+      <div class="user-name"><?= h($user['username'] ?? '') ?></div>
+      <div class="user-bal">Balance <strong>$<?= $balance ?></strong></div>
+      <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
+    </div>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-label">Orders</div>

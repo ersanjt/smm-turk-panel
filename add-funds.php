@@ -79,12 +79,23 @@ if ($activeTab === 'history') {
     );
 }
 
+// Current balance for display (header also fetches it; we need it here for the balance block)
+$currentBalance = (float) ($user['balance'] ?? 0);
+$balanceRow = $db->fetch("SELECT balance FROM users WHERE id = ?", [(int)$user['id']]);
+if ($balanceRow !== null) {
+    $currentBalance = (float) $balanceRow['balance'];
+}
+
 $pageTitle = 'Add Funds';
 $pageDescription = 'Deposit funds via cryptocurrency (ETH, USDT ERC20) to your SMM panel balance.';
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
+.add-funds-balance-box { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 18px; background: linear-gradient(135deg, rgba(227,10,23,.08) 0%, rgba(227,10,23,.04) 100%); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 20px; }
+.add-funds-balance-box .balance-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.add-funds-balance-box .balance-value { font-size: 20px; font-weight: 800; color: var(--text); font-family: 'Syne', sans-serif; }
+.add-funds-balance-box .balance-value span { color: var(--primary); }
 .add-funds-banner { background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%); color: #0c5460; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; border: 1px solid #b8daff; }
 .add-funds-banner a { color: var(--primary); font-weight: 600; }
 .add-funds-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
@@ -99,6 +110,11 @@ require_once __DIR__ . '/layouts/header.php';
 .add-funds-instructions { background: var(--bg); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; border: 1px solid var(--border); }
 .add-funds-instructions a { color: var(--primary); font-weight: 600; }
 </style>
+
+<div class="add-funds-balance-box">
+  <span class="balance-label">Your current balance</span>
+  <span class="balance-value">$<span><?= number_format($currentBalance, 3) ?></span></span>
+</div>
 
 <div class="add-funds-banner">
   Deposits are <strong>crypto only</strong>. Send to one of the wallet addresses below (use the network that matches the address). After sending, submit your transaction ID so we can credit your balance.
