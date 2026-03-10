@@ -34,21 +34,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     }
 }
 
-// Load categories and services
-$categories = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
-$catParam = $_GET['cat'] ?? null;
+// Load categories and services (dedupe by trimmed category to avoid duplicate filter tags)
+$categoriesRaw = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+$seen = [];
+$categories = [];
+foreach ($categoriesRaw as $row) {
+    $cat = trim($row['category'] ?? '');
+    if ($cat !== '' && !isset($seen[$cat])) {
+        $seen[$cat] = true;
+        $categories[] = ['category' => $cat];
+    }
+}
+$catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
 $preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
 if ($preselectServiceId) {
     $preselect = $db->fetch("SELECT category FROM services WHERE service_id=? AND status='active'", [$preselectServiceId]);
-    if ($preselect && ($catParam === null || $preselect['category'] !== $catParam)) {
-        $catParam = $preselect['category'];
+    if ($preselect && ($catParam === null || trim($preselect['category'] ?? '') !== $catParam)) {
+        $catParam = trim($preselect['category'] ?? '');
     }
 }
-$selectedCat = $catParam !== null ? $catParam : ($categories[0]['category'] ?? '');
-$services = $db->fetchAll(
-    "SELECT * FROM services WHERE status='active' AND category=? ORDER BY service_id",
-    [$selectedCat]
-);
+// When no category in URL: show all services and only "All" (+ ) is active
+$selectedCat = ($catParam !== null && $catParam !== '') ? $catParam : '';
+if ($selectedCat !== '') {
+    $services = $db->fetchAll(
+        "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? ORDER BY service_id",
+        [$selectedCat]
+    );
+} else {
+    $services = $db->fetchAll("SELECT * FROM services WHERE status='active' ORDER BY service_id");
+}
 $searchQ = trim($_GET['q'] ?? '');
 if ($searchQ) {
     $services = array_filter($services, function($s) use ($searchQ) {
@@ -108,10 +122,10 @@ require_once __DIR__ . '/layouts/header.php';
 
 <!-- Platform icons (category filter) -->
 <div class="platform-icons">
-  <a class="platform-btn <?= $catParam === null ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>" title="All">+</a>
+  <a class="platform-btn <?= $selectedCat === '' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>" title="All">+</a>
   <?php foreach ($categories as $cat):
     $icon = platformIcon($cat['category'], $platformIcons);
-    $isActive = $cat['category'] === $selectedCat;
+    $isActive = $selectedCat !== '' && $cat['category'] === $selectedCat;
   ?>
   <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?= h($icon) ?></a>
   <?php endforeach; ?>

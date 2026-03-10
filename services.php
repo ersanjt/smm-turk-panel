@@ -11,10 +11,11 @@ $sort   = $_GET['sort'] ?? 'id';
 $dir    = strtolower($_GET['dir'] ?? 'asc');
 if (!in_array($dir, ['asc', 'desc'])) $dir = 'asc';
 
+$cat = $cat !== '' ? trim($cat) : '';
 $where  = "WHERE status='active'";
 $params = [];
 if ($search) { $where .= " AND name LIKE ?"; $params[] = "%$search%"; }
-if ($cat)    { $where .= " AND category = ?"; $params[] = $cat; }
+if ($cat)    { $where .= " AND TRIM(COALESCE(category,'')) = ?"; $params[] = $cat; }
 
 $orderBy = 'service_id ASC';
 if ($sort === 'rate') $orderBy = 'rate ' . ($dir === 'desc' ? 'DESC' : 'ASC');
@@ -23,7 +24,13 @@ if ($sort === 'max')  $orderBy = 'max ' . ($dir === 'desc' ? 'DESC' : 'ASC');
 if ($sort === 'id')   $orderBy = 'service_id ' . ($dir === 'desc' ? 'DESC' : 'ASC');
 
 $services   = $db->fetchAll("SELECT * FROM services $where ORDER BY $orderBy LIMIT 500", $params);
-$categories = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+$categoriesRaw = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+$seen = [];
+$categories = [];
+foreach ($categoriesRaw as $row) {
+    $c = trim($row['category'] ?? '');
+    if ($c !== '' && !isset($seen[$c])) { $seen[$c] = true; $categories[] = ['category' => $c]; }
+}
 
 $platformIcons = [
     'YouTube' => '▶', 'Instagram' => '📷', 'TikTok' => '🎵', 'Twitter' => '𝕏', 'Facebook' => 'f', 'LinkedIn' => 'in',

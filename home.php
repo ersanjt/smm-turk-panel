@@ -53,9 +53,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* تم روز (Light) */
             --primary: #E30A17;
             --primary-dark: #B90812;
-            --primary-light: #FF4757;
+            --primary-light: #FF5566;
             --primary-soft: rgba(227, 10, 23, 0.08);
             --primary-soft-strong: rgba(227, 10, 23, 0.14);
             --accent: #e63950;
@@ -63,9 +64,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             --dark2: #2d1519;
             --muted: #6b4a50;
             --muted-dark: #5a3d42;
-            --light: #fef8f9;
-            --light-warm: #fff5f6;
+            --light: #fdf9fa;
+            --light-warm: #fef5f6;
             --white: #ffffff;
+            --border-light: #f0e6e8;
             --shadow-sm: 0 2px 8px rgba(26, 10, 14, 0.06);
             --shadow-md: 0 12px 40px rgba(26, 10, 14, 0.08);
             --shadow-lg: 0 24px 64px rgba(26, 10, 14, 0.1);
@@ -287,14 +289,14 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .hero-desc strong { color: var(--primary); font-weight: 700; }
         .hero-form-box .form-group { margin-bottom: 16px; }
         .hero-form-box .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-        .hero-form-box .input-wrap { display: flex; align-items: center; gap: 0; background: var(--light); border: 1.5px solid #f0e6e8; border-radius: 12px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+        .hero-form-box .input-wrap { display: flex; align-items: center; gap: 0; background: var(--light); border: 1.5px solid var(--border-light); border-radius: 12px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
         .hero-form-box .input-wrap:focus-within { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 3px var(--primary-soft); }
         .hero-form-box .input-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted); flex-shrink: 0; }
         .hero-form-box .input-wrap:focus-within .input-icon { color: var(--primary); }
         .hero-form-box .input-wrap .form-control { border: none; border-radius: 0; padding: 12px 14px 12px 0; background: transparent; font-size: 15px; }
         .hero-form-box .input-wrap .form-control::placeholder { color: var(--muted); }
         .hero-form-box .input-wrap .form-control:focus { box-shadow: none; outline: none; }
-        .hero-form-box .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid #f0e6e8; border-radius: 12px; font-size: 15px; outline: none; transition: border-color .2s; background: var(--light); }
+        .hero-form-box .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border-light); border-radius: 12px; font-size: 15px; outline: none; transition: border-color .2s; background: var(--light); }
         .hero-form-box .form-control::placeholder { color: var(--muted); }
         .hero-form-box .form-control:focus { border-color: var(--primary); background: var(--white); }
         .hero-form-box .btn-login { width: 100%; padding: 16px 20px; background: linear-gradient(145deg, var(--primary), var(--primary-dark)); color: var(--white); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .02em; cursor: pointer; transition: all .25s ease; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 14px rgba(227, 10, 23, .3), 0 1px 0 rgba(255,255,255,.15) inset; }
@@ -304,9 +306,11 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .hero-form-box .remember { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
         .hero-form-box .forgot { font-size: 13px; color: var(--primary); font-weight: 600; }
         .hero-form-box .divider { display: flex; align-items: center; gap: 14px; margin: 22px 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-        .hero-form-box .divider::before, .hero-form-box .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #f0e6e8, transparent); }
-        .hero-form-box .btn-google { width: 100%; padding: 14px 16px; border: 2px solid #e8e0e2; border-radius: 12px; background: var(--white); font-size: 15px; font-weight: 600; color: var(--dark); cursor: pointer; transition: all .25s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow-sm); }
+        .hero-form-box .divider::before, .hero-form-box .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-light), transparent); }
+        .hero-form-box .btn-google { width: 100%; padding: 14px 16px; border: 2px solid var(--border-light); border-radius: 12px; background: var(--white); font-size: 15px; font-weight: 600; color: var(--dark); cursor: pointer; transition: all .25s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow-sm); text-decoration: none; }
         .hero-form-box .btn-google:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); box-shadow: 0 4px 14px rgba(227, 10, 23, .12); transform: translateY(-1px); }
+        .hero-form-box .btn-google-hero { padding: 16px 20px; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .hero-form-box .btn-google svg { flex-shrink: 0; }
         .hero-form-box .register-link { text-align: center; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(227, 10, 23, .1); font-size: 14px; color: var(--muted); }
         .hero-form-box .register-link a { color: var(--primary); font-weight: 700; transition: color .2s; }
         .hero-form-box .register-link a:hover { color: var(--primary-dark); }
@@ -387,30 +391,112 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); word-break: break-word; line-height: 1.6; }
 
 
-        /* Dark theme (body.theme-dark) */
-        body.theme-dark { background: #0f0809; color: #e8dcdd; }
-        body.theme-dark .nav { background: linear-gradient(180deg, rgba(26,10,14,.98) 0%, rgba(26,10,14,.95) 100%); border-bottom-color: rgba(227,10,23,.2); box-shadow: 0 4px 24px rgba(0,0,0,.3); }
-        body.theme-dark .nav::after { opacity: 0.5; }
-        body.theme-dark .nav-logo { color: #fff; }
-        body.theme-dark .nav-links a:not(.nav-btn) { color: rgba(255,255,255,.85); }
-        body.theme-dark .nav-links a:not(.nav-btn):hover { color: var(--primary-light); background: rgba(227,10,23,.15); }
-        body.theme-dark .nav-lang-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: #fff; }
-        body.theme-dark .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary-light); }
-        body.theme-dark .hero { background: linear-gradient(160deg, #0f0809 0%, #1a0a0e 35%, #1f0d11 70%, #0f0809 100%); }
-        body.theme-dark .hero::before { background: radial-gradient(ellipse 80% 50% at 15% 40%, rgba(227,10,23,.12), transparent 55%), radial-gradient(ellipse 70% 60% at 85% 70%, rgba(230,57,80,.06), transparent 50%); }
-        body.theme-dark .hero h1 { color: #fff; }
-        body.theme-dark .hero h1 .hero-title-2 { color: var(--primary-light); }
-        body.theme-dark .hero-desc { color: rgba(255,255,255,.75); }
-        body.theme-dark .hero-desc strong { color: var(--primary-light); }
-        body.theme-dark .section-benefits { background: linear-gradient(180deg, #1a0a0e 0%, #15080b 100%); }
-        body.theme-dark .section-label { color: var(--primary-light); }
-        body.theme-dark .section-title { color: #fff; }
-        body.theme-dark .section-desc { color: rgba(255,255,255,.7); }
-        body.theme-dark .footer { background: #0a0506; }
-        body.theme-dark .mob-footer-bar { background: rgba(26,10,14,.98); border-top-color: rgba(227,10,23,.2); }
-        body.theme-dark .nav-mob-drawer-inner { background: var(--dark2); }
-        body.theme-dark .nav-mob-drawer-inner a { color: #fff; }
-        body.theme-dark .nav-mob-drawer-inner a:hover { background: rgba(227,10,23,.2); color: var(--primary-light); }
+        /* تم شب (Dark) — رنگ‌های یکپارچه */
+        body.theme-dark {
+            background: #0d090b;
+            color: #f0e9eb;
+        }
+        body.theme-dark .nav {
+            background: linear-gradient(180deg, #141013 0%, #0f0c0e 100%);
+            border-bottom-color: rgba(255, 85, 102, 0.2);
+            box-shadow: 0 4px 24px rgba(0,0,0,.4);
+        }
+        body.theme-dark .nav::after { opacity: 0.6; }
+        body.theme-dark .nav-logo { color: #f5eef0; }
+        body.theme-dark .nav-logo span { color: #FF5566; }
+        body.theme-dark .nav-links a:not(.nav-btn) { color: #e0d6d9; }
+        body.theme-dark .nav-links a:not(.nav-btn):hover { color: #FF5566; background: rgba(255, 85, 102, 0.12); }
+        body.theme-dark .nav-lang-btn { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); color: #f0e9eb; }
+        body.theme-dark .nav-lang-btn:hover { border-color: #FF5566; color: #FF5566; }
+        body.theme-dark .nav-theme-toggle { background: #1a1416; border-color: rgba(255,255,255,.1); }
+        body.theme-dark .nav-theme-toggle:hover { border-color: #FF5566; background: rgba(255, 85, 102, 0.15); }
+        body.theme-dark .nav-theme-toggle .theme-icon-dark { color: #f0e9eb; }
+        body.theme-dark .nav-btn { background: linear-gradient(145deg, #C41E3A, #A01830); color: #fff; box-shadow: 0 4px 16px rgba(196, 30, 58, .4); }
+        body.theme-dark .nav-btn:hover { background: linear-gradient(145deg, #E30A17, #B90812); }
+        body.theme-dark .hero {
+            background: linear-gradient(160deg, #0d090b 0%, #120c0e 40%, #151012 70%, #0d090b 100%);
+        }
+        body.theme-dark .hero::before {
+            background: radial-gradient(ellipse 80% 50% at 15% 40%, rgba(255, 85, 102, 0.08), transparent 55%),
+                        radial-gradient(ellipse 70% 60% at 85% 70%, rgba(255, 85, 102, 0.05), transparent 50%);
+        }
+        body.theme-dark .hero h1 { color: #f5eef0; }
+        body.theme-dark .hero h1 .hero-title-2 { color: #FF5566; }
+        body.theme-dark .hero-desc { color: #c4b5b9; }
+        body.theme-dark .hero-desc strong { color: #FF5566; }
+        body.theme-dark .hero-form-box {
+            background: #1a1416;
+            border-color: rgba(255, 85, 102, 0.15);
+            box-shadow: 0 24px 48px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.06);
+        }
+        body.theme-dark .hero-form-box .form-title { color: #f5eef0; }
+        body.theme-dark .hero-form-box .form-label { color: #a89da1; }
+        body.theme-dark .hero-form-box .input-wrap { background: #121013; border-color: rgba(255,255,255,.08); }
+        body.theme-dark .hero-form-box .input-wrap:focus-within { border-color: #FF5566; background: #1a1416; box-shadow: 0 0 0 3px rgba(255, 85, 102, 0.2); }
+        body.theme-dark .hero-form-box .input-icon { color: #a89da1; }
+        body.theme-dark .hero-form-box .input-wrap:focus-within .input-icon { color: #FF5566; }
+        body.theme-dark .hero-form-box .form-control { background: transparent; border-color: transparent; color: #f0e9eb; }
+        body.theme-dark .hero-form-box .form-control::placeholder { color: #7a6d71; }
+        body.theme-dark .hero-form-box .remember { color: #a89da1; }
+        body.theme-dark .hero-form-box .remember input { accent-color: #FF5566; }
+        body.theme-dark .hero-form-box .forgot { color: #FF5566; }
+        body.theme-dark .hero-form-box .divider { color: #7a6d71; }
+        body.theme-dark .hero-form-box .divider::before,
+        body.theme-dark .hero-form-box .divider::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent); }
+        body.theme-dark .hero-form-box .btn-google { background: #1a1416; border-color: rgba(255,255,255,.12); color: #f0e9eb; }
+        body.theme-dark .hero-form-box .btn-google:hover { border-color: #FF5566; color: #FF5566; background: rgba(255, 85, 102, 0.12); }
+        body.theme-dark .hero-form-box .register-link { border-top-color: rgba(255,255,255,.08); color: #a89da1; }
+        body.theme-dark .hero-form-box .register-link a { color: #FF5566; }
+        body.theme-dark .section { background: transparent; }
+        body.theme-dark .section-benefits { background: linear-gradient(180deg, #0f0c0e 0%, #0d090b 100%); }
+        body.theme-dark .section-benefits::before { background: linear-gradient(90deg, transparent, rgba(255, 85, 102, 0.15), transparent); }
+        body.theme-dark .section-label { color: #FF5566; }
+        body.theme-dark .section-title { color: #f5eef0; }
+        body.theme-dark .section-desc { color: #b8a8ac; }
+        body.theme-dark .benefit-card { background: #1a1416; border-color: rgba(255,255,255,.06); box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+        body.theme-dark .benefit-card:hover { border-color: rgba(255, 85, 102, 0.3); box-shadow: 0 20px 48px rgba(0,0,0,.35); }
+        body.theme-dark .benefit-card h3 { color: #f5eef0; }
+        body.theme-dark .benefit-card p { color: #b8a8ac; }
+        body.theme-dark .feature-block { background: #1a1416; border-color: rgba(255,255,255,.06); }
+        body.theme-dark .feature-block:hover { border-color: rgba(255, 85, 102, 0.25); }
+        body.theme-dark .feature-block h3 { color: #f5eef0; }
+        body.theme-dark .feature-block p { color: #b8a8ac; }
+        body.theme-dark .feature-block .icon { background: rgba(255, 85, 102, 0.15); }
+        body.theme-dark .stat-item { background: #1a1416; border-color: rgba(255,255,255,.06); }
+        body.theme-dark .stat-item .stat-value { color: #FF5566; }
+        body.theme-dark .stat-item .stat-label { color: #b8a8ac; }
+        body.theme-dark .stat-item .icon { background: rgba(255, 85, 102, 0.15); }
+        body.theme-dark .cta-block { background: linear-gradient(145deg, #A01830 0%, #8a1428 50%, #6b0f1e 100%); box-shadow: 0 20px 48px rgba(160, 24, 48, .4); }
+        body.theme-dark .cta-block .section-label { color: rgba(255,255,255,.9); }
+        body.theme-dark .cta-block .section-title { color: #fff; }
+        body.theme-dark .cta-block .section-desc { color: rgba(255,255,255,.85); }
+        body.theme-dark .cta-block .btn-cta { background: #fff; color: #C41E3A; }
+        body.theme-dark .faq-item { background: #1a1416; border-color: rgba(255,255,255,.06); }
+        body.theme-dark .faq-item:hover { border-color: rgba(255,255,255,.1); }
+        body.theme-dark .faq-item.open { border-color: rgba(255, 85, 102, 0.4); }
+        body.theme-dark .faq-q { color: #e8dce0; }
+        body.theme-dark .faq-item.open .faq-q { color: #FF5566; }
+        body.theme-dark .faq-q span { color: #FF5566; }
+        body.theme-dark .faq-a { color: #b8a8ac; }
+        body.theme-dark .why-us-icon { background: rgba(255, 85, 102, 0.1); border-color: rgba(255, 85, 102, 0.15); }
+        body.theme-dark .why-us-icon:hover { border-color: rgba(255, 85, 102, 0.25); }
+        body.theme-dark .why-us-icon span { color: #f5eef0; }
+        body.theme-dark .footer { background: #080506; color: #a89da1; }
+        body.theme-dark .footer::before { background: linear-gradient(90deg, transparent, rgba(255, 85, 102, 0.2), transparent); }
+        body.theme-dark .footer-links a { color: #d8ccd0; }
+        body.theme-dark .footer-links a:hover { color: #fff; background: rgba(255,255,255,.08); }
+        body.theme-dark .footer-copy { color: #7a6d71; }
+        body.theme-dark .mob-footer-bar { background: #141013; border-top-color: rgba(255, 85, 102, 0.2); }
+        body.theme-dark .mob-footer-bar .mob-footer-btn-outline { background: transparent; color: #FF5566; border-color: #FF5566; }
+        body.theme-dark .mob-footer-bar .mob-footer-btn-outline:hover { background: rgba(255, 85, 102, 0.15); }
+        body.theme-dark .nav-mob-drawer-inner { background: #1a1416; }
+        body.theme-dark .nav-mob-drawer-inner a { color: #f0e9eb; }
+        body.theme-dark .nav-mob-drawer-inner a:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
+        body.theme-dark .nav-mob-menu-btn { background: #1a1416; color: #f0e9eb; }
+        body.theme-dark .nav-mob-menu-btn:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
+        body.theme-dark .nav-lang-dropdown { background: #1a1416; box-shadow: 0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); }
+        body.theme-dark .nav-lang-dropdown a { color: #e8dce0; }
+        body.theme-dark .nav-lang-dropdown a:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
 
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; text-align: center; }
@@ -536,12 +622,20 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         </div>
         <div class="hero-form-box">
             <h2 class="form-title"><?= h(__('nav_sign_in')) ?></h2>
+            <?php $googleAuth = defined('GOOGLE_CLIENT_ID') && trim(GOOGLE_CLIENT_ID) !== ''; ?>
+            <?php if ($googleAuth): ?>
+            <a href="<?= h(path('login-google.php')) ?>" class="btn-google btn-google-hero">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <?= h(__('sign_in_with_google')) ?>
+            </a>
+            <div class="divider">— <?= h(__('or_continue_with_email')) ?> —</div>
+            <?php endif; ?>
             <form method="POST" action="<?= h(path('login.php')) ?>">
                 <div class="form-group">
                     <label class="form-label"><?= h(__('login_username')) ?></label>
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-                        <input type="text" name="email" class="form-control" placeholder="<?= h(__('login_username')) ?>" required autofocus>
+                        <input type="text" name="email" class="form-control" placeholder="<?= h(__('login_username')) ?>" required <?= $googleAuth ? '' : 'autofocus' ?>>
                     </div>
                 </div>
                 <div class="form-group">
@@ -554,9 +648,6 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
                 <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" class="forgot"><?= h(__('forgot_password')) ?></a></div>
                 <button type="submit" class="btn-login"><?= h(__('btn_login_dashboard')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-                <div class="divider">— <?= h(__('login_with_google')) ?> —</div>
-                <?php $googleAuth = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) !== '' : false; ?>
-<a href="<?= h($googleAuth ? path('login-google.php') : path('login.php')) ?>" class="btn-google"><?= h(__('login_with_google')) ?></a>
                 <p class="register-link"><?= h(__('no_account')) ?> <a href="<?= h(path('login.php')) ?>?mode=register">→ <?= h(__('register')) ?></a></p>
             </form>
         </div>

@@ -18,6 +18,8 @@ return [
     'btn_login' => 'Giriş Yap',
     'btn_login_dashboard' => 'Panele Giriş',
     'login_with_google' => 'G ile Giriş',
+    'sign_in_with_google' => 'Google ile Giriş Yap',
+    'or_continue_with_email' => 'veya e-posta ile devam et',
     'no_account' => 'Hesabınız yok mu?',
     'register' => 'Kayıt Ol',
     'benefit_heading' => 'Avantajlar',

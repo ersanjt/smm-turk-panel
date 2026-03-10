@@ -18,6 +18,8 @@ return [
     'btn_login' => 'Connexion',
     'btn_login_dashboard' => 'Accéder au tableau de bord',
     'login_with_google' => 'Connexion avec G',
+    'sign_in_with_google' => 'Se connecter avec Google',
+    'or_continue_with_email' => 'ou continuer avec l\'e-mail',
     'no_account' => 'Pas encore de compte ?',
     'register' => 'S\'inscrire',
     'benefit_heading' => 'Avantages',

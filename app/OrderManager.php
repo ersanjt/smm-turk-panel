@@ -115,13 +115,15 @@ class OrderManager {
         $count  = 0;
 
         foreach ($services as $s) {
+            $name = ContentCorrections::correctServiceName($s['name'] ?? '');
+            $category = ContentCorrections::correctCategory($s['category'] ?? '');
             $this->db->execute(
                 "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
                  rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
                 [
-                    $s['service'], $s['name'], $s['type'] ?? 'Default', $s['category'] ?? '',
+                    $s['service'], $name, $s['type'] ?? 'Default', $category,
                     $s['rate'], $s['min'], $s['max'],
                     ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
                 ]

@@ -18,6 +18,8 @@ return [
     'btn_login' => 'Login',
     'btn_login_dashboard' => 'Sign in to Dashboard',
     'login_with_google' => 'Login with G',
+    'sign_in_with_google' => 'Sign in with Google',
+    'or_continue_with_email' => 'or continue with email',
     'no_account' => "Don't have an account?",
     'register' => 'Register',
     'benefit_heading' => 'Benefit',
