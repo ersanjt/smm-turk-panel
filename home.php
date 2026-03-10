@@ -150,18 +150,16 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .nav-logo-icon {
             width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
-            box-shadow: 0 4px 14px rgba(227, 10, 23, .25), 0 1px 0 rgba(255,255,255,.2) inset;
-            transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-smooth);
             position: relative; overflow: hidden;
+            transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-smooth);
         }
         .nav-logo-icon::after {
             content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,.25) 45%, transparent 55%);
-            transform: translateX(-100%); transition: transform 0.6s ease;
+            transform: translateX(-100%); transition: transform 0.6s ease; border-radius: 12px; pointer-events: none;
         }
-        .nav-logo:hover .nav-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.2) inset; }
+        .nav-logo:hover .nav-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 6px 20px rgba(227, 10, 23, .35); }
         .nav-logo:hover .nav-logo-icon::after { transform: translateX(100%); }
-        .nav-logo img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
+        .nav-logo img { width: 44px; height: 44px; object-fit: contain; display: block; }
         .nav-logo-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; text-transform: uppercase; }
         .nav-logo-text span { color: var(--primary); }
         .nav-logo-tag { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -509,7 +507,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             .nav-inner { min-height: 56px; padding: 8px 0; flex-wrap: nowrap; gap: 10px; }
             .nav-logo { flex: 0 0 auto; }
             .nav-logo-icon { width: 40px; height: 40px; }
-            .nav-logo img { width: 22px; height: 22px; }
+            .nav-logo img { width: 40px; height: 40px; }
             .nav-logo-text { font-size: 17px; }
             .nav-logo-tag { display: none; }
             .nav-links { margin-left: auto; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
@@ -539,7 +537,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             .nav-inner { min-height: 52px; gap: 8px; }
             .nav-logo-text { font-size: 15px; }
             .nav-logo-icon { width: 36px; height: 36px; }
-            .nav-logo img { width: 20px; height: 20px; }
+            .nav-logo img { width: 36px; height: 36px; }
             .nav-links { gap: 6px; }
             .nav-links a:not(.nav-btn) { font-size: 12px; padding: 6px 4px; }
             .nav-btn { padding: 10px 12px; font-size: 12px; min-height: 44px; }
@@ -555,6 +553,8 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         }
         @media (max-width: 360px) {
             .nav-logo-text { font-size: 14px; }
+            .nav-logo img { width: 32px; height: 32px; }
+            .nav-logo-icon { width: 32px; height: 32px; }
             .nav-links a { font-size: 12px; }
             .nav-btn { padding: 8px 12px; font-size: 12px; }
         }
@@ -570,7 +570,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 <header class="nav" role="banner">
     <div class="nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="26" height="26" fetchpriority="high"></span>
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
             <span class="nav-logo-text">SMM <span>TURK</span></span>
             <span class="nav-logo-tag">SMM Panel</span>
         </a>

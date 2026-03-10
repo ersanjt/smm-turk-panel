@@ -64,9 +64,9 @@ img{max-width:100%;height:auto}
 .sidebar-mob-balance span{opacity:.9;font-weight:600}
 .sidebar-logo a{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;color:inherit;transition:opacity .2s}
 .sidebar-logo a:hover{opacity:.92}
-.logo-icon{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--primary),var(--primary-dark));box-shadow:0 4px 14px rgba(227,10,23,.3),0 1px 0 rgba(255,255,255,.15) inset;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
-.sidebar-logo:hover .logo-icon{transform:scale(1.06) rotate(-3deg);box-shadow:0 6px 20px rgba(227,10,23,.4),0 1px 0 rgba(255,255,255,.15) inset}
-.logo-icon img{width:26px;height:26px;filter:brightness(0) invert(1)}
+.logo-icon{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
+.sidebar-logo:hover .logo-icon{transform:scale(1.06) rotate(-3deg);box-shadow:0 6px 20px rgba(227,10,23,.35)}
+.logo-icon img{width:44px;height:44px;object-fit:contain;display:block}
 .logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .logo-text span{color:var(--primary-light);letter-spacing:-.02em}
 .sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -86,7 +86,7 @@ img{max-width:100%;height:auto}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary) 30%,var(--primary-dark) 50%,var(--primary) 70%,transparent);background-size:200% 100%;opacity:.6;pointer-events:none;animation:topbarShine 4s ease-in-out infinite}
 .topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .topbar-mob-logo{display:none;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--text);flex-shrink:0}
-.topbar-mob-logo img{width:40px;height:40px;border-radius:12px}
+.topbar-mob-logo img{width:44px;height:44px;border-radius:12px;object-fit:contain}
 .topbar-mob-logo .topbar-mob-logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.1;text-transform:uppercase}
 .topbar-mob-logo .topbar-mob-logo-text b{color:var(--primary)}
 .topbar-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:#fff;margin-right:8px;box-shadow:0 2px 8px rgba(227,10,23,.25)}
@@ -315,7 +315,7 @@ textarea.form-control{min-height:120px}
   <div class="sidebar-mob-balance" aria-hidden="true">Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="26" height="26"></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44"></span>
       <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
@@ -397,7 +397,7 @@ textarea.form-control{min-height:120px}
   <div class="topbar">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt=""><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
       <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
       <div class="topbar-stats">
         <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>

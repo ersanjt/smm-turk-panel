@@ -11,7 +11,7 @@ if ($auth->isLoggedIn()) {
 $clientId     = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) : '';
 $clientSecret = defined('GOOGLE_CLIENT_SECRET') ? trim(GOOGLE_CLIENT_SECRET) : '';
 $siteUrl      = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$redirectUri  = $siteUrl . '/login-google-callback.php';
+$redirectUri  = url('login-google-callback.php');
 
 $error = '';
 $code  = $_GET['code'] ?? '';

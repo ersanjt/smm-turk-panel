@@ -30,7 +30,7 @@ if (php_sapi_name() !== 'cli') {
     $maintenance = $db->getSetting('maintenance_mode');
     if ($maintenance === '1' && !$auth->isAdmin()) {
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn()) || strpos($uri, '/login.php') !== false;
+        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn()) || preg_match('#/login(\.php)?(?:\?|$)#', $uri);
         if (!$allow) {
             header('HTTP/1.1 503 Service Unavailable');
             header('Retry-After: 300');
@@ -58,17 +58,36 @@ function site_base(): string {
     return (defined('SITE_URL') && SITE_URL !== '') ? rtrim(SITE_URL, '/') : '';
 }
 
+/**
+ * Convert .php page paths to clean URLs (no .php extension).
+ * Assets, api, uploads and non-.php paths are returned unchanged.
+ */
+function clean_page_path(string $p): string {
+    $p = ltrim($p, '/');
+    if (substr($p, -4) !== '.php') {
+        return '/' . $p;
+    }
+    $p = substr($p, 0, -4);
+    if ($p === 'index') {
+        return '/';
+    }
+    if ($p === 'admin/index') {
+        return '/admin';
+    }
+    return '/' . $p;
+}
+
 /** Internal URL: full URL for redirects (use in Location header). */
 function url(string $path): string {
-    $path = '/' . ltrim($path, '/');
+    $path = clean_page_path('/' . ltrim($path, '/'));
     $base = site_base();
     return $base !== '' ? $base . $path : $path;
 }
 
-/** Path for internal href (same-origin). Use in HTML: href="<?= h(path('login.php')) ?>". */
+/** Path for internal href (same-origin). Use in HTML: href="<?= h(path('login.php')) ?>". Outputs clean URLs without .php. */
 function path(string $p): string {
-    $p = '/' . ltrim($p, '/');
-    return base_path() . $p;
+    $path = clean_page_path('/' . ltrim($p, '/'));
+    return base_path() . $path;
 }
 
 function money(float $amount): string {

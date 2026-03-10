@@ -10,7 +10,7 @@ if ($auth->isLoggedIn()) {
 
 $clientId = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) : '';
 $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$redirectUri = $siteUrl . '/login-google-callback.php';
+$redirectUri = url('login-google-callback.php');
 
 if ($clientId === '' || $siteUrl === '') {
     flash('error', 'Google Sign-In is not configured.');

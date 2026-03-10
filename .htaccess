@@ -9,12 +9,21 @@
   Options -Indexes
 </IfModule>
 
-# SMM Turk - API rewrite
+# SMM Turk - Clean URLs (no .php in browser) + API rewrite
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteBase /
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# Real files and directories: do not rewrite
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+# API and referral
 RewriteRule ^api/v2$ api/v2.php [L,QSA]
 RewriteRule ^c/([a-zA-Z0-9_-]+)/?$ c.php?ref=$1 [L,QSA]
+# Clean URLs: / -> index.php, /page -> page.php, /admin -> admin/index.php, /admin/xxx -> admin/xxx.php
+RewriteRule ^$ index.php [L,QSA]
+RewriteRule ^admin/?$ admin/index.php [L,QSA]
+RewriteRule ^admin/([a-zA-Z0-9_.-]+)/?$ admin/$1.php [L,QSA]
+RewriteRule ^([a-zA-Z0-9_.-]+)/?$ $1.php [L,QSA]
 </IfModule>
