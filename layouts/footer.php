@@ -1,3 +1,4 @@
+    </div><!-- end content-inner -->
   </div><!-- end content -->
   <footer class="footer">
     <div class="footer-inner">
@@ -18,7 +19,7 @@
     <a href="<?= h(path('tickets.php')) ?>" class="<?= ($currentPage ?? '') === 'tickets' ? 'active' : '' ?>"><span class="mob-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Tickets</span></a>
     <button type="button" id="mobNavMenuBtn" aria-label="Open menu"><span class="mob-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span><span>Menu</span></button>
   </nav>
-</div><!-- end main -->
+</main><!-- end main -->
 
 <script>
 (function(){

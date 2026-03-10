@@ -143,13 +143,12 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             min-height: 64px; padding: 10px 0;
         }
         .nav-logo {
-            display: flex; align-items: center; gap: 14px; font-family: 'Syne', sans-serif; font-size: 23px; font-weight: 800; letter-spacing: -0.04em;
-            color: var(--dark); text-decoration: none; min-height: 44px; letter-spacing: -0.03em;
-            transition: opacity .2s, transform .2s;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            color: var(--dark); text-decoration: none; transition: opacity .2s, transform .2s;
         }
         .nav-logo:hover { opacity: 0.92; transform: translateY(-1px); }
         .nav-logo-icon {
-            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(145deg, var(--primary), var(--primary-dark));
             box-shadow: 0 4px 14px rgba(227, 10, 23, .25), 0 1px 0 rgba(255,255,255,.2) inset;
@@ -162,9 +161,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         }
         .nav-logo:hover .nav-logo-icon { transform: scale(1.08) rotate(-2deg); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.2) inset; }
         .nav-logo:hover .nav-logo-icon::after { transform: translateX(100%); }
-        .nav-logo img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
-        .nav-logo span { color: var(--primary); letter-spacing: -0.02em; }
-        .nav-logo-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-left: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .nav-logo img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
+        .nav-logo-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; text-transform: uppercase; }
+        .nav-logo-text span { color: var(--primary); }
+        .nav-logo-tag { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; }
         .nav-links { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .nav-links a {
             font-size: 13.5px; font-weight: 600; color: var(--dark); letter-spacing: .02em;
@@ -219,16 +219,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         body.theme-dark .nav-theme-toggle .theme-icon-dark { opacity: .9; }
         .nav-lang-compact { margin-left: 4px; }
 
-        /* Mobile menu (hamburger) - hidden on desktop */
         .nav-theme-toggle .theme-icon-light { opacity: .85; }
-        .nav-mob-menu-btn { display: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: none; background: var(--light); border-radius: 10px; cursor: pointer; align-items: center; justify-content: center; font-size: 20px; color: var(--dark); transition: background .2s, color .2s; }
-        .nav-mob-menu-btn:hover { background: var(--primary-soft); color: var(--primary); }
-        .nav-mob-drawer { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26,10,14,.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s; padding-top: max(70px, calc(56px + env(safe-area-inset-top))); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
-        .nav-mob-drawer.open { opacity: 1; pointer-events: auto; }
-        .nav-mob-drawer-inner { background: var(--white); border-radius: 16px 16px 0 0; padding: 16px; max-height: 70vh; overflow-y: auto; box-shadow: 0 -8px 32px rgba(0,0,0,.12); }
-        .nav-mob-drawer-inner a { display: flex; align-items: center; padding: 14px 16px; font-size: 15px; font-weight: 600; color: var(--dark); border-radius: 12px; margin-bottom: 4px; min-height: 48px; transition: background .2s; }
-        .nav-mob-drawer-inner a:hover { background: var(--primary-soft); color: var(--primary); }
-        .nav-mob-drawer-inner a:last-child { margin-bottom: 0; }
 
         /* Mobile footer bar - fixed bottom CTA (only on landing, mobile) */
         .mob-footer-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 900; background: rgba(255,255,255,.98); backdrop-filter: blur(14px); border-top: 1px solid rgba(227,10,23,.12); padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(12px, env(safe-area-inset-bottom)); gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; box-shadow: 0 -4px 24px rgba(0,0,0,.06); }
@@ -389,6 +380,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         .footer-links a { color: rgba(255,255,255,.85); font-size: 14px; font-weight: 600; padding: 12px 20px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; transition: color .2s, background .2s; }
         .footer-links a:hover { color: var(--white); background: rgba(255,255,255,.08); }
         .footer-copy { font-size: 13px; color: rgba(255,255,255,.5); word-break: break-word; line-height: 1.6; }
+        .footer-nav-label { display: none; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 16px; }
 
 
         /* تم شب (Dark) — رنگ‌های یکپارچه */
@@ -403,7 +395,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         }
         body.theme-dark .nav::after { opacity: 0.6; }
         body.theme-dark .nav-logo { color: #f5eef0; }
-        body.theme-dark .nav-logo span { color: #FF5566; }
+        body.theme-dark .nav-logo-text span { color: #FF5566; }
         body.theme-dark .nav-links a:not(.nav-btn) { color: #e0d6d9; }
         body.theme-dark .nav-links a:not(.nav-btn):hover { color: #FF5566; background: rgba(255, 85, 102, 0.12); }
         body.theme-dark .nav-lang-btn { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); color: #f0e9eb; }
@@ -448,6 +440,12 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         body.theme-dark .hero-form-box .register-link { border-top-color: rgba(255,255,255,.08); color: #a89da1; }
         body.theme-dark .hero-form-box .register-link a { color: #FF5566; }
         body.theme-dark .section { background: transparent; }
+        body.theme-dark #services,
+        body.theme-dark #faq { background: #0f0c0e !important; }
+        body.theme-dark #services .section-label,
+        body.theme-dark #faq .section-label { color: #FF5566; }
+        body.theme-dark #services .section-title,
+        body.theme-dark #faq .section-title { color: #f5eef0; }
         body.theme-dark .section-benefits { background: linear-gradient(180deg, #0f0c0e 0%, #0d090b 100%); }
         body.theme-dark .section-benefits::before { background: linear-gradient(90deg, transparent, rgba(255, 85, 102, 0.15), transparent); }
         body.theme-dark .section-label { color: #FF5566; }
@@ -483,17 +481,15 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         body.theme-dark .why-us-icon span { color: #f5eef0; }
         body.theme-dark .footer { background: #080506; color: #a89da1; }
         body.theme-dark .footer::before { background: linear-gradient(90deg, transparent, rgba(255, 85, 102, 0.2), transparent); }
-        body.theme-dark .footer-links a { color: #d8ccd0; }
-        body.theme-dark .footer-links a:hover { color: #fff; background: rgba(255,255,255,.08); }
-        body.theme-dark .footer-copy { color: #7a6d71; }
+        body.theme-dark .footer-links a { color: #e8e0e3; }
+        body.theme-dark .footer-links a:hover { color: #fff; background: rgba(255, 85, 102, 0.12); }
+        body.theme-dark .footer-copy { color: #8a7d82; }
+        body.theme-dark .footer-nav-label { color: rgba(255,255,255,.35); }
+        body.theme-dark .footer-links { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); }
+        body.theme-dark .footer-links a:not(:last-child) { border-bottom-color: rgba(255,255,255,.08); }
         body.theme-dark .mob-footer-bar { background: #141013; border-top-color: rgba(255, 85, 102, 0.2); }
         body.theme-dark .mob-footer-bar .mob-footer-btn-outline { background: transparent; color: #FF5566; border-color: #FF5566; }
         body.theme-dark .mob-footer-bar .mob-footer-btn-outline:hover { background: rgba(255, 85, 102, 0.15); }
-        body.theme-dark .nav-mob-drawer-inner { background: #1a1416; }
-        body.theme-dark .nav-mob-drawer-inner a { color: #f0e9eb; }
-        body.theme-dark .nav-mob-drawer-inner a:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
-        body.theme-dark .nav-mob-menu-btn { background: #1a1416; color: #f0e9eb; }
-        body.theme-dark .nav-mob-menu-btn:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
         body.theme-dark .nav-lang-dropdown { background: #1a1416; box-shadow: 0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); }
         body.theme-dark .nav-lang-dropdown a { color: #e8dce0; }
         body.theme-dark .nav-lang-dropdown a:hover { background: rgba(255, 85, 102, 0.15); color: #FF5566; }
@@ -511,13 +507,12 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         @media (max-width: 768px) {
             .nav { padding: 0 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: max(0, env(safe-area-inset-top)); }
             .nav-inner { min-height: 56px; padding: 8px 0; flex-wrap: nowrap; gap: 10px; }
-            .nav-logo { font-size: 18px; flex: 0 0 auto; }
-            .nav-logo-icon { width: 36px; height: 36px; }
-            .nav-logo img { width: 20px; height: 20px; }
+            .nav-logo { flex: 0 0 auto; }
+            .nav-logo-icon { width: 40px; height: 40px; }
+            .nav-logo img { width: 22px; height: 22px; }
+            .nav-logo-text { font-size: 17px; }
             .nav-logo-tag { display: none; }
-            .nav-mob-menu-btn { display: flex; order: 1; }
-            .nav-links { order: 2; margin-left: auto; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
-            .nav-links .hide-mob { display: none; }
+            .nav-links { margin-left: auto; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
             .nav-lang-btn { min-height: 44px; padding: 8px 10px; font-size: 12px; }
             .nav-links a:not(.nav-btn) { font-size: 13px; padding: 8px 6px; }
             .nav-btn { padding: 10px 14px; font-size: 13px; min-height: 44px; }
@@ -531,17 +526,20 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             .benefit-card { padding: 20px; flex-direction: column; align-items: center; text-align: center; }
             .cta-block { padding: 32px 20px; margin: 32px 0; border-radius: 20px; }
             .mob-footer-bar { display: flex; }
-            .footer { padding: 32px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(32px, env(safe-area-inset-bottom)); }
-            .footer-links { gap: 12px; display: grid; grid-template-columns: 1fr 1fr; justify-items: center; }
-            .footer-links a { padding: 14px 12px; min-height: 48px; font-size: 14px; font-weight: 600; width: 100%; justify-content: center; border-radius: 10px; transition: background .2s; }
-            .footer-links a:hover { background: rgba(255,255,255,.08); }
+            .footer { padding: 28px 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-bottom: max(36px, calc(24px + env(safe-area-inset-bottom))); }
+            .footer-nav-label { display: block; }
+            .footer-links { gap: 0; display: flex; flex-direction: column; align-items: stretch; margin-bottom: 28px; max-width: 320px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,.04); border-radius: 16px; padding: 8px; border: 1px solid rgba(255,255,255,.06); }
+            .footer-links a { padding: 16px 20px; min-height: 52px; font-size: 15px; font-weight: 600; width: 100%; justify-content: center; border-radius: 12px; transition: background .2s, color .2s; border: none; color: rgba(255,255,255,.9); }
+            .footer-links a:hover { background: rgba(255,255,255,.08); color: #fff; }
+            .footer-links a:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,.06); }
+            .footer-copy { font-size: 12px; color: rgba(255,255,255,.45); padding: 0 8px; line-height: 1.6; }
         }
         @media (max-width: 480px) {
             .nav { padding: 0 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(0, env(safe-area-inset-top)); }
             .nav-inner { min-height: 52px; gap: 8px; }
-            .nav-logo { font-size: 16px; }
-            .nav-logo-icon { width: 32px; height: 32px; }
-            .nav-logo img { width: 18px; height: 18px; }
+            .nav-logo-text { font-size: 15px; }
+            .nav-logo-icon { width: 36px; height: 36px; }
+            .nav-logo img { width: 20px; height: 20px; }
             .nav-links { gap: 6px; }
             .nav-links a:not(.nav-btn) { font-size: 12px; padding: 6px 4px; }
             .nav-btn { padding: 10px 12px; font-size: 12px; min-height: 44px; }
@@ -550,13 +548,13 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
             .section-title { font-size: clamp(22px, 4vw, 28px); }
             .mob-footer-bar { padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); flex-direction: row; }
             .mob-footer-bar .mob-footer-btn { min-width: 120px; padding: 12px 16px; font-size: 14px; }
-            .footer { padding: 24px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-            .footer-links { grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; }
-            .footer-links a { padding: 14px; font-size: 13px; }
-            .footer-copy { font-size: 12px; padding: 0 8px; }
+            .footer { padding: 24px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(28px, calc(20px + env(safe-area-inset-bottom))); }
+            .footer-links { padding: 6px; margin-bottom: 24px; }
+            .footer-links a { padding: 14px 18px; min-height: 48px; font-size: 14px; }
+            .footer-copy { font-size: 11px; padding: 0 4px; }
         }
         @media (max-width: 360px) {
-            .nav-logo span { font-size: 15px; }
+            .nav-logo-text { font-size: 14px; }
             .nav-links a { font-size: 12px; }
             .nav-btn { padding: 8px 12px; font-size: 12px; }
         }
@@ -572,10 +570,10 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 <header class="nav" role="banner">
     <div class="nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="24" height="24" fetchpriority="high"></span>
-            <span>SMM<span>Turk</span></span><span class="nav-logo-tag">SMM Panel</span>
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="26" height="26" fetchpriority="high"></span>
+            <span class="nav-logo-text">SMM <span>TURK</span></span>
+            <span class="nav-logo-tag">SMM Panel</span>
         </a>
-        <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="Menu" aria-expanded="false" aria-controls="navMobDrawer">☰</button>
         <div class="nav-links">
             <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
             <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('nav_sign_up')) ?></a>
@@ -596,17 +594,6 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         </div>
     </div>
 </header>
-<div class="nav-mob-drawer" id="navMobDrawer" role="dialog" aria-label="Menu" aria-modal="true" aria-hidden="true">
-    <div class="nav-mob-drawer-inner">
-        <a href="#benefits" class="mob-drawer-link"><?= h(__('benefits')) ?></a>
-        <a href="#services" class="mob-drawer-link"><?= h(__('services_nav')) ?></a>
-        <a href="#faq" class="mob-drawer-link"><?= h(__('faq_nav')) ?></a>
-        <a href="<?= h(path('terms.php')) ?>" class="mob-drawer-link"><?= h(__('nav_terms')) ?></a>
-        <a href="<?= h(path('login.php')) ?>" class="mob-drawer-link"><?= h(__('nav_sign_in')) ?></a>
-        <a href="<?= h(path('login.php')) ?>?mode=register" class="mob-drawer-link"><?= h(__('nav_sign_up')) ?> →</a>
-    </div>
-</div>
-
 <main id="main-content">
 <section class="hero" aria-labelledby="hero-title">
     <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
@@ -781,6 +768,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 </nav>
 
 <footer class="footer" role="contentinfo">
+    <p class="footer-nav-label" aria-hidden="true"><?= h(__('footer_quick_links') ?: 'Quick links') ?></p>
     <div class="footer-links">
         <a href="<?= h(path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
         <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('footer_signup')) ?></a>
@@ -808,17 +796,6 @@ document.getElementById('langBtn').addEventListener('click', function() {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.nav-lang')) document.getElementById('langDropdown').classList.remove('open');
 });
-(function(){
-    var btn = document.getElementById('navMobMenuBtn');
-    var drawer = document.getElementById('navMobDrawer');
-    if (btn && drawer) {
-        function openDrawer() { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
-        function closeDrawer() { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
-        btn.addEventListener('click', function() { drawer.classList.contains('open') ? closeDrawer() : openDrawer(); });
-        drawer.addEventListener('click', function(e) { if (e.target === drawer) closeDrawer(); });
-        drawer.querySelectorAll('.mob-drawer-link').forEach(function(link) { link.addEventListener('click', closeDrawer); });
-    }
-})();
 document.querySelectorAll('.faq-q').forEach(function(el) {
     el.addEventListener('click', function() {
         var item = this.closest('.faq-item');

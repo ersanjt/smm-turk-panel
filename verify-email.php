@@ -43,9 +43,9 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25);text-align:center}
-.box-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px}
-.box-logo img{width:40px;height:40px;border-radius:12px;flex-shrink:0}
-.box-logo .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1a0a0e;letter-spacing:-.04em}
+.box-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+.box-logo img{width:48px;height:48px;border-radius:12px;flex-shrink:0}
+.box-logo .logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1a0a0e;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .box-logo .logo span{color:#E30A17;letter-spacing:-.02em}
 .msg{padding:14px;border-radius:12px;font-size:14px;margin-bottom:20px}
 .msg.ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
@@ -58,8 +58,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="box">
   <div class="box-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="40" height="40">
-    <span class="logo">SMM<span>Turk</span></span>
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="48" height="48">
+    <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="msg <?= $success ? 'ok' : 'err' ?>"><?= htmlspecialchars($message) ?></div>
   <a href="<?= h(path('login.php')) ?>" class="btn">Go to Login</a>

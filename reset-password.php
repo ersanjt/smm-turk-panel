@@ -46,9 +46,9 @@ if (empty($_SESSION['csrf_token'])) {
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#1a0a0e 0%,#2d1519 50%,#1a0a0e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
-.auth-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
-.auth-logo img{width:44px;height:44px;border-radius:12px;flex-shrink:0}
-.auth-logo .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a0a0e;letter-spacing:-.04em}
+.auth-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
+.auth-logo img{width:48px;height:48px;border-radius:12px;flex-shrink:0}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1a0a0e;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .auth-logo .logo span{color:#E30A17;letter-spacing:-.02em}
 .tagline{text-align:center;color:#6b4a50;font-size:13px;margin-bottom:28px}
 .form-group{margin-bottom:14px}
@@ -67,8 +67,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="auth-box">
   <div class="auth-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44">
-    <span class="logo">SMM<span>Turk</span></span>
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="48" height="48">
+    <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="tagline">Set your new password</div>
   <?php if ($success): ?>

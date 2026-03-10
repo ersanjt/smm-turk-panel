@@ -117,6 +117,9 @@ require_once __DIR__ . '/layouts/header.php';
 .desc-notes{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 .desc-notes li{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:11.5px;color:var(--text-muted);line-height:1.6}
 .desc-notes .asterisk{color:var(--primary);font-weight:700;flex-shrink:0}
+#desc-panel pre{word-break:break-all;overflow-x:auto;max-width:100%}
+.order-form-row form{min-width:0}
+@media(max-width:768px){.order-form-row form{max-width:100%}}
 </style>
 
 <!-- Order type tabs -->

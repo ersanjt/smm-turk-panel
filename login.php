@@ -88,9 +88,9 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 .auth-box{background:var(--white);border-radius:24px;padding:40px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.06)}
 .auth-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
 .auth-back:hover{color:var(--primary)}
-.auth-logo{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
-.auth-logo img{width:48px;height:48px;border-radius:12px;flex-shrink:0}
-.auth-logo .logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--dark);letter-spacing:-.04em}
+.auth-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.auth-logo img{width:52px;height:52px;border-radius:12px;flex-shrink:0}
+.auth-logo .logo{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--dark);letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .auth-logo .logo span{color:var(--primary);letter-spacing:-.02em}
 .tagline{text-align:center;color:var(--muted);font-size:14px;margin-bottom:28px;font-weight:500}
 .tabs{display:flex;background:rgba(227,10,23,.08);border-radius:14px;padding:5px;margin-bottom:26px}
@@ -124,7 +124,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 .footer-link a:hover{color:var(--primary-dark)}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .auth-box{animation:fadeInUp .45s ease both}
-@media(max-width:480px){.auth-box{padding:28px 22px;border-radius:20px}.auth-logo .logo{font-size:24px}.auth-logo img{width:40px;height:40px}}
+@media(max-width:480px){.auth-box{padding:28px 22px;border-radius:20px}.auth-logo .logo{font-size:26px}.auth-logo img{width:44px;height:44px}}
 @media(prefers-reduced-motion:reduce){.auth-box{animation:none}.btn:hover{transform:none}}
 </style>
 </head>
@@ -134,8 +134,8 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 <div class="auth-box">
   <a href="<?= h(path('home.php')) ?>" class="auth-back">← Back to Home</a>
   <div class="auth-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="48" height="48">
-    <span class="logo">SMM<span>Turk</span></span>
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="52" height="52">
+    <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>
 

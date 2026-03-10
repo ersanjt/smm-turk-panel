@@ -68,6 +68,7 @@ return [
     'cta_ready' => 'Ready to Grow Your Social Media?',
     'cta_join' => 'Join thousands of marketers. Sign up free, no credit card required.',
     'cta_btn' => 'Create Free Account',
+    'footer_quick_links' => 'Quick links',
     'footer_login' => 'Login',
     'footer_signup' => 'Sign Up',
     'footer_api' => 'API',

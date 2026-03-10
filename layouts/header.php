@@ -52,6 +52,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;width:100%;max-width:100vw}
 a{text-decoration:none;color:inherit}
+a:focus-visible,.icon-btn:focus-visible,.btn:focus-visible,.nav-item:focus-visible,.menu-toggle:focus-visible,.sidebar-close:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 img{max-width:100%;height:auto}
 .main{min-width:0;overflow-x:hidden}
 .sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom)}
@@ -61,12 +62,12 @@ img{max-width:100%;height:auto}
 .sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 100%);position:relative}
 .sidebar-mob-balance{display:none;padding:12px 18px;background:rgba(227,10,23,.15);border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--primary-light);font-weight:700}
 .sidebar-mob-balance span{opacity:.9;font-weight:600}
-.sidebar-logo a{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;transition:opacity .2s}
+.sidebar-logo a{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;color:inherit;transition:opacity .2s}
 .sidebar-logo a:hover{opacity:.92}
-.logo-icon{width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--primary),var(--primary-dark));box-shadow:0 4px 14px rgba(227,10,23,.3),0 1px 0 rgba(255,255,255,.15) inset;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
+.logo-icon{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--primary),var(--primary-dark));box-shadow:0 4px 14px rgba(227,10,23,.3),0 1px 0 rgba(255,255,255,.15) inset;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
 .sidebar-logo:hover .logo-icon{transform:scale(1.06) rotate(-3deg);box-shadow:0 6px 20px rgba(227,10,23,.4),0 1px 0 rgba(255,255,255,.15) inset}
-.logo-icon img{width:22px;height:22px;filter:brightness(0) invert(1)}
-.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.04em}
+.logo-icon img{width:26px;height:26px;filter:brightness(0) invert(1)}
+.logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
 .logo-text span{color:var(--primary-light);letter-spacing:-.02em}
 .sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
 .user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px}
@@ -80,14 +81,14 @@ img{max-width:100%;height:auto}
 .nav-item.active{background:var(--primary);color:#fff}
 .nav-item svg{width:16px;height:16px;flex-shrink:0;transition:transform var(--motion-duration) var(--ease-spring)}
 .nav-item:hover svg{transform:scale(1.1)}
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0;max-width:100%}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;min-width:0;max-width:100%}
 .topbar{background:linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(255,252,253,.95) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 4px 20px rgba(26,10,14,.04);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));padding-top:max(0,env(safe-area-inset-top));min-height:60px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary) 30%,var(--primary-dark) 50%,var(--primary) 70%,transparent);background-size:200% 100%;opacity:.6;pointer-events:none;animation:topbarShine 4s ease-in-out infinite}
 .topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.topbar-mob-logo{display:none;align-items:center;gap:8px;text-decoration:none;color:var(--text);flex-shrink:0}
-.topbar-mob-logo img{width:32px;height:32px;border-radius:10px}
-.topbar-mob-logo span{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em}
-.topbar-mob-logo span b{color:var(--primary)}
+.topbar-mob-logo{display:none;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--text);flex-shrink:0}
+.topbar-mob-logo img{width:40px;height:40px;border-radius:12px}
+.topbar-mob-logo .topbar-mob-logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.1;text-transform:uppercase}
+.topbar-mob-logo .topbar-mob-logo-text b{color:var(--primary)}
 .topbar-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));color:#fff;margin-right:8px;box-shadow:0 2px 8px rgba(227,10,23,.25)}
 .topbar-stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stat-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.8);border-radius:12px;font-size:12px;font-weight:600;border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.03)}
@@ -98,8 +99,9 @@ img{max-width:100%;height:auto}
 .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px;border-radius:10px;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .2s;font-size:15px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .icon-btn svg{width:18px;height:18px;flex-shrink:0}
 .icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(227,10,23,.25)}
-.content{padding:24px;flex:1}
-.card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out),border-color var(--motion-duration) ease}
+.content{padding:24px;flex:1;min-width:0;max-width:100%;overflow-x:hidden}
+.content-inner{max-width:1400px;margin:0 auto}
+.card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out),border-color var(--motion-duration) ease;overflow:hidden}
 .card:hover{box-shadow:0 16px 48px rgba(227,10,23,.1);transform:translateY(-4px)}
 .stat-pill,.icon-btn{transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
 .stat-pill:hover,.icon-btn:hover{transform:scale(1.05)}
@@ -224,10 +226,10 @@ body.sidebar-open{overflow:hidden;touch-action:none}
 .topbar-left{flex:0 1 auto;min-width:0}
 .topbar .stat-pill{font-size:11px;padding:6px 10px}
 .topbar .topbar-stats .stat-pill:nth-child(n+3){display:none}
-.topbar-right{margin-left:auto;width:auto;justify-content:flex-end;flex-wrap:nowrap;gap:6px}
-.topbar-right .icon-btn{width:40px;height:40px;min-width:40px;min-height:40px}
+.topbar-right{margin-left:auto;width:auto;justify-content:flex-end;flex-wrap:wrap;gap:6px}
+.topbar-right .icon-btn{width:40px;height:40px;min-width:40px;min-height:40px;flex-shrink:0}
 .topbar-right .icon-btn svg{width:20px;height:20px}
-.topbar-right .btn{padding:8px 14px;font-size:12px;min-height:40px}
+.topbar-right .btn{padding:8px 14px;font-size:12px;min-height:40px;flex-shrink:0}
 .grid2,.grid3,.grid4{grid-template-columns:1fr}
 .admin-grid{grid-template-columns:1fr;gap:12px}
 .admin-card{flex-direction:row;padding:16px;gap:12px}
@@ -271,12 +273,11 @@ textarea.form-control{min-height:120px}
 }
 @media(max-width:480px){
 .content{padding:12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
-.topbar{padding:8px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
-.topbar .stat-pill{display:none}
+.topbar{padding:8px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));min-height:52px}
+.topbar .topbar-stats,.topbar .stat-pill{display:none!important}
 .content .form-control[style*="width"],.content select.form-control[style*="width"],.card .form-control[style*="width"],.card select[style*="width"]{width:100%!important;max-width:100%!important;min-width:0!important}
-.topbar .stat-pill{font-size:10px;padding:4px 8px}
 .btn{padding:10px 16px;font-size:13px}
-.topbar-right .icon-btn{width:38px;height:38px;min-width:38px;min-height:38px}
+.topbar-right .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px}
 .card{padding:14px}
 .table th,.table td{padding:8px 10px;font-size:11px}
 .svc-table th,.svc-table td{padding:8px 10px;font-size:11px}
@@ -314,8 +315,8 @@ textarea.form-control{min-height:120px}
   <div class="sidebar-mob-balance" aria-hidden="true">Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="22" height="22"></span>
-      <span class="logo-text">SMM<span>Turk</span></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="26" height="26"></span>
+      <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
   <div class="sidebar-user">
@@ -392,11 +393,11 @@ textarea.form-control{min-height:120px}
   </nav>
 </aside>
 
-<div class="main">
+<main class="main" id="main-dashboard">
   <div class="topbar">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt=""><span>SMM<b>Turk</b></span></a>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt=""><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
       <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
       <div class="topbar-stats">
         <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
@@ -412,7 +413,8 @@ textarea.form-control{min-height:120px}
       <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary" style="padding:7px 16px;font-size:12px;">+ Add Funds</a>
     </div>
   </div>
-  <div class="content">
+  <div class="content" role="main">
+    <div class="content-inner">
 <?php if ($flash): ?>
 <div class="alert alert-<?= $flash['type'] ?>"><?= h($flash['message']) ?></div>
 <?php endif; ?>
