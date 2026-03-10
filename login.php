@@ -72,7 +72,8 @@ if (empty($_SESSION['csrf_token'])) {
 <title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
 <meta name="description" content="Login or register to SMM Turk — cheapest SMM panel. Crypto deposits, API, 24/7 support.">
 <?php if (defined('SITE_URL') && SITE_URL !== ''): ?>
-<link rel="canonical" href="<?= h(rtrim(SITE_URL, '/') . '/login.php') ?>">
+<link rel="canonical" href="<?= h(url('login.php')) ?>">
+<meta name="geo.region" content="<?= h(defined('GEO_REGION') ? GEO_REGION : 'TR') ?>">
 <?php endif; ?>
 <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">

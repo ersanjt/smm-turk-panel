@@ -10,8 +10,11 @@ define('DB_USER', 'your_db_user');      // Your MySQL username
 define('DB_PASS', 'your_db_password');  // Your MySQL password
 define('DB_CHARSET', 'utf8mb4');
 
-define('SITE_URL', 'https://yourdomain.com');  // No trailing slash
+// Base URL for redirects, canonicals, and OG tags. Use https and no trailing slash (e.g. https://smm-turk.com)
+define('SITE_URL', 'https://smm-turk.com');
 define('SITE_NAME', 'SMM Turk');
+// Geo/SEO: primary region for meta geo.region (ISO 3166-1 alpha-2, e.g. TR for Turkey)
+define('GEO_REGION', 'TR');
 define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verification emails (cPanel: use an email from your domain)
 
 // SmmFollows API - Get key from https://smmfollows.com → Account → API

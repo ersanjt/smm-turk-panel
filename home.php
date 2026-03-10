@@ -9,11 +9,12 @@ if ($auth->isLoggedIn()) {
 
 $lang = Lang::init();
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
-$siteUrl  = defined('SITE_URL') ? SITE_URL : '';
+$siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $langParam = '?lang=';
-$currentPath = '/home.php';
-$canonicalUrl = rtrim($siteUrl, '/') . '/home.php';
-$logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
+$currentPath = 'home.php';
+$canonicalUrl = $siteUrl ? $siteUrl . '/' . $currentPath : '';
+$logoUrl = $siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=2') : path('assets/img/logo-icon.svg?v=2');
+$geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 ?>
 <!DOCTYPE html>
 <html lang="<?= h($lang) ?>">
@@ -22,18 +23,31 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($siteName) ?> — Cheapest SMM Panel | Turkey & Worldwide</title>
     <meta name="description" content="SMM Turk: Cheapest SMM panel. Instagram, YouTube, TikTok growth. Crypto-only deposits, reseller API, 24/7 support. Turkey & worldwide.">
-    <link rel="canonical" href="<?= h($canonicalUrl) ?>">
+    <?php if ($canonicalUrl): ?><link rel="canonical" href="<?= h($canonicalUrl) ?>"><?php endif; ?>
+    <?php
+    $baseCanonical = $siteUrl ? $siteUrl . '/' . $currentPath : '';
+    foreach (Lang::allowed() as $l):
+        $href = $baseCanonical ? $baseCanonical . ($l === 'en' ? '' : '?lang=' . $l) : path($currentPath) . ($l === 'en' ? '' : '?lang=' . $l);
+        $hreflang = $l === 'en' ? 'en' : ($l === 'tr' ? 'tr' : ($l === 'de' ? 'de' : 'fr'));
+    ?><link rel="alternate" hreflang="<?= h($hreflang) ?>" href="<?= h($href) ?>"><?php endforeach; ?>
+    <?php if ($baseCanonical): ?><link rel="alternate" hreflang="x-default" href="<?= h($baseCanonical) ?>"><?php endif; ?>
     <meta name="theme-color" content="#E30A17">
-    <meta name="geo.region" content="TR">
+    <meta name="geo.region" content="<?= h($geoRegion) ?>">
+    <meta name="geo.country" content="<?= h($geoRegion) ?>">
+    <meta name="ICBM" content="39.9334, 32.8597">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="<?= h($siteName) ?>">
     <meta property="og:title" content="<?= h($siteName) ?> — Cheapest SMM Panel">
     <meta property="og:description" content="Cheapest SMM panel. Crypto-only deposits, reseller API, 24/7 support. Turkey & worldwide.">
-    <meta property="og:url" content="<?= h($canonicalUrl) ?>">
+    <meta property="og:url" content="<?= h($canonicalUrl ?: path($currentPath)) ?>">
     <meta property="og:image" content="<?= h($logoUrl) ?>">
-    <meta property="og:locale" content="<?= $lang === 'tr' ? 'tr_TR' : 'en_US' ?>">
+    <meta property="og:locale" content="<?= $lang === 'tr' ? 'tr_TR' : ($lang === 'de' ? 'de_DE' : ($lang === 'fr' ? 'fr_FR' : 'en_US')) ?>">
+    <?php foreach (array_diff(Lang::allowed(), [$lang]) as $alt): $loc = $alt === 'tr' ? 'tr_TR' : ($alt === 'de' ? 'de_DE' : ($alt === 'fr' ? 'fr_FR' : 'en_US')); ?>
+    <meta property="og:locale:alternate" content="<?= h($loc) ?>">
+    <?php endforeach; ?>
     <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
     <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl ?: path('')) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>","address":{"@type":"PostalAddress","addressCountry":"<?= h($geoRegion) ?>"}}</script>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {

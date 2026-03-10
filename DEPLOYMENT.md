@@ -100,9 +100,12 @@ define('DB_HOST', 'localhost');              // معمولاً localhost
 define('DB_NAME', 'نام_دیتابیس');            // مثلاً cpanel_user_smmturk
 define('DB_USER', 'نام_کاربر');              // کاربر MySQL
 define('DB_PASS', 'رمز_دیتابیس');            // پسورد MySQL
-define('SITE_URL', 'https://yourdomain.com'); // بدون / در آخر
+define('SITE_URL', 'https://smm-turk.com');   // آدرس اصلی سایت، بدون / در آخر
+define('GEO_REGION', 'TR');                    // منطقهٔ جغرافیایی برای سئو (TR = ترکیه)
 define('PROVIDER_API_KEY', 'API_KEY_SMMFOLLOWS');
 ```
+
+**سئو و Geo (برای دامنهٔ اصلی):** برای سایت smm-turk.com حتماً `SITE_URL` را روی `https://smm-turk.com` و در صورت تمایل `GEO_REGION` را روی `TR` بگذار. این مقادیر برای لینک‌های canonical، Open Graph، hreflang و متاهای جغرافیایی استفاده می‌شوند. فایل `robots.txt` در روت پروژه قرار دارد و ایندکس شدن توسط موتورهای جستجو را مجاز می‌کند.
 
 ---
 

@@ -6,10 +6,12 @@ $spent   = $user ? number_format((float)$user['spent'], 3) : '0.000';
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$canonicalUrl = $siteUrl ? $siteUrl . $_SERVER['REQUEST_URI'] : '';
+$canonicalPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$canonicalUrl = $siteUrl ? $siteUrl . $canonicalPath : '';
 $pageDesc = $pageDescription ?? 'SMM Turk — Cheapest SMM panel. Instagram, YouTube, TikTok growth. Reseller API, crypto deposits, 24/7 support.';
-$pageImg  = $pageImage ?? $siteUrl . '/assets/img/logo-icon.svg?v=2';
+$pageImg  = $pageImage ?? ($siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=2') : path('assets/img/logo-icon.svg?v=2'));
 $pageOgTitle = $pageTitle ?? 'Dashboard';
+$geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,19 +21,24 @@ $pageOgTitle = $pageTitle ?? 'Dashboard';
 <title><?= h($pageTitle ?? 'Dashboard') ?> — <?= h($siteName) ?></title>
 <meta name="description" content="<?= h($pageDesc) ?>">
 <meta name="theme-color" content="#E30A17">
-<meta name="geo.region" content="TR">
+<meta name="geo.region" content="<?= h($geoRegion) ?>">
+<meta name="geo.country" content="<?= h($geoRegion) ?>">
 <?php if ($siteUrl !== '' && $canonicalUrl !== ''): ?>
 <link rel="canonical" href="<?= h($canonicalUrl) ?>">
 <?php endif; ?>
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="<?= h($siteName) ?>">
 <meta property="og:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta property="og:description" content="<?= h($pageDesc) ?>">
 <meta property="og:url" content="<?= h($canonicalUrl) ?>">
 <meta property="og:image" content="<?= h($pageImg) ?>">
 <meta property="og:locale" content="en_US">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta name="twitter:description" content="<?= h($pageDesc) ?>">
+<meta name="twitter:image" content="<?= h($pageImg) ?>">
 <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">

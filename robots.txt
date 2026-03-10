@@ -1,0 +1,6 @@
+# SMM Turk Panel - https://smm-turk.com
+User-agent: *
+Allow: /
+
+# Optional: add sitemap when you have one (e.g. sitemap.xml or dynamic sitemap)
+# Sitemap: https://smm-turk.com/sitemap.xml
