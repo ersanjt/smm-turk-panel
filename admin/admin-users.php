@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         $db->execute("UPDATE users SET status='active' WHERE id=?", [$uid]);
         flash('success', "User unbanned.");
     }
-    redirect('/admin/admin-users.php');
+    redirect(url('admin/admin-users.php'));
 }
 
 $search = trim($_GET['q'] ?? '');

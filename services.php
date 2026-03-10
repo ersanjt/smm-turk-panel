@@ -75,11 +75,11 @@ require_once __DIR__ . '/layouts/header.php';
 
 <div class="services-toolbar">
   <div class="platform-row">
-    <a class="platform-chip <?= !$cat ? 'active' : '' ?>" href="services.php">Everything</a>
+    <a class="platform-chip <?= !$cat ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>">Everything</a>
     <?php foreach ($categories as $c):
       $icon = platformIcon($c['category'], $platformIcons);
     ?>
-    <a class="platform-chip <?= $cat === $c['category'] ? 'active' : '' ?>" href="?cat=<?= urlencode($c['category']) ?>"><?= h($icon) ?> <?= h($c['category']) ?></a>
+    <a class="platform-chip <?= $cat === $c['category'] ? 'active' : '' ?>" href="<?= h(path('services.php')) ?>?cat=<?= urlencode($c['category']) ?>"><?= h($icon) ?> <?= h($c['category']) ?></a>
     <?php endforeach; ?>
   </div>
   <form method="GET" style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
@@ -113,7 +113,7 @@ $q = $_GET;
 $sortUrl = function($col) use ($q, $sort, $dir) {
   $q['sort'] = $col;
   $q['dir'] = ($sort === $col && $dir === 'asc') ? 'desc' : 'asc';
-  return '?' . http_build_query($q);
+  return path('services.php') . '?' . http_build_query($q);
 };
 ?>
           <th><a href="<?= $sortUrl('id') ?>">ID ▼</a></th>
@@ -135,7 +135,7 @@ $sortUrl = function($col) use ($q, $sort, $dir) {
             echo '<tr><td colspan="7" class="new-services-banner" style="margin:0;border-radius:0;">🆕 New Added Services</td></tr>';
             $displayedNew = true;
           }
-          $orderUrl = '/index.php?cat=' . urlencode($s['category']) . '&service=' . $s['service_id'];
+          $orderUrl = path('index.php') . '?cat=' . urlencode($s['category']) . '&service=' . $s['service_id'];
         ?>
         <tr>
           <td>
@@ -165,7 +165,7 @@ $sortUrl = function($col) use ($q, $sort, $dir) {
 <?php if (empty($services)): ?>
 <div class="card" style="text-align:center;padding:48px;">
   <p style="color:var(--text-muted);margin-bottom:12px;">No services match your filters.</p>
-  <a href="services.php" class="btn btn-primary">Show all</a>
+  <a href="<?= h(path('services.php')) ?>" class="btn btn-primary">Show all</a>
 </div>
 <?php endif; ?>
 

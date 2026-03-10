@@ -82,6 +82,6 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 </div>
 
-<p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">When someone registers using your referral link and places an order, you earn <?= number_format($commission, 0) ?>% commission. Request payout via <a href="/tickets.php">support ticket</a> when you reach the minimum.</p>
+<p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">When someone registers using your referral link and places an order, you earn <?= number_format($commission, 0) ?>% commission. Request payout via <a href="<?= h(path('tickets.php')) ?>">support ticket</a> when you reach the minimum.</p>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

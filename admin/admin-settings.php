@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         }
     }
     flash('success', '✅ Settings saved successfully.');
-    redirect('/admin/admin-settings.php');
+    redirect(url('admin/admin-settings.php'));
 }
 
 $settings = [];

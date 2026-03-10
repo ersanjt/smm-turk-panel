@@ -97,13 +97,13 @@ require_once __DIR__ . '/../layouts/header.php';
 
 <!-- Quick Actions -->
 <div class="quick-actions" style="margin-bottom:24px;">
-  <a href="admin-users.php" class="qa-btn" style="background:var(--primary);color:#fff;">👥 Manage Users</a>
-  <a href="admin-orders.php" class="qa-btn" style="background:#00c853;color:#fff;">📦 Manage Orders</a>
-  <a href="admin-services.php" class="qa-btn" style="background:#ff9100;color:#fff;">⭐ Services</a>
-  <a href="admin-sync.php" class="qa-btn" style="background:#0a0a1a;color:#fff;">🔄 Sync Services</a>
-  <a href="admin-settings.php" class="qa-btn" style="background:#6b6b8a;color:#fff;">⚙️ Settings</a>
-  <a href="admin-tickets.php" class="qa-btn" style="background:#ff3d00;color:#fff;">🎫 Tickets</a>
-  <a href="admin-deposits.php" class="qa-btn" style="background:#9c27b0;color:#fff;">₿ Pending Deposits <?= $pendingDeposits > 0 ? '(' . $pendingDeposits . ')' : '' ?></a>
+  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn" style="background:var(--primary);color:#fff;">👥 Manage Users</a>
+  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn" style="background:#00c853;color:#fff;">📦 Manage Orders</a>
+  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn" style="background:#ff9100;color:#fff;">⭐ Services</a>
+  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn" style="background:#0a0a1a;color:#fff;">🔄 Sync Services</a>
+  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn" style="background:#6b6b8a;color:#fff;">⚙️ Settings</a>
+  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn" style="background:#ff3d00;color:#fff;">🎫 Tickets</a>
+  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn" style="background:#9c27b0;color:#fff;">₿ Pending Deposits <?= $pendingDeposits > 0 ? '(' . $pendingDeposits . ')' : '' ?></a>
 </div>
 
 <div class="grid2">

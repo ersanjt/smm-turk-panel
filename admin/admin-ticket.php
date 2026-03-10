@@ -7,7 +7,7 @@ $id = (int)($_GET['id'] ?? 0);
 $ticket = $db->fetch("SELECT t.*, u.username, u.email FROM tickets t JOIN users u ON t.user_id = u.id WHERE t.id = ?", [$id]);
 if (!$ticket) {
     flash('error', 'Ticket not found.');
-    redirect('/admin/admin-tickets.php');
+    redirect(url('admin/admin-tickets.php'));
 }
 
 // Admin reply or close
@@ -18,13 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
             $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 1)", [$id, $auth->getUserId(), $msg]);
             $db->execute("UPDATE tickets SET status = 'answered', updated_at = NOW() WHERE id = ?", [$id]);
             flash('success', 'Reply sent.');
-            redirect('/admin/admin-ticket.php?id=' . $id);
+            redirect(url('admin/admin-ticket.php') . '?id=' . (int)$id);
         }
     }
     if (isset($_POST['close'])) {
         $db->execute("UPDATE tickets SET status = 'closed', updated_at = NOW() WHERE id = ?", [$id]);
         flash('success', 'Ticket closed.');
-        redirect('/admin/admin-ticket.php?id=' . $id);
+        redirect(url('admin/admin-ticket.php') . '?id=' . (int)$id);
     }
 }
 
@@ -59,7 +59,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <div style="padding:14px 0;">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Attachments</div>
     <?php foreach ($attachments as $a): ?>
-    <a href="/<?= h($a['file_path']) ?>" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
+    <a href="<?= h(path($a['file_path'])) ?>" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
@@ -84,6 +84,6 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 <?php endif; ?>
 
-<p style="margin-top:16px;"><a href="/admin/admin-tickets.php">← Back to Tickets</a></p>
+<p style="margin-top:16px;"><a href="<?= h(path('admin/admin-tickets.php')) ?>">← Back to Tickets</a></p>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

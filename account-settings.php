@@ -19,7 +19,7 @@ $apiKeyCreatedAt = $hasApiKeyCreatedAt && !empty($user['api_key_created_at']) ? 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
         flash('error', 'Invalid request. Please try again.');
-        redirect('/account-settings.php');
+        redirect(url('account-settings.php'));
     }
 
     // Change email
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $auth->updateEmail($user['id'], $newEmail, $currentPassword);
         if ($result['success']) {
             flash('success', 'Email updated successfully.');
-            redirect('/account-settings.php');
+            redirect(url('account-settings.php'));
         }
         $errors['email'] = $result['error'];
     }
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $auth->updatePassword($user['id'], $current, $newPass);
             if ($result['success']) {
                 flash('success', 'Password changed successfully.');
-                redirect('/account-settings.php');
+                redirect(url('account-settings.php'));
             }
             $errors['password'] = $result['error'];
         }
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'enable_2fa' && $hasTwoFactor) {
         $db->execute("UPDATE users SET two_factor_enabled = 1 WHERE id = ?", [$user['id']]);
         flash('success', 'Two-factor authentication enabled.');
-        redirect('/account-settings.php');
+        redirect(url('account-settings.php'));
     }
 
     // Save timezone
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strlen($tz) > 0 && strlen($tz) <= 64) {
             $db->execute("UPDATE users SET timezone = ? WHERE id = ?", [$tz, $user['id']]);
             flash('success', 'Timezone saved.');
-            redirect('/account-settings.php');
+            redirect(url('account-settings.php'));
         }
     }
 
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->execute("UPDATE users SET api_key = ? WHERE id = ?", [$newKey, $user['id']]);
         }
         flash('success', 'New API key generated. Update your applications with the new key.');
-        redirect('/account-settings.php');
+        redirect(url('account-settings.php'));
     }
 }
 

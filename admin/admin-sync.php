@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         flash('error', "❌ {$result['error']}");
     }
-    redirect('/admin/admin-services.php');
+    redirect(url('admin/admin-services.php'));
 }
 
 require_once __DIR__ . '/../layouts/header.php';

@@ -42,7 +42,7 @@ require_once __DIR__ . '/../layouts/header.php';
         <input type="text" name="q" value="<?= h($search) ?>" class="form-control" style="width:200px;" placeholder="Search by name or ID…">
         <button type="submit" class="btn btn-primary">Search</button>
       </form>
-      <a href="/admin/admin-sync.php" class="btn" style="background:var(--primary);color:#fff;">🔄 Sync from provider</a>
+      <a href="<?= h(path('admin/admin-sync.php')) ?>" class="btn" style="background:var(--primary);color:#fff;">🔄 Sync from provider</a>
     </div>
   </div>
   <div style="padding:0 20px 12px;">
@@ -68,7 +68,7 @@ require_once __DIR__ . '/../layouts/header.php';
       </thead>
       <tbody>
         <?php if (empty($services)): ?>
-        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No services found. <a href="/admin/admin-sync.php">Sync from provider</a> first.</td></tr>
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No services found. <a href="<?= h(path('admin/admin-sync.php')) ?>">Sync from provider</a> first.</td></tr>
         <?php else: ?>
         <?php foreach ($services as $s): ?>
         <tr>
@@ -98,6 +98,6 @@ require_once __DIR__ . '/../layouts/header.php';
   <?php endif; ?>
 </div>
 
-<p style="margin-top:16px;"><a href="/admin/index.php" class="btn btn-primary" style="padding:8px 16px;">← Admin Panel</a></p>
+<p style="margin-top:16px;"><a href="<?= h(path('admin/index.php')) ?>" class="btn btn-primary" style="padding:8px 16px;">← Admin Panel</a></p>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

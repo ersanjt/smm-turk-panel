@@ -31,7 +31,7 @@ require_once __DIR__ . '/layouts/header.php';
       <button type="button" onclick="navigator.clipboard.writeText('<?= h($user['api_key'] ?? '') ?>'); this.textContent='Copied!';" style="background:#fff;color:var(--primary);border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Copy</button>
     </div>
   </div>
-  <p style="font-size: 12px; opacity: .8; margin-top: 12px;">Get or regenerate your API key on the <a href="/account-settings.php" style="color: #ff9aa2;">Account Settings</a> page.</p>
+  <p style="font-size: 12px; opacity: .8; margin-top: 12px;">Get or regenerate your API key on the <a href="<?= h(path('account-settings.php')) ?>" style="color: #ff9aa2;">Account Settings</a> page.</p>
 </div>
 
 <div class="card">

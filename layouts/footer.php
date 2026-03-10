@@ -7,15 +7,15 @@
       if ($contactEmail): ?>
       <a href="mailto:<?= h($contactEmail) ?>" class="footer-contact"><?= h($contactEmail) ?></a>
       <?php endif; ?>
-      <a href="/tickets.php" class="footer-ticket">Open a ticket</a>
+      <a href="<?= h(path('tickets.php')) ?>" class="footer-ticket">Open a ticket</a>
     </div>
   </footer>
   <!-- Mobile bottom navigation (visible only on small screens) -->
   <nav class="mob-bottom-nav" aria-label="Main navigation">
-    <a href="/index.php" class="<?= ($currentPage ?? '') === 'index' ? 'active' : '' ?>"><span class="mob-nav-icon">➕</span><span>Order</span></a>
-    <a href="/orders.php" class="<?= ($currentPage ?? '') === 'orders' ? 'active' : '' ?>"><span class="mob-nav-icon">📋</span><span>Orders</span></a>
-    <a href="/add-funds.php" class="<?= ($currentPage ?? '') === 'add-funds' ? 'active' : '' ?>"><span class="mob-nav-icon">💳</span><span>Funds</span></a>
-    <a href="/tickets.php" class="<?= ($currentPage ?? '') === 'tickets' ? 'active' : '' ?>"><span class="mob-nav-icon">🎫</span><span>Tickets</span></a>
+    <a href="<?= h(path('index.php')) ?>" class="<?= ($currentPage ?? '') === 'index' ? 'active' : '' ?>"><span class="mob-nav-icon">➕</span><span>Order</span></a>
+    <a href="<?= h(path('orders.php')) ?>" class="<?= ($currentPage ?? '') === 'orders' ? 'active' : '' ?>"><span class="mob-nav-icon">📋</span><span>Orders</span></a>
+    <a href="<?= h(path('add-funds.php')) ?>" class="<?= ($currentPage ?? '') === 'add-funds' ? 'active' : '' ?>"><span class="mob-nav-icon">💳</span><span>Funds</span></a>
+    <a href="<?= h(path('tickets.php')) ?>" class="<?= ($currentPage ?? '') === 'tickets' ? 'active' : '' ?>"><span class="mob-nav-icon">🎫</span><span>Tickets</span></a>
     <button type="button" id="mobNavMenuBtn" aria-label="Open menu"><span class="mob-nav-icon">☰</span><span>Menu</span></button>
   </nav>
 </div><!-- end main -->

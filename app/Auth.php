@@ -74,7 +74,7 @@ class Auth {
 
     public function logout(): void {
         session_destroy();
-        header('Location: /login.php');
+        header('Location: ' . url('login.php'));
         exit;
     }
 
@@ -88,14 +88,14 @@ class Auth {
 
     public function requireLogin(): void {
         if (!$this->isLoggedIn()) {
-            header('Location: /login.php');
+            header('Location: ' . url('login.php'));
             exit;
         }
     }
 
     public function requireAdmin(): void {
         if (!$this->isAdmin()) {
-            header('Location: /index.php');
+            header('Location: ' . url('index.php'));
             exit;
         }
     }

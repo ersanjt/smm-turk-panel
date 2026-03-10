@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ticket']) && c
 
     if (!$message) {
         flash('error', 'Please enter your message.');
-        redirect('/tickets.php');
+        redirect(url('tickets.php'));
     }
 
     $subject = $category . ($subcategory ? ' - ' . $subcategory : '');
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ticket']) && c
     }
 
     flash('success', 'Ticket #' . $tid . ' created. We will reply as soon as possible.');
-    redirect('/ticket.php?id=' . (int)$tid);
+    redirect(url('ticket.php') . '?id=' . (int)$tid);
 }
 
 // List: search and pagination
@@ -125,7 +125,7 @@ require_once __DIR__ . '/layouts/header.php';
 </style>
 
 <div class="ticket-banner">
-  To get a quicker response to your inquiries or issues, please refer to our <a href="/home.php#faq">FAQs page</a> before submitting a ticket.
+  To get a quicker response to your inquiries or issues, please refer to our <a href="<?= h(path('home.php')) ?>#faq">FAQs page</a> before submitting a ticket.
 </div>
 
 <div class="grid2" style="align-items: start; gap: 24px;">
@@ -189,7 +189,7 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
     <?php else: ?>
     <?php foreach ($tickets as $t): ?>
-    <a href="/ticket.php?id=<?= (int)$t['id'] ?>" class="ticket-item">
+    <a href="<?= h(path('ticket.php')) ?>?id=<?= (int)$t['id'] ?>" class="ticket-item">
       <span class="ticket-item-id"><?= (int)$t['id'] ?> — <?= h(mb_substr($t['subject'], 0, 60)) ?><?= mb_strlen($t['subject']) > 60 ? '…' : '' ?></span>
       <span class="ticket-item-meta"><?= h(date('Y-m-d h:i:s A', strtotime($t['updated_at'] ?? 'now'))) ?></span>
       <span class="ticket-item-status <?= ($t['status'] ?? 'open') === 'open' ? 'new' : h($t['status'] ?? 'open') ?>"><?= ($t['status'] ?? 'open') === 'open' ? 'New' : h(ucfirst($t['status'] ?? '')) ?></span>

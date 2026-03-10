@@ -8,7 +8,7 @@ $id = (int)($_GET['id'] ?? 0);
 $ticket = $db->fetch("SELECT * FROM tickets WHERE id = ? AND user_id = ?", [$id, $uid]);
 if (!$ticket) {
     flash('error', 'Ticket not found.');
-    redirect('/tickets.php');
+    redirect(url('tickets.php'));
 }
 
 // Reply
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply']) && csrf_veri
         $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 0)", [$id, $uid, $msg]);
         $db->execute("UPDATE tickets SET status = 'open', updated_at = NOW() WHERE id = ?", [$id]);
         flash('success', 'Reply sent.');
-        redirect('/ticket.php?id=' . $id);
+        redirect(url('ticket.php') . '?id=' . (int)$id);
     }
 }
 
@@ -53,7 +53,7 @@ require_once __DIR__ . '/layouts/header.php';
   <div style="padding:14px 0;">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Attachments</div>
     <?php foreach ($attachments as $a): ?>
-    <a href="/<?= h($a['file_path']) ?>" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
+    <a href="<?= h(path($a['file_path'])) ?>" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;">📎 <?= h($a['original_name']) ?></a>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
@@ -73,6 +73,6 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 <?php endif; ?>
 
-<p style="margin-top:16px;"><a href="/tickets.php">← Back to Tickets</a></p>
+<p style="margin-top:16px;"><a href="<?= h(path('tickets.php')) ?>">← Back to Tickets</a></p>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

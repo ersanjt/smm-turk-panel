@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id']) && csrf
     } else {
         flash('error', 'Deposit not found or already processed.');
     }
-    redirect('/admin/admin-deposits.php');
+    redirect(url('admin/admin-deposits.php'));
 }
 
 // Cancel deposit
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id']) && csrf_
     $tid = (int) $_POST['cancel_id'];
     $db->execute("UPDATE transactions SET status = 'failed' WHERE id = ? AND type = 'deposit' AND status = 'pending'", [$tid]);
     flash('success', 'Deposit cancelled.');
-    redirect('/admin/admin-deposits.php');
+    redirect(url('admin/admin-deposits.php'));
 }
 
 $pending = $db->fetchAll(

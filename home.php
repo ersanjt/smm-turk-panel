@@ -3,7 +3,7 @@ require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
 
 if ($auth->isLoggedIn()) {
-    header('Location: /index.php');
+    header('Location: ' . url('index.php'));
     exit;
 }
 
@@ -31,8 +31,8 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
     <meta property="og:url" content="<?= h($canonicalUrl) ?>">
     <meta property="og:image" content="<?= h($logoUrl) ?>">
     <meta property="og:locale" content="<?= $lang === 'tr' ? 'tr_TR' : 'en_US' ?>">
-    <link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
-    <link rel="apple-touch-icon" href="/assets/img/logo-icon.svg?v=2">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
+    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"Cheapest SMM Panel — Turkey & worldwide. Reseller panel, API, 24/7 support.","logo":"<?= h($logoUrl) ?>"}</script>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -52,32 +52,84 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; overflow-x: hidden; }
         a { text-decoration: none; color: inherit; }
 
+        /* ——— Header (Landing) ——— */
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            background: rgba(255,255,255,.96); backdrop-filter: blur(14px);
-            border-bottom: 1px solid rgba(227, 10, 23, 0.12);
-            padding: 14px 24px;
+            background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(255,252,253,.95) 100%);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(227, 10, 23, 0.08);
+            box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 4px 24px rgba(26,10,14,.04);
+            padding: 0 24px;
             padding-left: max(24px, env(safe-area-inset-left));
             padding-right: max(24px, env(safe-area-inset-right));
-            padding-top: max(14px, env(safe-area-inset-top));
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            padding-top: max(0, env(safe-area-inset-top));
         }
-        .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); text-decoration: none; min-height: 44px; }
-        .nav-logo img { width: 36px; height: 36px; border-radius: 10px; transition: transform .25s ease; flex-shrink: 0; }
-        .nav-logo:hover img { transform: scale(1.08); }
+        .nav::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+            background: linear-gradient(90deg, transparent 0%, var(--primary) 20%, var(--primary-dark) 50%, var(--primary) 80%, transparent 100%);
+            opacity: 0.85;
+        }
+        .nav-inner {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            min-height: 64px; padding: 10px 0;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 14px; font-family: 'Syne', sans-serif; font-size: 23px; font-weight: 800;
+            color: var(--dark); text-decoration: none; min-height: 44px; letter-spacing: -0.03em;
+            transition: opacity .2s, transform .2s;
+        }
+        .nav-logo:hover { opacity: 0.92; transform: translateY(-1px); }
+        .nav-logo-icon {
+            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            box-shadow: 0 4px 14px rgba(227, 10, 23, .25), 0 1px 0 rgba(255,255,255,.2) inset;
+            transition: transform .25s ease, box-shadow .25s ease;
+        }
+        .nav-logo:hover .nav-logo-icon { transform: scale(1.05); box-shadow: 0 6px 20px rgba(227, 10, 23, .35), 0 1px 0 rgba(255,255,255,.2) inset; }
+        .nav-logo img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
         .nav-logo span { color: var(--primary); }
-        .nav-links { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-        .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); transition: color .2s, transform .2s; padding: 8px 4px; min-height: 44px; display: inline-flex; align-items: center; }
-        .nav-links a:hover { color: var(--primary); transform: translateY(-1px); }
+        .nav-logo-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-left: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .nav-links { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .nav-links a {
+            font-size: 13.5px; font-weight: 600; color: var(--dark); letter-spacing: .02em;
+            padding: 10px 14px; min-height: 44px; display: inline-flex; align-items: center; border-radius: 10px;
+            transition: color .2s, background .2s, transform .2s; position: relative;
+        }
+        .nav-links a:hover { color: var(--primary); background: var(--primary-soft); transform: translateY(-1px); }
+        .nav-links a:not(.nav-btn):hover::after {
+            content: ''; position: absolute; left: 14px; right: 14px; bottom: 8px; height: 2px; background: var(--primary); border-radius: 1px; opacity: 0.4;
+        }
         .nav-lang { position: relative; }
-        .nav-lang-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; min-height: 44px; box-sizing: border-box; border-radius: 10px; border: 1.5px solid rgba(227,10,23,.2); background: var(--white); font-size: 13px; font-weight: 600; color: var(--dark); cursor: pointer; }
-        .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary); }
-        .nav-lang-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.06); min-width: 140px; display: none; overflow: hidden; }
+        .nav-lang-btn {
+            display: flex; align-items: center; gap: 8px; padding: 10px 14px; min-height: 44px; box-sizing: border-box;
+            border-radius: 10px; border: 1px solid rgba(227,10,23,.15); background: rgba(255,255,255,.9);
+            font-size: 12px; font-weight: 700; letter-spacing: .5px; color: var(--dark); cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04); transition: border-color .2s, color .2s, box-shadow .2s;
+        }
+        .nav-lang-btn:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 2px 8px rgba(227,10,23,.12); }
+        .nav-lang-btn svg { width: 10px; height: 10px; opacity: .7; transition: transform .2s; }
+        .nav-lang:has(.nav-lang-dropdown.open) .nav-lang-btn svg { transform: rotate(180deg); }
+        .nav-lang-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0; min-width: 160px;
+            background: var(--white); border-radius: 14px; overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06);
+            display: none;
+        }
         .nav-lang-dropdown.open { display: block; }
-        .nav-lang-dropdown a { display: block; padding: 12px 16px; font-size: 14px; color: var(--dark); }
+        .nav-lang-dropdown a { display: block; padding: 12px 18px; font-size: 14px; font-weight: 500; color: var(--dark); transition: background .2s, color .2s; }
         .nav-lang-dropdown a:hover { background: var(--primary-soft); color: var(--primary); }
-        .nav-btn { background: var(--primary); color: var(--white); padding: 10px 22px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform .25s ease, box-shadow .25s ease, background .2s; }
-        .nav-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .35); }
+        .nav-btn {
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: var(--white); padding: 12px 24px; min-height: 44px; box-sizing: border-box;
+            display: inline-flex; align-items: center; gap: 8px; border-radius: 12px;
+            font-weight: 700; font-size: 14px; letter-spacing: .03em;
+            box-shadow: 0 4px 14px rgba(227, 10, 23, .3), 0 1px 0 rgba(255,255,255,.15) inset;
+            transition: transform .25s ease, box-shadow .25s ease, background .2s; border: none; cursor: pointer;
+        }
+        .nav-btn:hover { background: linear-gradient(145deg, var(--primary-dark), #9a0610); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227, 10, 23, .4), 0 1px 0 rgba(255,255,255,.1) inset; }
+        .nav-btn:active { transform: translateY(0); }
 
         /* Mobile menu (hamburger) - hidden on desktop */
         .nav-mob-menu-btn { display: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: none; background: var(--light); border-radius: 10px; cursor: pointer; align-items: center; justify-content: center; font-size: 20px; color: var(--dark); transition: background .2s, color .2s; }
@@ -216,9 +268,12 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         }
         /* Mobile header & footer (768px and below) */
         @media (max-width: 768px) {
-            .nav { padding: 12px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: max(12px, env(safe-area-inset-top)); flex-wrap: nowrap; gap: 10px; }
+            .nav { padding: 0 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: max(0, env(safe-area-inset-top)); }
+            .nav-inner { min-height: 56px; padding: 8px 0; flex-wrap: nowrap; gap: 10px; }
             .nav-logo { font-size: 18px; flex: 0 0 auto; }
-            .nav-logo img { width: 32px; height: 32px; }
+            .nav-logo-icon { width: 36px; height: 36px; }
+            .nav-logo img { width: 20px; height: 20px; }
+            .nav-logo-tag { display: none; }
             .nav-mob-menu-btn { display: flex; order: 1; }
             .nav-links { order: 2; margin-left: auto; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
             .nav-links .hide-mob { display: none; }
@@ -241,9 +296,11 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             .footer-links a:hover { background: rgba(255,255,255,.08); }
         }
         @media (max-width: 480px) {
-            .nav { padding: 10px 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(10px, env(safe-area-inset-top)); gap: 8px; }
+            .nav { padding: 0 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(0, env(safe-area-inset-top)); }
+            .nav-inner { min-height: 52px; gap: 8px; }
             .nav-logo { font-size: 16px; }
-            .nav-logo img { width: 28px; height: 28px; }
+            .nav-logo-icon { width: 32px; height: 32px; }
+            .nav-logo img { width: 18px; height: 18px; }
             .nav-links { gap: 6px; }
             .nav-links a:not(.nav-btn) { font-size: 12px; padding: 6px 4px; }
             .nav-btn { padding: 10px 12px; font-size: 12px; min-height: 44px; }
@@ -271,29 +328,32 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
 <body>
 
 <header class="nav" role="banner">
-    <a href="<?= h($currentPath) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-        <img src="/assets/img/logo-icon.svg?v=2" alt="" width="36" height="36" fetchpriority="high">
-        <span>SMM<span>Turk</span></span>
-    </a>
-    <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="<?= h(__('benefits')) ?>" aria-expanded="false" aria-controls="navMobDrawer">
-        ☰
-    </button>
-    <div class="nav-links">
-        <a href="#benefits" class="hide-mob"><?= h(__('benefits')) ?></a>
-        <a href="#services" class="hide-mob"><?= h(__('services_nav')) ?></a>
-        <a href="#faq" class="hide-mob"><?= h(__('faq_nav')) ?></a>
-        <div class="nav-lang">
-            <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
-                <?= strtoupper($lang) ?> ▼
-            </button>
-            <div class="nav-lang-dropdown" id="langDropdown">
-                <?php foreach (Lang::allowed() as $l): ?>
-                <a href="<?= h($currentPath . $langParam . $l) ?>"><?= $l === 'en' ? 'English' : ($l === 'tr' ? 'Türkçe' : ($l === 'de' ? 'Deutsch' : 'Français')) ?></a>
-                <?php endforeach; ?>
+    <div class="nav-inner">
+        <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>" alt="" width="24" height="24" fetchpriority="high"></span>
+            <span>SMM<span>Turk</span></span><span class="nav-logo-tag">SMM Panel</span>
+        </a>
+        <button type="button" class="nav-mob-menu-btn" id="navMobMenuBtn" aria-label="<?= h(__('benefits')) ?>" aria-expanded="false" aria-controls="navMobDrawer">
+            ☰
+        </button>
+        <div class="nav-links">
+            <a href="#benefits" class="hide-mob"><?= h(__('benefits')) ?></a>
+            <a href="#services" class="hide-mob"><?= h(__('services_nav')) ?></a>
+            <a href="#faq" class="hide-mob"><?= h(__('faq_nav')) ?></a>
+            <div class="nav-lang">
+                <div class="nav-lang-dropdown" id="langDropdown">
+                    <?php foreach (Lang::allowed() as $l): ?>
+                    <a href="<?= h(path('home.php') . $langParam . $l) ?>"><?= $l === 'en' ? 'English' : ($l === 'tr' ? 'Türkçe' : ($l === 'de' ? 'Deutsch' : 'Français')) ?></a>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
+                    <?= strtoupper($lang) ?>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
             </div>
+            <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
+            <a href="<?= h(path('login.php')) ?>?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
         </div>
-        <a href="/login.php"><?= h(__('nav_sign_in')) ?></a>
-        <a href="/login.php?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
     </div>
 </header>
 <!-- Mobile menu drawer (visible only on small screens) -->
@@ -302,8 +362,8 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         <a href="#benefits" class="mob-drawer-link"><?= h(__('benefits')) ?></a>
         <a href="#services" class="mob-drawer-link"><?= h(__('services_nav')) ?></a>
         <a href="#faq" class="mob-drawer-link"><?= h(__('faq_nav')) ?></a>
-        <a href="/login.php" class="mob-drawer-link"><?= h(__('nav_sign_in')) ?></a>
-        <a href="/login.php?mode=register" class="mob-drawer-link"><?= h(__('nav_sign_up')) ?> →</a>
+        <a href="<?= h(path('login.php')) ?>" class="mob-drawer-link"><?= h(__('nav_sign_in')) ?></a>
+        <a href="<?= h(path('login.php')) ?>?mode=register" class="mob-drawer-link"><?= h(__('nav_sign_up')) ?> →</a>
     </div>
 </div>
 
@@ -316,7 +376,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
             <p class="hero-desc"><?= h(__('hero_desc')) ?></p>
         </div>
         <div class="hero-form-box">
-            <form method="POST" action="/login.php">
+            <form method="POST" action="<?= h(path('login.php')) ?>">
                 <div class="form-group">
                     <label class="form-label"><?= h(__('login_username')) ?></label>
                     <div class="input-wrap">
@@ -332,12 +392,12 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
                     </div>
                 </div>
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
-                <div style="margin-bottom:12px;"><a href="/forgot-password.php" class="forgot"><?= h(__('forgot_password')) ?></a></div>
+                <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" class="forgot"><?= h(__('forgot_password')) ?></a></div>
                 <button type="submit" class="btn-login"><?= h(__('btn_login')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                 <div class="divider">— <?= h(__('login_with_google')) ?> —</div>
                 <?php $googleAuth = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) !== '' : false; ?>
-<a href="<?= $googleAuth ? '/login-google.php' : '/login.php' ?>" class="btn-google"><?= h(__('login_with_google')) ?></a>
-                <p class="register-link"><?= h(__('no_account')) ?> <a href="/login.php?mode=register">→ <?= h(__('register')) ?></a></p>
+<a href="<?= h($googleAuth ? path('login-google.php') : path('login.php')) ?>" class="btn-google"><?= h(__('login_with_google')) ?></a>
+                <p class="register-link"><?= h(__('no_account')) ?> <a href="<?= h(path('login.php')) ?>?mode=register">→ <?= h(__('register')) ?></a></p>
             </form>
         </div>
     </div>
@@ -402,7 +462,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         <div class="section-label"><?= h(__('quick_response_label')) ?></div>
         <h2 class="section-title"><?= h(__('quick_response')) ?></h2>
         <p class="section-desc"><?= h(__('quick_response_desc')) ?></p>
-        <a href="/login.php?mode=register" class="btn-cta"><?= h(__('sign_up_now')) ?> →</a>
+        <a href="<?= h(path('login.php')) ?>?mode=register" class="btn-cta"><?= h(__('sign_up_now')) ?> →</a>
     </div>
     <div class="stats-row">
         <div class="stat-item">
@@ -448,7 +508,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
         </div>
         <div>
             <p class="section-desc" style="margin-bottom:24px;"><?= h(__('why_us_desc')) ?></p>
-            <a href="/login.php?mode=register" class="nav-btn" style="display:inline-block;"><?= h(__('sign_up_now')) ?> →</a>
+            <a href="<?= h(path('login.php')) ?>?mode=register" class="nav-btn" style="display:inline-block;"><?= h(__('sign_up_now')) ?> →</a>
         </div>
     </div>
 </section>
@@ -457,7 +517,7 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
     <div class="cta-block">
         <h2 class="section-title"><?= h(__('cta_ready')) ?></h2>
         <p class="section-desc"><?= h(__('cta_join')) ?></p>
-        <a href="/login.php?mode=register" class="btn-cta"><?= h(__('cta_btn')) ?></a>
+        <a href="<?= h(path('login.php')) ?>?mode=register" class="btn-cta"><?= h(__('cta_btn')) ?></a>
     </div>
 </section>
 
@@ -465,16 +525,16 @@ $logoUrl = $siteUrl . '/assets/img/logo-icon.svg?v=2';
 
 <!-- Mobile-only fixed bottom bar: quick Login / Sign up (only visible on mobile) -->
 <nav class="mob-footer-bar" aria-label="<?= h(__('footer_login')) ?>">
-    <a href="/login.php" class="mob-footer-btn mob-footer-btn-outline"><?= h(__('footer_login')) ?></a>
-    <a href="/login.php?mode=register" class="mob-footer-btn mob-footer-btn-primary"><?= h(__('footer_signup')) ?> →</a>
+    <a href="<?= h(path('login.php')) ?>" class="mob-footer-btn mob-footer-btn-outline"><?= h(__('footer_login')) ?></a>
+    <a href="<?= h(path('login.php')) ?>?mode=register" class="mob-footer-btn mob-footer-btn-primary"><?= h(__('footer_signup')) ?> →</a>
 </nav>
 
 <footer class="footer" role="contentinfo">
     <div class="footer-links">
-        <a href="/login.php"><?= h(__('footer_login')) ?></a>
-        <a href="/login.php?mode=register"><?= h(__('footer_signup')) ?></a>
-        <a href="/api-page.php"><?= h(__('footer_api')) ?></a>
-        <a href="/tickets.php"><?= h(__('footer_support')) ?></a>
+        <a href="<?= h(path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
+        <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('footer_signup')) ?></a>
+        <a href="<?= h(path('api-page.php')) ?>"><?= h(__('footer_api')) ?></a>
+        <a href="<?= h(path('tickets.php')) ?>"><?= h(__('footer_support')) ?></a>
     </div>
     <div class="footer-copy">© <?= date('Y') ?> <?= h($siteName) ?>. <?= h(__('footer_copyright')) ?>.</div>
 </footer>

@@ -59,7 +59,7 @@ require_once __DIR__ . '/../layouts/header.php';
         <td><?= h(mb_substr($t['subject'], 0, 50)) ?><?= mb_strlen($t['subject']) > 50 ? '…' : '' ?></td>
         <td><span class="badge <?= $t['status'] === 'open' ? 'badge-orange' : ($t['status'] === 'answered' ? 'badge-green' : 'badge-gray') ?>"><?= h($t['status']) ?></span></td>
         <td style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($t['updated_at'] ?? $t['created_at']))) ?></td>
-        <td><a href="/admin/admin-ticket.php?id=<?= (int)$t['id'] ?>" class="btn btn-primary" style="padding:6px 12px;font-size:12px;">View & Reply</a></td>
+        <td><a href="<?= h(path('admin/admin-ticket.php')) ?>?id=<?= (int)$t['id'] ?>" class="btn btn-primary" style="padding:6px 12px;font-size:12px;">View & Reply</a></td>
       </tr>
       <?php endforeach; ?>
       </tbody>

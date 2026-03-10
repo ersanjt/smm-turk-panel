@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_
             flash('success', 'Transaction ID saved. We will add your balance after confirmation.');
         }
     }
-    redirect('/add-funds.php');
+    redirect(url('add-funds.php'));
 }
 
 // Main form: amount + consent (crypto only)
@@ -37,11 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_funds']) && csrf_
 
     if (!$consent) {
         flash('error', 'You must consent that you are not fraudulent.');
-        redirect('/add-funds.php');
+        redirect(url('add-funds.php'));
     }
     if ($amount < $minDeposit) {
         flash('error', "Minimum deposit is \${$minDeposit}.");
-        redirect('/add-funds.php');
+        redirect(url('add-funds.php'));
     }
 
     $balanceBefore = (float) $user['balance'];
@@ -87,8 +87,8 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <div class="add-funds-tabs">
-  <a href="/add-funds.php" class="<?= $activeTab === 'add' ? 'active' : '' ?>">Add Funds</a>
-  <a href="/add-funds.php?tab=history" class="<?= $activeTab === 'history' ? 'active' : '' ?>">Fund History</a>
+  <a href="<?= h(path('add-funds.php')) ?>" class="<?= $activeTab === 'add' ? 'active' : '' ?>">Add Funds</a>
+  <a href="<?= h(path('add-funds.php')) ?>?tab=history" class="<?= $activeTab === 'history' ? 'active' : '' ?>">Fund History</a>
 </div>
 
 <?php if ($activeTab === 'history'): ?>
@@ -113,7 +113,7 @@ require_once __DIR__ . '/layouts/header.php';
       </table>
     </div>
     <?php endif; ?>
-    <p style="margin-top:16px;"><a href="/add-funds.php" class="btn btn-primary">Add Funds (Crypto)</a></p>
+    <p style="margin-top:16px;"><a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary">Add Funds (Crypto)</a></p>
   </div>
 <?php elseif ($step === 'form'): ?>
   <div class="card">
@@ -158,8 +158,8 @@ require_once __DIR__ . '/layouts/header.php';
       </div>
       <button type="submit" class="btn btn-primary">I've sent the payment</button>
     </form>
-    <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">Balance will be added after we confirm. You can also open a <a href="/tickets.php">ticket</a> with the TxHash.</p>
-    <a href="/add-funds.php" style="display:inline-block;margin-top:12px;font-size:13px;">← New deposit</a>
+    <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">Balance will be added after we confirm. You can also open a <a href="<?= h(path('tickets.php')) ?>">ticket</a> with the TxHash.</p>
+    <a href="<?= h(path('add-funds.php')) ?>" style="display:inline-block;margin-top:12px;font-size:13px;">← New deposit</a>
   </div>
 <?php endif; ?>
 

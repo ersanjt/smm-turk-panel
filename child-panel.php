@@ -49,11 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_child']) && cs
                 $db->execute("UPDATE users SET balance = balance + ?, spent = spent - ? WHERE id = ?", [$price, $price, $user['id']]);
                 flash('error', 'Order failed. Please try again or contact support.');
             }
-            redirect('/child-panel.php');
+            redirect(url('child-panel.php'));
         }
     } else {
         flash('error', implode(' ', $err));
-        redirect('/child-panel.php');
+        redirect(url('child-panel.php'));
     }
 }
 
@@ -164,8 +164,8 @@ require_once __DIR__ . '/layouts/header.php';
       <div class="cp-faq-item"><div class="cp-faq-q">I already have a domain. What do I do? <span>+</span></div><div class="cp-faq-a">Enter your domain in the order form. Then in your domain registrar’s control panel, set the nameservers to the ones shown above.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How do I change nameservers for my domain? <span>+</span></div><div class="cp-faq-a">Log in to where you bought the domain (GoDaddy, Namecheap, Cloudflare, etc.), find DNS or Nameservers settings, and replace the current nameservers with the ones we provide.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How to connect my child panel with WordPress? <span>+</span></div><div class="cp-faq-a">You can embed the panel in an iframe on your WordPress site or link to it. For full integration, use our API from a custom WordPress plugin.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Can I get a refund after purchasing a child panel? <span>+</span></div><div class="cp-faq-a">Refund policy depends on usage. Contact us via <a href="/tickets.php">support ticket</a> for any refund request.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How can I change my child panel domain? <span>+</span></div><div class="cp-faq-a">Open a <a href="/tickets.php">ticket</a> with your new domain. We will guide you through the change.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Can I get a refund after purchasing a child panel? <span>+</span></div><div class="cp-faq-a">Refund policy depends on usage. Contact us via <a href="<?= h(path('tickets.php')) ?>">support ticket</a> for any refund request.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How can I change my child panel domain? <span>+</span></div><div class="cp-faq-a">Open a <a href="<?= h(path('tickets.php')) ?>">ticket</a> with your new domain. We will guide you through the change.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Is the affiliate feature available on child panel? <span>+</span></div><div class="cp-faq-a">Child panels can have their own referral/affiliate settings. Contact support to enable this for your panel.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How can I set up payment methods in my child account? <span>+</span></div><div class="cp-faq-a">After activation, you can add payment options in your child panel’s admin area or request integration via support.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How do I collect money from my customers? <span>+</span></div><div class="cp-faq-a">Your child panel can use payment gateways (e.g. Stripe, PayPal) that you configure. Funds go to your account; you use balance here to pay for orders.</div></div>

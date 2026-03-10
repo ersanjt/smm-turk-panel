@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/app/init.php';
 if (!$auth->isLoggedIn()) {
-    header('Location: /home.php');
+    header('Location: ' . url('home.php'));
     exit;
 }
 
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         $result = $om->placeOrder($auth->getUserId(), $serviceId, $link, $quantity);
         if ($result['success']) {
             flash('success', "✅ Order #{$result['order_id']} placed! Charged: \${$result['charge']}");
-            header('Location: /orders.php');
+            header('Location: ' . url('orders.php'));
             exit;
         } else {
             $error = $result['error'];
@@ -101,19 +101,19 @@ require_once __DIR__ . '/layouts/header.php';
 
 <!-- Order type tabs -->
 <nav class="order-tabs" aria-label="Order type">
-  <a class="order-tab active" href="/index.php">New Order</a>
-  <a class="order-tab" href="/mass-order.php">Mass Order</a>
-  <a class="order-tab" href="/services.php">Services</a>
+  <a class="order-tab active" href="<?= h(path('index.php')) ?>">New Order</a>
+  <a class="order-tab" href="<?= h(path('mass-order.php')) ?>">Mass Order</a>
+  <a class="order-tab" href="<?= h(path('services.php')) ?>">Services</a>
 </nav>
 
 <!-- Platform icons (category filter) -->
 <div class="platform-icons">
-  <a class="platform-btn <?= $catParam === null ? 'active' : '' ?>" href="?" title="All">+</a>
+  <a class="platform-btn <?= $catParam === null ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>" title="All">+</a>
   <?php foreach ($categories as $cat):
     $icon = platformIcon($cat['category'], $platformIcons);
     $isActive = $cat['category'] === $selectedCat;
   ?>
-  <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?= h($icon) ?></a>
+  <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?= h($icon) ?></a>
   <?php endforeach; ?>
 </div>
 
@@ -125,7 +125,7 @@ require_once __DIR__ . '/layouts/header.php';
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <select class="form-control" style="width:auto;min-width:180px;" onchange="location.href='?cat='+encodeURIComponent(this.value)">
+    <select class="form-control" style="width:auto;min-width:180px;" onchange="location.href='<?= h(path('index.php')) ?>?cat='+encodeURIComponent(this.value)">
       <option value="">Search By Category</option>
       <?php foreach ($categories as $c): ?>
       <option value="<?= h($c['category']) ?>" <?= $c['category'] === $selectedCat ? 'selected' : '' ?>><?= h($c['category']) ?></option>
@@ -141,7 +141,7 @@ require_once __DIR__ . '/layouts/header.php';
 <div class="platform-tabs">
   <?php foreach ($categories as $cat): ?>
   <a class="ptab <?= $cat['category'] === $selectedCat ? 'active' : '' ?>"
-     href="?cat=<?= urlencode($cat['category']) ?>">
+     href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>">
     <?= h($cat['category']) ?>
   </a>
   <?php endforeach; ?>

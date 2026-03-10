@@ -5,7 +5,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect('/index.php');
+    redirect(url('index.php'));
 }
 
 $clientId     = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) : '';
@@ -67,7 +67,7 @@ if ($clientId === '' || $clientSecret === '' || $siteUrl === '') {
                 $name     = $profile['name'] ?? $profile['given_name'] ?? 'User';
                 $result   = $auth->loginOrCreateFromGoogle($googleId, $email, $name);
                 if ($result['success']) {
-                    redirect('/index.php');
+                    redirect(url('index.php'));
                 }
                 $error = $result['error'] ?? 'Login failed.';
             }
@@ -76,4 +76,4 @@ if ($clientId === '' || $clientSecret === '' || $siteUrl === '') {
 }
 
 $_SESSION['flash'] = ['type' => 'error', 'message' => $error];
-redirect('/login.php');
+redirect(url('login.php'));

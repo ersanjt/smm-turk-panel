@@ -44,6 +44,31 @@ function h(string $str): string {
     return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
 }
 
+/** Base path for internal links (e.g. '' or '/panel'). Use in href. */
+function base_path(): string {
+    if (!defined('SITE_URL') || SITE_URL === '') return '';
+    $path = parse_url(SITE_URL, PHP_URL_PATH);
+    return $path ? rtrim($path, '/') : '';
+}
+
+/** Full base URL for redirects (e.g. 'https://example.com' or 'https://example.com/panel'). */
+function site_base(): string {
+    return (defined('SITE_URL') && SITE_URL !== '') ? rtrim(SITE_URL, '/') : '';
+}
+
+/** Internal URL: full URL for redirects (use in Location header). */
+function url(string $path): string {
+    $path = '/' . ltrim($path, '/');
+    $base = site_base();
+    return $base !== '' ? $base . $path : $path;
+}
+
+/** Path for internal href (same-origin). Use in HTML: href="<?= h(path('login.php')) ?>". */
+function path(string $p): string {
+    $p = '/' . ltrim($p, '/');
+    return base_path() . $p;
+}
+
 function money(float $amount): string {
     return '$' . number_format($amount, 4);
 }

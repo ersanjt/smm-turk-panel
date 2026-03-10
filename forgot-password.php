@@ -2,7 +2,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect(defined('SITE_URL') ? rtrim(SITE_URL, '/') . '/index.php' : '/index.php');
+    redirect(url('index.php'));
 }
 
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
@@ -31,7 +31,7 @@ if (empty($_SESSION['csrf_token'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — Forgot Password</title>
-<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -57,7 +57,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 </head>
 <body>
 <div class="auth-box">
-  <a href="/login.php" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Login</a>
+  <a href="<?= h(path('login.php')) ?>" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Login</a>
   <div class="auth-logo">
     <img src="/assets/img/logo-icon.svg?v=2" alt="" width="44" height="44">
     <span class="logo">SMM<span>Turk</span></span>
@@ -68,7 +68,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   <?php endif; ?>
   <?php if ($success): ?>
   <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-  <p class="back-link"><a href="/login.php">Back to Login</a></p>
+  <p class="back-link"><a href="<?= h(path('login.php')) ?>">Back to Login</a></p>
   <?php else: ?>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -78,7 +78,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
     </div>
     <button type="submit" class="btn">Send reset link</button>
   </form>
-  <p class="back-link"><a href="/login.php">Back to Login</a></p>
+  <p class="back-link"><a href="<?= h(path('login.php')) ?>">Back to Login</a></p>
   <?php endif; ?>
 </div>
 </body>

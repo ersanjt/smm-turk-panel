@@ -5,8 +5,7 @@
 require_once __DIR__ . '/app/init.php';
 
 $ref = trim($_GET['ref'] ?? '');
-$url = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$loginUrl = $url ? $url . '/login.php' : '/login.php';
+$loginUrl = url('login.php');
 
 if ($ref === '') {
     header('Location: ' . $loginUrl);

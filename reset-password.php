@@ -2,7 +2,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect(defined('SITE_URL') ? rtrim(SITE_URL, '/') . '/index.php' : '/index.php');
+    redirect(url('index.php'));
 }
 
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
@@ -38,7 +38,7 @@ if (empty($_SESSION['csrf_token'])) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — Set new password</title>
-<link rel="icon" type="image/svg+xml" href="/assets/img/logo-icon.svg?v=2">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=2')) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -71,10 +71,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   <div class="tagline">Set your new password</div>
   <?php if ($success): ?>
   <div class="alert alert-success">Password updated successfully. You can now log in.</div>
-  <p class="back-link"><a href="/login.php">Go to Login</a></p>
+  <p class="back-link"><a href="<?= h(path('login.php')) ?>">Go to Login</a></p>
   <?php elseif ($token === ''): ?>
   <div class="alert alert-error">Invalid or missing reset link. Request a new one from the login page.</div>
-  <p class="back-link"><a href="/forgot-password.php">Forgot password?</a> · <a href="/login.php">Login</a></p>
+  <p class="back-link"><a href="<?= h(path('forgot-password.php')) ?>">Forgot password?</a> · <a href="<?= h(path('login.php')) ?>">Login</a></p>
   <?php else: ?>
   <?php if ($error): ?>
   <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
@@ -91,7 +91,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
     </div>
     <button type="submit" class="btn">Set new password</button>
   </form>
-  <p class="back-link"><a href="/login.php">Back to Login</a></p>
+  <p class="back-link"><a href="<?= h(path('login.php')) ?>">Back to Login</a></p>
   <?php endif; ?>
 </div>
 </body>

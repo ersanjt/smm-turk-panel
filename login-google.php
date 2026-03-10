@@ -5,7 +5,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect('/index.php');
+    redirect(url('index.php'));
 }
 
 $clientId = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) : '';
@@ -14,7 +14,7 @@ $redirectUri = $siteUrl . '/login-google-callback.php';
 
 if ($clientId === '' || $siteUrl === '') {
     flash('error', 'Google Sign-In is not configured.');
-    redirect('/login.php');
+    redirect(url('login.php'));
 }
 
 $state = bin2hex(random_bytes(16));
