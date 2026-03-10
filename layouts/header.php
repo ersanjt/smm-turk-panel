@@ -98,9 +98,6 @@ img{max-width:100%;height:auto}
 .icon-btn{width:36px;height:36px;min-width:36px;min-height:36px;border-radius:10px;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .2s;font-size:15px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .icon-btn svg{width:18px;height:18px;flex-shrink:0}
 .icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(227,10,23,.25)}
-.topbar-add-funds{display:inline-flex;align-items:center;gap:6px}
-.topbar-add-funds .icon-btn{width:auto;min-width:36px;padding:0 10px}
-.topbar-add-funds .icon-btn svg{width:16px;height:16px}
 .content{padding:24px;flex:1}
 .card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out),border-color var(--motion-duration) ease}
 .card:hover{box-shadow:0 16px 48px rgba(227,10,23,.1);transform:translateY(-4px)}
@@ -151,8 +148,8 @@ img{max-width:100%;height:auto}
 .footer-contact:hover{color:#fff}
 .footer-ticket{background:var(--orange);color:#fff;padding:8px 18px;border-radius:10px;font-weight:700;text-decoration:none;font-size:12px;transition:all .2s;display:inline-block;min-height:44px;line-height:28px;box-sizing:border-box}
 .footer-ticket:hover{background:#fbbf24;color:#1a0a0e;transform:translateY(-1px)}
-@media(max-width:768px){.footer{padding:20px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(20px,env(safe-area-inset-bottom))}.footer-inner{flex-direction:column;text-align:center;gap:14px}.footer-copy{order:1}.footer-contact{order:2}.footer-ticket{order:3;min-height:44px;padding:10px 20px}.footer-copy,.footer-contact{font-size:13px}}
-@media(max-width:380px){.footer{padding:16px 12px}.footer-inner{gap:12px}.footer-ticket{width:100%;text-align:center}}
+@media(max-width:768px){.footer{padding:20px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(24px,calc(20px + env(safe-area-inset-bottom)))}.footer-inner{flex-direction:column;text-align:center;gap:16px}.footer-copy{order:1;font-size:13px;line-height:1.5}.footer-contact{order:2;font-size:13px;padding:10px 0;min-height:44px;display:inline-flex;align-items:center;justify-content:center}.footer-ticket{order:3;min-height:48px;padding:12px 24px;font-size:13px;border-radius:12px}}
+@media(max-width:380px){.footer{padding:18px 12px}.footer-inner{gap:14px}.footer-ticket{width:100%;text-align:center;max-width:280px;margin:0 auto}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes softPulse{0%,100%{opacity:1}50%{opacity:.92}}
@@ -196,14 +193,15 @@ img{max-width:100%;height:auto}
 .quick-actions{gap:8px}
 }
 /* Mobile bottom nav (dashboard) - only on small screens */
-.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(255,255,255,.98);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:8px 6px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-bottom:max(8px,env(safe-area-inset-bottom));justify-content:space-around;align-items:center;box-shadow:0 -4px 24px rgba(0,0,0,.06)}
-.mob-bottom-nav a,.mob-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 6px;min-height:52px;min-width:56px;border-radius:12px;font-size:10px;font-weight:600;color:var(--text-muted);text-decoration:none;background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;flex:1;max-width:80px;box-sizing:border-box}
-.mob-bottom-nav a:hover,.mob-bottom-nav button:hover{background:var(--primary);color:#fff}
-.mob-bottom-nav a.active{background:linear-gradient(180deg,rgba(227,10,23,.12) 0%,rgba(227,10,23,.06) 100%);color:var(--primary);border-radius:12px}
+.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(255,255,255,.98);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:6px 4px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-bottom:max(10px,env(safe-area-inset-bottom));justify-content:space-around;align-items:stretch;gap:4px;box-shadow:0 -4px 24px rgba(0,0,0,.08)}
+.mob-bottom-nav a,.mob-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;min-height:56px;min-width:0;border-radius:12px;font-size:10px;font-weight:600;color:var(--text-muted);text-decoration:none;background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s,transform .2s;flex:1;max-width:84px;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.mob-bottom-nav a:hover,.mob-bottom-nav button:hover{background:rgba(227,10,23,.08);color:var(--primary)}
+.mob-bottom-nav a:active,.mob-bottom-nav button:active{transform:scale(0.96)}
+.mob-bottom-nav a.active{background:linear-gradient(180deg,rgba(227,10,23,.14) 0%,rgba(227,10,23,.08) 100%);color:var(--primary);border-radius:12px;font-weight:700}
 .mob-bottom-nav a.active .mob-nav-icon,.mob-bottom-nav a.active .mob-nav-icon svg{color:inherit}
 .mob-bottom-nav button{color:inherit}
-.mob-bottom-nav .mob-nav-icon{font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
-.mob-bottom-nav .mob-nav-icon svg{width:22px;height:22px;flex-shrink:0}
+.mob-bottom-nav .mob-nav-icon{font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center}
+.mob-bottom-nav .mob-nav-icon svg{width:24px;height:24px;flex-shrink:0}
 .mob-bottom-nav a.active .mob-nav-icon,.mob-bottom-nav a.active .mob-nav-icon svg{color:var(--primary)}
 @media(max-width:768px){
 .mob-bottom-nav{display:flex}
