@@ -70,34 +70,43 @@ a{text-decoration:none;color:inherit}
 a:focus-visible,.icon-btn:focus-visible,.btn:focus-visible,.nav-item:focus-visible,.menu-toggle:focus-visible,.sidebar-close:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 img{max-width:100%;height:auto}
 .main{min-width:0;overflow-x:hidden}
-.sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom)}
-.sidebar-close{display:none;position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:10px;border:none;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;align-items:center;justify-content:center;transition:background .2s,transform .2s;z-index:2}
-.sidebar-close:hover{background:rgba(255,255,255,.18)}
-.sidebar-close svg{width:20px;height:20px}
-.sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 100%);position:relative}
-.sidebar-mob-balance{display:none;padding:12px 18px;background:rgba(227,10,23,.15);border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--primary-light);font-weight:700}
-.sidebar-mob-balance span{opacity:.9;font-weight:600}
-.sidebar-logo a{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;color:inherit;transition:opacity .2s}
-.sidebar-logo a:hover{opacity:.92}
-.logo-icon{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
-.sidebar-logo:hover .logo-icon{transform:scale(1.06) rotate(-3deg);box-shadow:0 6px 20px rgba(227,10,23,.35)}
-.logo-icon img{width:44px;height:44px;object-fit:contain;display:block}
-.logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.04em;line-height:1.1;text-transform:uppercase}
+.sidebar{width:240px;min-width:240px;background:linear-gradient(180deg,var(--sidebar-bg) 0%,#0f0608 100%);position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom);box-shadow:4px 0 24px rgba(0,0,0,.15)}
+.sidebar-close{display:none;position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);cursor:pointer;align-items:center;justify-content:center;transition:background .2s,color .2s;z-index:2}
+.sidebar-close:hover{background:rgba(255,255,255,.15);color:#fff}
+.sidebar-close svg{width:18px;height:18px}
+.sidebar-mob-balance{display:none;flex-direction:row;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(135deg,rgba(227,10,23,.2),rgba(227,10,23,.12));border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:#fff;font-weight:700;letter-spacing:.02em}
+.sidebar-mob-balance svg{flex-shrink:0;opacity:.95}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 100%);position:relative}
+.sidebar-logo a{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:inherit;transition:opacity .2s}
+.sidebar-logo a:hover{opacity:.95}
+.logo-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform var(--motion-duration) var(--ease-spring),box-shadow var(--motion-duration) var(--ease-out)}
+.sidebar-logo:hover .logo-icon{transform:scale(1.05);box-shadow:0 8px 24px rgba(227,10,23,.3)}
+.logo-icon img{width:48px;height:48px;object-fit:contain;display:block}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1.15;text-transform:uppercase}
 .logo-text span{color:var(--primary-light);letter-spacing:-.02em}
-.sidebar-user{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
-.user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin-bottom:8px;overflow:hidden;flex-shrink:0}
+.sidebar-user{padding:20px;margin:16px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px}
+.user-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;margin-bottom:12px;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(227,10,23,.25)}
 .user-avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.user-name{color:#fff;font-size:13px;font-weight:600}
-.user-bal{color:var(--primary-light);font-size:12px;margin-top:3px;font-weight:600}
-.user-status{display:inline-block;background:rgba(227,10,23,.25);color:var(--primary-light);font-size:10px;padding:2px 8px;border-radius:20px;margin-top:4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
-.sidebar-nav{padding:14px 12px;flex:1}
-.nav-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 8px;margin:14px 0 6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--sidebar-text);font-size:13.5px;font-weight:500;transition:background var(--motion-duration) ease,color var(--motion-duration) ease,transform var(--motion-duration) var(--ease-spring);margin-bottom:2px}
-.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateX(6px)}
-.nav-item.active{background:var(--primary);color:#fff}
-.nav-item svg{width:16px;height:16px;flex-shrink:0;transition:transform var(--motion-duration) var(--ease-spring)}
-.nav-item:hover svg{transform:scale(1.1)}
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;min-width:0;max-width:100%}
+.user-name{color:#fff;font-size:14px;font-weight:700;letter-spacing:.01em}
+.user-bal{color:rgba(255,255,255,.75);font-size:12px;margin-top:6px;font-weight:600;display:flex;align-items:center;gap:6px}
+.user-bal strong{color:var(--primary-light);font-weight:700}
+.user-status{display:inline-flex;align-items:center;margin-top:10px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.sidebar-user .user-status{background:rgba(227,10,23,.22);color:var(--primary-light);border:1px solid rgba(227,10,23,.35)}
+.sidebar-nav{padding:12px 14px;flex:1}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.35);padding:0 12px;margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+.nav-label::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--primary);opacity:.7}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;color:var(--sidebar-text);font-size:13px;font-weight:500;transition:background .2s,color .2s,transform .2s ease;margin-bottom:4px;border:1px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateX(4px);border-color:rgba(255,255,255,.04)}
+.nav-item.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:rgba(255,255,255,.1);box-shadow:0 4px 12px rgba(227,10,23,.25)}
+.nav-item.nav-item-cta{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:700;border:none;box-shadow:0 4px 14px rgba(227,10,23,.35);margin-bottom:8px}
+.nav-item.nav-item-cta:hover{background:linear-gradient(135deg,var(--primary-dark),#9a0610);transform:translateY(-2px);box-shadow:0 6px 20px rgba(227,10,23,.4)}
+.nav-item.nav-item-cta.active{box-shadow:0 4px 14px rgba(227,10,23,.4)}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;transition:transform .2s}
+.nav-item:hover svg{transform:scale(1.08)}
+.sidebar-nav-footer{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
+.sidebar-nav-footer .nav-item{color:rgba(255,107,107,.95)}
+.sidebar-nav-footer .nav-item:hover{background:rgba(255,107,107,.12);color:#ff6b6b}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;min-width:0;max-width:100%}
 .topbar{background:linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(255,252,253,.95) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 4px 20px rgba(26,10,14,.04);padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right));padding-top:max(0,env(safe-area-inset-top));min-height:60px;height:auto;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary) 30%,var(--primary-dark) 50%,var(--primary) 70%,transparent);background-size:200% 100%;opacity:.6;pointer-events:none;animation:topbarShine 4s ease-in-out infinite}
 .topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
@@ -240,7 +249,7 @@ body.sidebar-open{overflow:hidden;touch-action:none}
 .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:99;opacity:0;pointer-events:none;transition:opacity .25s;cursor:pointer}
 .sidebar .nav-item{min-height:48px;padding:12px 14px;font-size:14px}
 .sidebar-close{display:flex}
-.sidebar-mob-balance{display:block}
+.sidebar-mob-balance{display:flex}
 .main{margin-left:0}
 .menu-toggle{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;border:none;background:var(--bg);border-radius:12px;cursor:pointer;color:var(--text);margin-right:4px;transition:background .2s,color .2s}
 .menu-toggle:hover{background:var(--primary);color:#fff}
@@ -335,7 +344,7 @@ textarea.form-control{min-height:120px}
 <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 <aside class="sidebar" id="sidebar" role="navigation">
   <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-  <div class="sidebar-mob-balance" aria-hidden="true">Balance: $<?= $balance ?></div>
+  <div class="sidebar-mob-balance" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
       <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="44" height="44"></span>
@@ -345,12 +354,12 @@ textarea.form-control{min-height:120px}
   <div class="sidebar-user">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="user-name"><?= h($user['username'] ?? '') ?></div>
-    <div class="user-bal">Balance: $<?= $balance ?></div>
+    <div class="user-bal">Balance <strong>$<?= $balance ?></strong></div>
     <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-label">Orders</div>
-    <a class="nav-item <?= $currentPage === 'index' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>">
+    <a class="nav-item nav-item-cta <?= $currentPage === 'index' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       New Order
     </a>
@@ -407,8 +416,8 @@ textarea.form-control{min-height:120px}
       Admin Panel
     </a>
     <?php endif; ?>
-    <div style="margin-top:auto;padding-top:20px;">
-    <a class="nav-item" href="<?= h(path('logout.php')) ?>" style="color:#ff6b6b;">
+    <div class="sidebar-nav-footer">
+    <a class="nav-item" href="<?= h(path('logout.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Logout
     </a>

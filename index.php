@@ -125,7 +125,7 @@ require_once __DIR__ . '/layouts/header.php';
     $pKey = platformKeyFromCategory($cat['category']);
     $isActive = $selectedCat !== '' && $cat['category'] === $selectedCat;
   ?>
-  <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?php if ($pKey && platformSvg($pKey, 22)): ?><?= platformSvg($pKey, 22) ?><?php else: ?><span class="platform-btn-fallback"><?= h(mb_substr($cat['category'], 0, 1)) ?></span><?php endif; ?></a>
+  <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?= platformSvg($pKey, 22) ?></a>
   <?php endforeach; ?>
 </div>
 
