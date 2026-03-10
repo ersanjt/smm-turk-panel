@@ -140,7 +140,7 @@ require_once __DIR__ . '/layouts/header.php';
   </form>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <select class="form-control" style="width:auto;min-width:180px;" onchange="location.href='<?= h(path('index.php')) ?>?cat='+encodeURIComponent(this.value)">
-      <option value="">Search By Category</option>
+      <option value="" <?= $selectedCat === '' ? 'selected' : '' ?>>Search By Category</option>
       <?php foreach ($categories as $c): ?>
       <option value="<?= h($c['category']) ?>" <?= $c['category'] === $selectedCat ? 'selected' : '' ?>><?= h($c['category']) ?></option>
       <?php endforeach; ?>
@@ -154,7 +154,7 @@ require_once __DIR__ . '/layouts/header.php';
 <!-- Category pills (optional quick filter) -->
 <div class="platform-tabs">
   <?php foreach ($categories as $cat): ?>
-  <a class="ptab <?= $cat['category'] === $selectedCat ? 'active' : '' ?>"
+  <a class="ptab <?= $selectedCat !== '' && $cat['category'] === $selectedCat ? 'active' : '' ?>"
      href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>">
     <?= h($cat['category']) ?>
   </a>
