@@ -576,6 +576,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
         </a>
         <div class="nav-links">
             <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
+            <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
             <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('nav_sign_up')) ?></a>
             <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
             <button type="button" class="nav-theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
@@ -772,6 +773,7 @@ $geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
     <div class="footer-links">
         <a href="<?= h(path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
         <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('footer_signup')) ?></a>
+        <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
         <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
         <a href="<?= h(path('api-page.php')) ?>"><?= h(__('footer_api')) ?></a>
         <a href="<?= h(path('tickets.php')) ?>"><?= h(__('footer_support')) ?></a>

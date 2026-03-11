@@ -388,6 +388,10 @@ textarea.form-control{min-height:120px}
       Add Funds
     </a>
     <div class="nav-label">Support & Info</div>
+    <a class="nav-item <?= $currentPage === 'blog' || $currentPage === 'blog-post' ? 'active' : '' ?>" href="<?= h(path('blog.php')) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+      Blog
+    </a>
     <a class="nav-item" href="<?= h(path('home.php')) ?>#faq">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       FAQ
@@ -414,9 +418,13 @@ textarea.form-control{min-height:120px}
     </a>
     <?php if ($auth->isAdmin()): ?>
     <div class="nav-label">Admin</div>
-    <a class="nav-item <?= strpos($currentPage, 'admin') !== false ? 'active' : '' ?>" href="<?= h(path('admin/index.php')) ?>">
+    <a class="nav-item <?= strpos($currentPage, 'admin') !== false && $currentPage !== 'admin-blog' && $currentPage !== 'admin-blog-edit' ? 'active' : '' ?>" href="<?= h(path('admin/index.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       Admin Panel
+    </a>
+    <a class="nav-item <?= $currentPage === 'admin-blog' || $currentPage === 'admin-blog-edit' ? 'active' : '' ?>" href="<?= h(path('admin/admin-blog.php')) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Blog
     </a>
     <?php endif; ?>
     <div class="sidebar-nav-footer">

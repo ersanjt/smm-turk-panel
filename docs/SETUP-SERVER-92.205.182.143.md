@@ -214,6 +214,68 @@ git push origin main
 
 ---
 
+## مرحله ۹.۱: مایگریشن Child Panel (یک بار)
+
+اگر صفحه **Child Panel** را باز می‌کنی و با «Order failed» یا «Child panel feature is not set up» روبه‌رو می‌شوی، یعنی جدول `child_panels` در دیتابیس ساخته نشده. با **SSH** در مسیر پروژه (همان **REPO_DIR** یا جایی که فایل‌های PHP هستند) یک بار این را اجرا کن:
+
+```bash
+cd ~/smm-turk-panel/smm-turk
+php migrate-child-panel.php
+```
+
+(مسیر را با **REPO_DIR** خودت تطبیق بده. اگر پروژه مستقیم در `~/smm-turk-panel` است، همانجا `php migrate-child-panel.php` بزن.)
+
+بعد از اجرا باید پیام **Child panels table OK.** را ببینی و سفارش Child Panel از داخل سایت کار کند.
+
+---
+
+## مرحله ۹.۲: مایگریشن بلاگ — کجا و چطور اجرا کنم؟
+
+**کجا بزنی؟** همیشه داخل **همان پوشه‌ای که سایت از آن اجرا می‌شود** — یعنی جایی که فایل‌های **config.php** و **index.php** و **blog.php** هستند.
+
+| نحوهٔ دیپلوی تو | مسیر همان پوشه | دستورات |
+|------------------|-----------------|----------|
+| اسکریپت دیپلوی (کپی به public_html) | **public_html** | `cd ~/public_html` سپس `php migrate-blog.php` و در صورت تمایل `php seed-blog.php` |
+| cPanel → Git و Checkout به public_html | **public_html** | `cd ~/public_html` سپس همان دو دستور بالا |
+| فقط Git روی سرور (بدون کپی؛ سایت از خود رپو سرو می‌شود) | همان پوشهٔ رپو | `cd ~/smm-turk-panel/smm-turk` (یا جایی که رپو را کلون کردی) سپس همان دو دستور |
+
+**گام‌به‌گام (روی سرور):**
+
+1. **ترمینال را باز کن**
+   - یا با **SSH:** وصل شو (`ssh smmturk@92.205.182.143`) و بعد دستورات زیر را بزن.
+   - یا از **cPanel:** برو **Advanced → Terminal** و همان دستورات را بزن.
+
+2. **برو داخل پوشهٔ سایت (معمولاً public_html):**
+   ```bash
+   cd ~/public_html
+   ```
+   اگر دامنهٔ جدا داری و سایت در مسیر دیگری است:
+   ```bash
+   cd ~/domains/smm-turk.com/public_html
+   ```
+   (نام دامنه را با دامنهٔ خودت عوض کن.)
+
+3. **مطمئن شو فایل‌های بلاگ آنجاست:**
+   ```bash
+   ls migrate-blog.php blog.php config.php
+   ```
+   اگر خطای «No such file» دیدی، یعنی یا هنوز دیپلوی نکردی (اول Pull/Deploy بزن) یا مسیر اشتباه است.
+
+4. **مایگریشن بلاگ را یک بار اجرا کن:**
+   ```bash
+   php migrate-blog.php
+   ```
+   باید پیام **Blog tables created.** را ببینی.
+
+5. **(اختیاری) پر کردن اولیهٔ ۱۲ مقاله و دسته/برچسب:**
+   ```bash
+   php seed-blog.php
+   ```
+
+**نکته:** اگر با **cPanel** فقط Git Version Control داری و Terminal/SSH نداری، بعد از Pull در cPanel فایل‌ها داخل **public_html** بروز می‌شوند؛ ولی برای اجرای `php migrate-blog.php` باید یا **SSH** را فعال کنی یا از **پشتیبانی هاست** بخواهی یک بار این اسکریپت را برایت اجرا کنند (مسیر: همان **public_html**).
+
+---
+
 ## مرحله ۱۰ (اختیاری): اگر Webhook کار نکرد — استفاده از Cron
 
 در cPanel به **Cron Jobs** برو و یک Cron جدید اضافه کن:
