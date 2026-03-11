@@ -38,6 +38,7 @@ define('MIN_DEPOSIT', 10);
 define('REFERRAL_COMMISSION', 2);
 
 // Google Sign-In (optional). Get credentials: https://console.cloud.google.com/apis/credentials
+// Redirect URI = SITE_URL + '/login-google-callback' (no .php). Add it in Console → Credentials → Your OAuth client → Authorized redirect URIs.
 define('GOOGLE_CLIENT_ID', '');
 define('GOOGLE_CLIENT_SECRET', '');
 
