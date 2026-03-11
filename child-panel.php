@@ -47,7 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_child']) && cs
                 flash('success', 'Child panel order submitted. We will activate it soon. Please set your domain nameservers as indicated below.');
             } catch (Throwable $e) {
                 $db->execute("UPDATE users SET balance = balance + ?, spent = spent - ? WHERE id = ?", [$price, $price, $user['id']]);
-                flash('error', 'Order failed. Please try again or contact support.');
+                Logger::log('Child panel order failed: ' . $e->getMessage(), 'child_panel');
+                $msg = (stripos($e->getMessage(), "doesn't exist") !== false)
+                    ? 'Child panel feature is not set up. Administrator must run: php migrate-child-panel.php'
+                    : 'Order failed. Please try again or contact support.';
+                flash('error', $msg);
             }
             redirect(url('child-panel.php'));
         }
