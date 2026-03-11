@@ -45,6 +45,13 @@ foreach ($categoriesRaw as $row) {
         $categories[] = ['category' => $cat];
     }
 }
+// Per-category service counts for tooltips and badges
+$categoryCounts = $db->fetchAll("SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active' GROUP BY TRIM(COALESCE(category,''))");
+$countByCategory = [];
+foreach ($categoryCounts as $r) {
+    $countByCategory[trim($r['category'] ?? '')] = (int) $r['cnt'];
+}
+$totalServicesCount = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
 $catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
 $preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
 if ($preselectServiceId) {
@@ -62,7 +69,6 @@ if ($selectedCat !== '') {
     );
     $showAllLimitHint = false;
 } else {
-    $totalServicesCount = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
     $services = $db->fetchAll("SELECT * FROM services WHERE status='active' ORDER BY service_id LIMIT 1500");
     $showAllLimitHint = $totalServicesCount > 1500;
 }
@@ -85,15 +91,22 @@ require_once __DIR__ . '/layouts/header.php';
 .order-tab{padding:10px 18px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;text-decoration:none;color:var(--text-muted);transition:all .2s}
 .order-tab:hover{color:var(--primary);background:var(--bg)}
 .order-tab.active{background:var(--primary);color:#fff}
-.platform-icons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
-.platform-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--text);flex-shrink:0}
-.platform-btn svg{width:22px;height:22px;display:block}
-.platform-btn .platform-btn-fallback{font-weight:700;font-size:13px;line-height:1}
-.platform-btn:hover,.platform-btn.active{border-color:var(--primary);background:var(--primary);color:#fff}
-.platform-btn:hover svg,.platform-btn.active svg{color:inherit}
-.platform-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.ptab{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;background:#fff;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-muted);text-decoration:none}
-.ptab:hover,.ptab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.order-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:block}
+/* Toolbar: search + category + filters in one block */
+.order-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px;padding:14px 18px;background:var(--bg);border:1px solid var(--border);border-radius:12px}
+.order-toolbar .form-control{min-width:160px}
+.order-toolbar .btn{padding:10px 16px}
+.order-toolbar label.checkbox-label{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-muted);margin:0}
+.checkbox-hint{font-weight:500;font-size:11px;opacity:.85}
+/* Category pills: labeled, scrollable, no icon-only grid */
+.order-cat-pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;align-items:center;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.order-cat-pills::-webkit-scrollbar{height:6px}
+.order-cat-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:2px solid var(--border);background:#fff;white-space:nowrap;text-decoration:none;color:var(--text);font-size:13px;font-weight:600;transition:border-color .2s,background .2s,color .2s;flex-shrink:0}
+.order-cat-pill svg{width:18px;height:18px;flex-shrink:0}
+.order-cat-pill .order-cat-name{max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.order-cat-pill .order-cat-count{min-width:22px;padding:2px 6px;border-radius:10px;background:var(--border);color:var(--text-muted);font-size:11px;font-weight:700;text-align:center}
+.order-cat-pill:hover,.order-cat-pill.active{border-color:var(--primary);background:var(--primary);color:#fff}
+.order-cat-pill:hover .order-cat-count,.order-cat-pill.active .order-cat-count{background:rgba(255,255,255,.25);color:#fff}
 .order-form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
 .order-form-row .form-group{margin-bottom:0;flex:1;min-width:180px}
 .order-form-row label.checkbox-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-muted)}
@@ -108,7 +121,16 @@ require_once __DIR__ . '/layouts/header.php';
 .desc-notes .asterisk{color:var(--primary);font-weight:700;flex-shrink:0}
 #desc-panel pre{word-break:break-all;overflow-x:auto;max-width:100%}
 .order-form-row form{min-width:0}
-@media(max-width:768px){.order-form-row form{max-width:100%}}
+@media(max-width:768px){
+  .order-toolbar{flex-direction:column;align-items:stretch}
+  .order-toolbar .form-control,.order-toolbar #cat-select{min-width:0;width:100%}
+  .order-form-row{flex-direction:column;align-items:stretch}
+  .order-form-row form{max-width:100%;width:100%}
+  .order-form-row form .form-control{flex:1}
+  .order-form-row > div{width:100%}
+  .order-form-row #cat-select{min-width:100%}
+  .order-grid{grid-template-columns:1fr}
+}
 </style>
 
 <!-- Order type tabs -->
@@ -118,45 +140,42 @@ require_once __DIR__ . '/layouts/header.php';
   <a class="order-tab" href="<?= h(path('services.php')) ?>">Services</a>
 </nav>
 
-<!-- Platform icons (category filter) - each shows the network logo -->
-<div class="platform-icons">
-  <a class="platform-btn <?= $selectedCat === '' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>" title="All"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></a>
+<!-- Search & filter toolbar -->
+<div class="order-toolbar">
+  <form method="GET" style="display:flex;gap:8px;flex:1;min-width:200px;max-width:380px;" role="search" aria-label="Search services">
+    <?php if ($selectedCat): ?><input type="hidden" name="cat" value="<?= h($selectedCat) ?>"><?php endif; ?>
+    <label for="search-service" class="sr-only">Search services</label>
+    <input type="search" id="search-service" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search services…" style="flex:1;" autocomplete="off">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+  <label for="cat-select" class="sr-only">Category</label>
+  <select id="cat-select" class="form-control" style="width:auto;min-width:200px;" onchange="location.href='<?= h(path('index.php')) ?>'+(this.value ? '?cat='+encodeURIComponent(this.value) : '')">
+    <option value="" <?= $selectedCat === '' ? 'selected' : '' ?>>All categories</option>
+    <?php foreach ($categories as $c): ?>
+    <option value="<?= h($c['category']) ?>" <?= $c['category'] === $selectedCat ? 'selected' : '' ?>><?= h($c['category']) ?></option>
+    <?php endforeach; ?>
+  </select>
+  <label class="checkbox-label" title="Show only services added in the last 7 days">
+    <input type="checkbox" id="newOnlyCheck" onchange="filterNew()"> New added <span class="checkbox-hint">(7 days)</span>
+  </label>
+</div>
+
+<!-- Category quick filter: labeled pills (name + count), scrollable -->
+<p class="order-section-label">Category</p>
+<div class="order-cat-pills">
+  <a class="order-cat-pill <?= $selectedCat === '' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?><?= $searchQ ? '?q=' . urlencode($searchQ) : '' ?>" title="All — <?= (int)$totalServicesCount ?> services">
+    <span class="order-cat-name">All</span>
+    <span class="order-cat-count" aria-hidden="true"><?= (int)$totalServicesCount ?></span>
+  </a>
   <?php foreach ($categories as $cat):
     $pKey = platformKeyFromCategory($cat['category']);
     $isActive = $selectedCat !== '' && $cat['category'] === $selectedCat;
+    $cnt = $countByCategory[$cat['category']] ?? 0;
   ?>
-  <a class="platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>" title="<?= h($cat['category']) ?>"><?= platformSvg($pKey, 22) ?></a>
-  <?php endforeach; ?>
-</div>
-
-<!-- Search & category row -->
-<div class="order-form-row">
-  <form method="GET" style="display:flex;gap:8px;flex:1;max-width:400px;" role="search" aria-label="Filter services by name">
-    <?php if ($selectedCat): ?><input type="hidden" name="cat" value="<?= h($selectedCat) ?>"><?php endif; ?>
-    <label for="search-service" class="sr-only">Search services</label>
-    <input type="search" id="search-service" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search My Service" style="flex:1;" autocomplete="off">
-    <button type="submit" class="btn btn-primary">Search</button>
-  </form>
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <label for="cat-select" class="sr-only">Category</label>
-    <select id="cat-select" class="form-control" style="width:auto;min-width:180px;" onchange="location.href='<?= h(path('index.php')) ?>'+(this.value ? '?cat='+encodeURIComponent(this.value) : '')">
-      <option value="" <?= $selectedCat === '' ? 'selected' : '' ?>>Search By Category</option>
-      <?php foreach ($categories as $c): ?>
-      <option value="<?= h($c['category']) ?>" <?= $c['category'] === $selectedCat ? 'selected' : '' ?>><?= h($c['category']) ?></option>
-      <?php endforeach; ?>
-    </select>
-    <label class="checkbox-label">
-      <input type="checkbox" id="newOnlyCheck" onchange="filterNew()"> New Added Services
-    </label>
-  </div>
-</div>
-
-<!-- Category pills (optional quick filter) -->
-<div class="platform-tabs">
-  <?php foreach ($categories as $cat): ?>
-  <a class="ptab <?= $selectedCat !== '' && $cat['category'] === $selectedCat ? 'active' : '' ?>"
-     href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?>">
-    <?= h($cat['category']) ?>
+  <a class="order-cat-pill <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>" title="<?= h($cat['category']) ?> — <?= $cnt ?> services">
+    <?php $catIcon = platformSvg($pKey, 18); if ($catIcon !== '') echo $catIcon; ?>
+    <span class="order-cat-name"><?= h($cat['category']) ?></span>
+    <span class="order-cat-count" aria-hidden="true"><?= $cnt ?></span>
   </a>
   <?php endforeach; ?>
 </div>
