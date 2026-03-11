@@ -13,7 +13,14 @@ class Database {
             ];
             $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
-            die(json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]));
+            $isProduction = !defined('SMM_PRODUCTION') || SMM_PRODUCTION;
+            if ($isProduction && class_exists('Logger')) {
+                Logger::log('Database connection failed: ' . $e->getMessage(), 'database');
+            }
+            $message = $isProduction
+                ? 'Database connection failed. Please try again later.'
+                : 'Database connection failed: ' . $e->getMessage();
+            die(json_encode(['error' => $message]));
         }
     }
 

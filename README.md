@@ -48,12 +48,10 @@ To let customers log in with Google:
 3. In `config.php` set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
 4. Run migration: `migrations/002_google_oauth.sql` (adds `google_id` to `users`)
 
-### 5. Admin Login
-Default admin credentials:
-- **Username:** admin  
-- **Email:** admin@smm-turk.com  
-- **Password:** password  
-⚠️ Change the password immediately after login!
+### 5. First admin and login
+- If your install created a default admin (e.g. via a seed or install script), use those credentials once to log in.
+- **Immediately** change the admin password in **Account Settings** (or create a new admin user and disable/remove the default one).
+- For production, set a **fixed** `SECRET_KEY` in `config.php` (e.g. 32-char hex from `openssl rand -hex 16` or env `SMM_SECRET_KEY`). Do not use a random value generated on each request, or sessions will break on restart.
 
 ### 5b. Optional: Forgot password
 To enable "Forgot password" and email reset links, run the migration `migrations/003_password_reset.sql` once (adds `password_reset_token` and `password_reset_expires` to `users`). Ensure mail (e.g. Mail From in Admin → Settings) is configured.
@@ -157,10 +155,22 @@ Add to crontab to auto-sync order statuses:
 ---
 
 ## Security Notes
-- Change admin password immediately
-- Set `error_reporting(0)` in config.php for production
-- Use HTTPS (SSL certificate required)
-- Keep `config.php` permissions to 640
+- Change the default admin password (or create your first admin and remove defaults) right after install.
+- Use a **fixed** `SECRET_KEY` in production (env `SMM_SECRET_KEY` or constant in `config.php`); avoid generating it at runtime.
+- In production, keep errors hidden: use default (no `SMM_DEBUG`) or set `define('SMM_DEBUG', false);` in `config.php`.
+- Use HTTPS (SSL certificate required).
+- Keep `config.php` permissions restrictive (e.g. 640).
+
+## Production deployment checklist
+- [ ] Copy `config.example.php` to `config.php` and set DB, `SITE_URL`, `PROVIDER_API_KEY`, `CRYPTO_WALLET_ADDRESS`.
+- [ ] Set a fixed `SECRET_KEY` (or `SMM_SECRET_KEY` env); do not rely on random generation in production.
+- [ ] Create or secure the first admin user and change default password.
+- [ ] Ensure HTTPS; session cookies will use Secure when the site is served over HTTPS.
+- [ ] Leave `SMM_DEBUG` unset or set to `false` so DB errors and paths are not shown to users.
+- [ ] Disable or remove `install-db.php` (or restrict by IP) after initial setup.
+- [ ] Configure cron for `cron-sync.php` if you use order sync.
+- [ ] Optional: set up database backups.
+- [ ] Optional: use `/health` or `/health.php` for uptime monitoring (returns 200 + `{"status":"ok","db":"ok"}` when DB is reachable; 503 on failure).
 
 ---
 

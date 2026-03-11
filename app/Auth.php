@@ -6,6 +6,17 @@ class Auth {
     public function __construct() {
         $this->db = Database::getInstance();
         if (session_status() === PHP_SESSION_NONE) {
+            $lifetime = defined('SESSION_LIFETIME') ? (int) SESSION_LIFETIME : 0;
+            $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (defined('SITE_URL') && str_starts_with((string) SITE_URL, 'https://'));
+            session_set_cookie_params([
+                'lifetime' => $lifetime,
+                'path'     => '/',
+                'domain'   => '',
+                'secure'   => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
             session_start();
         }
     }

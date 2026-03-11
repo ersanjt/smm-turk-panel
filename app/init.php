@@ -14,6 +14,22 @@ require_once __DIR__ . '/SmmApi.php';
 require_once __DIR__ . '/ContentCorrections.php';
 require_once __DIR__ . '/OrderManager.php';
 
+// In production, log PHP errors to file (tmp/logs/php_errors.log)
+if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
+    set_error_handler(function ($severity, $message, $file, $line) {
+        $s = [E_ERROR => 'E_ERROR', E_WARNING => 'E_WARNING', E_PARSE => 'E_PARSE', E_NOTICE => 'E_NOTICE', E_DEPRECATED => 'E_DEPRECATED'];
+        $label = $s[$severity] ?? 'E_' . $severity;
+        Logger::log("$label: $message in $file:$line", 'php_errors');
+        return false;
+    });
+    register_shutdown_function(function () {
+        $e = error_get_last();
+        if ($e !== null && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            Logger::log("Fatal: {$e['message']} in {$e['file']}:{$e['line']}", 'php_errors');
+        }
+    });
+}
+
 $db   = Database::getInstance();
 $auth = new Auth();
 
@@ -23,6 +39,9 @@ if (php_sapi_name() !== 'cli') {
     header('X-Content-Type-Options: nosniff');
     header('X-XSS-Protection: 1; mode=block');
     header('Referrer-Policy: strict-origin-when-cross-origin');
+    // CSP report-only: reduce XSS risk; adjust or switch to enforce when ready
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://apis.google.com; frame-src https://accounts.google.com;";
+    header("Content-Security-Policy-Report-Only: $csp");
 }
 
 // Maintenance mode (web only; allow CLI and logged-in admins)

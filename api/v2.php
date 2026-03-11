@@ -6,7 +6,8 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/../app/init.php';
 require_once __DIR__ . '/../app/RateLimit.php';
 
-$key    = $_POST['key'] ?? $_GET['key'] ?? '';
+// API key: only from POST body or X-API-Key header (not from URL to avoid logging/referrer exposure)
+$key    = trim((string)($_POST['key'] ?? $_SERVER['HTTP_X_API_KEY'] ?? ''));
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 if (!$key || !$action) {
