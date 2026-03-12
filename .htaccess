@@ -21,6 +21,9 @@ RewriteRule ^ - [L]
 # API and referral
 RewriteRule ^api/v2$ api/v2.php [L,QSA]
 RewriteRule ^c/([a-zA-Z0-9_-]+)/?$ c.php?ref=$1 [L,QSA]
+# Sitemap & robots
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteRule ^robots\.txt$ robots.php [L]
 # Blog: /blog -> blog.php, /blog/slug -> blog-post.php?slug=slug
 RewriteRule ^blog/?$ blog.php [L,QSA]
 RewriteRule ^blog/([a-zA-Z0-9\-]+)/?$ blog-post.php?slug=$1 [L,QSA]
