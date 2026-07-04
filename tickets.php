@@ -37,6 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ticket']) && c
 
     $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 0)", [$tid, $uid, $message]);
 
+    $user = $auth->getCurrentUser();
+    $contactEmail = trim((string) ($db->getSetting('contact_email') ?? ''));
+    if ($contactEmail !== '' && filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+        $mail = new Mail();
+        $mail->sendTicketNewToAdmin(
+            $contactEmail,
+            $user['username'] ?? 'User',
+            $user['email'] ?? '',
+            (int) $tid,
+            $subject,
+            $message
+        );
+    }
+
     // Attachments (extension allowlist + MIME validation)
     if (!empty($_FILES['attachments']['name'][0]) && is_dir($uploadDir)) {
         $ticketDir = $uploadDir . '/' . (int)$tid;
@@ -66,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ticket']) && c
     }
 
     flash('success', 'Ticket #' . $tid . ' created. We will reply as soon as possible.');
-    redirect(url('ticket.php') . '?id=' . (int)$tid);
+        redirect(page_url('ticket.php', ['id' => (int) $tid]));
 }
 
 // List: search and pagination

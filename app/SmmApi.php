@@ -5,12 +5,20 @@ class SmmApi {
     private string $api_key;
 
     public function __construct(?string $api_url = null, ?string $api_key = null) {
-        $this->api_url = $api_url ?? (defined('PROVIDER_API_URL') ? PROVIDER_API_URL : 'https://smmfollows.com/api/v2');
+        $db = Database::getInstance();
+        if ($api_url !== null && $api_url !== '') {
+            $this->api_url = $api_url;
+        } else {
+            $this->api_url = trim((string) ($db->getSetting('api_url') ?? ''));
+            if ($this->api_url === '') {
+                $this->api_url = defined('PROVIDER_API_URL') ? PROVIDER_API_URL : 'https://smmfollows.com/api/v2';
+            }
+        }
         if ($api_key !== null && $api_key !== '') {
             $this->api_key = $api_key;
             return;
         }
-        $dbKey = Database::getInstance()->getSetting('api_key');
+        $dbKey = $db->getSetting('api_key');
         $this->api_key = ($dbKey !== null && $dbKey !== '')
             ? $dbKey
             : (defined('PROVIDER_API_KEY') ? PROVIDER_API_KEY : '');
@@ -63,6 +71,14 @@ class SmmApi {
     }
 
     public function cancel(array $orderIds): ?array {
+        if (count($orderIds) === 1) {
+            $single = json_decode($this->connect([
+                'key' => $this->api_key, 'action' => 'cancel', 'order' => $orderIds[0],
+            ]), true);
+            if (is_array($single) && !isset($single['error'])) {
+                return [['order' => $orderIds[0], 'cancel' => $single['cancel'] ?? 1]];
+            }
+        }
         return json_decode($this->connect([
             'key' => $this->api_key, 'action' => 'cancel', 'orders' => implode(',', $orderIds),
         ]), true);

@@ -1,6 +1,7 @@
 <?php
 // services.php – Services listing (modern card-based layout)
 require_once __DIR__ . '/app/init.php';
+require_once __DIR__ . '/app/ProviderRegistry.php';
 $auth->requireLogin();
 $pageTitle = 'Services';
 $db = Database::getInstance();
@@ -8,6 +9,11 @@ $db = Database::getInstance();
 $search   = trim($_GET['q'] ?? '');
 $cat      = $_GET['cat'] ?? '';
 $platform = trim($_GET['platform'] ?? '');
+$tier     = strtolower(trim($_GET['tier'] ?? ''));
+if (!in_array($tier, ['', 'one', 'pro'], true)) {
+    $tier = '';
+}
+$providerFilter = ProviderRegistry::providerFromTier($tier);
 $sort     = $_GET['sort'] ?? 'id';
 $dir      = strtolower($_GET['dir'] ?? 'asc');
 if (!in_array($dir, ['asc', 'desc'])) $dir = 'asc';
@@ -15,6 +21,7 @@ if (!in_array($dir, ['asc', 'desc'])) $dir = 'asc';
 $cat = $cat !== '' ? trim($cat) : '';
 $where  = "WHERE status='active'";
 $params = [];
+if ($providerFilter) { $where .= " AND provider = ?"; $params[] = $providerFilter; }
 if ($search)   { $where .= " AND name LIKE ?"; $params[] = "%$search%"; }
 if ($platform) { $where .= " AND category LIKE ?"; $params[] = "%$platform%"; }
 if ($cat)      { $where .= " AND TRIM(COALESCE(category,'')) = ?"; $params[] = $cat; }
@@ -37,7 +44,10 @@ $services = $db->fetchAll("SELECT * FROM services $where ORDER BY $orderBy LIMIT
 $listFrom = $totalServices > 0 ? $offset + 1 : 0;
 $listTo = min($offset + count($services), $totalServices);
 
-$categoriesRaw = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+$categoriesRaw = $db->fetchAll(
+    "SELECT DISTINCT category FROM services WHERE status='active'" . ($providerFilter ? " AND provider = ?" : "") . " ORDER BY category",
+    $providerFilter ? [$providerFilter] : []
+);
 $seen = [];
 $categories = [];
 foreach ($categoriesRaw as $row) {
@@ -75,7 +85,7 @@ foreach (['id' => 'ID', 'rate' => 'Price', 'min' => 'Min', 'max' => 'Max'] as $c
 }
 
 function servicesPageUrl(array $extra = []): string {
-    global $search, $cat, $platform, $sort, $dir;
+    global $search, $cat, $platform, $sort, $dir, $tier;
     $q = [];
     if ($search !== '') {
         $q['q'] = $search;
@@ -85,6 +95,9 @@ function servicesPageUrl(array $extra = []): string {
     }
     if ($platform !== '') {
         $q['platform'] = $platform;
+    }
+    if ($tier !== '') {
+        $q['tier'] = $tier;
     }
     if ($sort !== 'id') {
         $q['sort'] = $sort;
@@ -96,30 +109,10 @@ function servicesPageUrl(array $extra = []): string {
     return path('services.php') . ($q ? '?' . http_build_query($q) : '');
 }
 
-// Platform logos filter: key => [label, title, svg fragment]. Order shown in UI.
-$platformList = [
-    'Telegram' => ['label' => 'Telegram', 'title' => 'Telegram'],
-    'Instagram' => ['label' => 'Instagram', 'title' => 'Instagram'],
-    'YouTube' => ['label' => 'YouTube', 'title' => 'YouTube'],
-    'TikTok' => ['label' => 'TikTok', 'title' => 'TikTok'],
-    'Twitter' => ['label' => 'X', 'title' => 'Twitter / X'],
-    'Facebook' => ['label' => 'Facebook', 'title' => 'Facebook'],
-    'LinkedIn' => ['label' => 'LinkedIn', 'title' => 'LinkedIn'],
-    'Discord' => ['label' => 'Discord', 'title' => 'Discord'],
-    'Spotify' => ['label' => 'Spotify', 'title' => 'Spotify'],
-    'Twitch' => ['label' => 'Twitch', 'title' => 'Twitch'],
-    'Reddit' => ['label' => 'Reddit', 'title' => 'Reddit'],
-    'Pinterest' => ['label' => 'Pinterest', 'title' => 'Pinterest'],
-    'VK' => ['label' => 'VK', 'title' => 'VK'],
-    'Tumblr' => ['label' => 'Tumblr', 'title' => 'Tumblr'],
-    'SoundCloud' => ['label' => 'SoundCloud', 'title' => 'SoundCloud'],
-    'Dailymotion' => ['label' => 'Dailymotion', 'title' => 'Dailymotion'],
-    'Kwai' => ['label' => 'Kwai', 'title' => 'Kwai'],
-    'Rumble' => ['label' => 'Rumble', 'title' => 'Rumble'],
-    'BlueSky' => ['label' => 'BlueSky', 'title' => 'BlueSky'],
-];
-
 require_once __DIR__ . '/app/PlatformIcons.php';
+
+// Platform logos filter — shared catalog with brand colors
+$platformList = platformFilterList();
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
@@ -702,14 +695,20 @@ require_once __DIR__ . '/layouts/header.php';
 <!-- Hero -->
 <section class="svc-page-hero" data-reveal>
   <h1 class="svc-hero-title">Services</h1>
-  <p class="svc-hero-desc">Browse all SMM services by network and category. Click a network icon to see only that network’s services, or use search and sort to find what you need.</p>
+  <p class="svc-hero-desc">Choose <strong>SMM Turk One</strong> or <strong>SMM Turk Pro</strong>, then filter by network and category. Buy from either catalog in one panel.</p>
 </section>
+
+<?php
+$tierExtra = array_filter(['cat' => $cat ?: null, 'tier' => $tier ?: null]);
+echo ProviderRegistry::serviceTierStrip('services.php', $tier, $search, $tierExtra);
+?>
 
 <!-- Search + Sort -->
 <div class="svc-toolbar-wrap" data-reveal>
   <form method="GET" class="svc-search-form" role="search">
     <?php if ($cat): ?><input type="hidden" name="cat" value="<?= h($cat) ?>"><?php endif; ?>
     <?php if ($platform): ?><input type="hidden" name="platform" value="<?= h($platform) ?>"><?php endif; ?>
+    <?php if ($tier): ?><input type="hidden" name="tier" value="<?= h($tier) ?>"><?php endif; ?>
     <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search services…" aria-label="Search services">
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
@@ -723,37 +722,31 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 </div>
 
-<!-- Platform logos: click to filter by network -->
+<!-- Platform logos: real brand colors -->
 <div class="svc-platform-wrap" data-reveal>
   <p class="svc-platform-label">Filter by network</p>
-  <div class="svc-platform-scroll" role="tablist" aria-label="Filter by social network">
-    <a class="svc-platform-btn svc-platform-all <?= !$platform ? 'active' : '' ?>" href="<?= h(path('services.php')) ?><?= $search ? '?q=' . urlencode($search) : '' ?>" title="All networks">All</a>
-    <?php foreach ($platformList as $pKey => $pInfo):
-      $isActive = $platform === $pKey;
-      $platformUrl = path('services.php') . '?platform=' . urlencode($pKey);
-      if ($search) $platformUrl .= '&q=' . urlencode($search);
-    ?>
-    <a class="svc-platform-btn <?= $isActive ? 'active' : '' ?>" href="<?= h($platformUrl) ?>" title="<?= h($pInfo['title']) ?>"><?= platformSvg($pKey, 24) ?></a>
-    <?php endforeach; ?>
-  </div>
+  <?= platformFilterStrip('services.php', $platform, $search, $tierExtra) ?>
 </div>
 
 <!-- Category pills -->
 <div class="svc-cats-wrap" data-reveal>
-  <p class="svc-cats-label">Category</p>
+  <p class="svc-cats-label"><?= $tier === 'one' ? ProviderRegistry::BRAND_ONE : ($tier === 'pro' ? ProviderRegistry::BRAND_PRO : 'Category') ?></p>
   <div class="svc-cats-scroll" role="tablist">
     <?php
-      $allCatParams = array_filter(['platform' => $platform ?: null, 'q' => $search ?: null]);
+      $allCatParams = array_filter(['platform' => $platform ?: null, 'q' => $search ?: null, 'tier' => $tier ?: null]);
       $allCatUrl = path('services.php') . ($allCatParams ? '?' . http_build_query($allCatParams) : '');
     ?>
     <a class="svc-cat-pill <?= !$cat ? 'active' : '' ?>" href="<?= h($allCatUrl) ?>">All</a>
     <?php foreach ($categories as $c):
-      $icon = platformIcon($c['category'], $platformIcons);
-      $catUrl = path('services.php') . '?cat=' . urlencode($c['category']);
-      if ($platform) $catUrl .= '&platform=' . urlencode($platform);
-      if ($search) $catUrl .= '&q=' . urlencode($search);
+      $pKey = platformKeyFromCategory($c['category']);
+      $catUrl = path('services.php') . '?' . http_build_query(array_filter([
+          'cat' => $c['category'],
+          'platform' => $platform ?: null,
+          'q' => $search ?: null,
+          'tier' => $tier ?: null,
+      ]));
     ?>
-    <a class="svc-cat-pill <?= $cat === $c['category'] ? 'active' : '' ?>" href="<?= h($catUrl) ?>"><span class="pill-icon"><?= h($icon) ?></span> <?= h($c['category']) ?></a>
+    <a class="svc-cat-pill <?= $cat === $c['category'] ? 'active' : '' ?>" href="<?= h($catUrl) ?>"><span class="pill-icon"><?= platformSvgBrand($pKey, 16) ?></span> <?= h(ProviderRegistry::displayCategoryName($c['category'], $tier)) ?></a>
     <?php endforeach; ?>
   </div>
 </div>
@@ -783,17 +776,24 @@ require_once __DIR__ . '/layouts/header.php';
   foreach ($services as $s):
     $displayRate = $s['rate'] * (1 + $s['markup']/100);
     $isNew = isset($s['updated_at']) && $s['updated_at'] >= $newCutoff;
-    $orderUrl = path('index.php') . '?cat=' . urlencode($s['category']) . '&service=' . $s['service_id'];
+    $orderUrl = path('index.php') . '?' . http_build_query(array_filter([
+        'cat' => $s['category'],
+        'service' => $s['service_id'],
+        'tier' => $tier ?: null,
+    ]));
     $icon = platformIcon($s['category'], $platformIcons);
+    $cardPlatformKey = platformKeyFromCategory($s['category']);
+    $cardTier = ProviderRegistry::tierFromProvider($s['provider'] ?? ProviderRegistry::PRIMARY);
+    $cardTierLabel = $cardTier === 'pro' ? ProviderRegistry::BRAND_PRO : ProviderRegistry::BRAND_ONE;
   ?>
-  <?php $cardPlatformKey = platformKeyFromCategory($s['category']); ?>
   <article class="svc-card" data-reveal>
     <?php if ($isNew): ?><span class="svc-card-new">New</span><?php endif; ?>
+    <span class="svc-card-tier svc-card-tier-<?= h($cardTier) ?>"><?= h($cardTierLabel) ?></span>
     <div class="svc-card-header">
-      <span class="svc-card-platform-icon" aria-hidden="true"><?= $cardPlatformKey ? platformSvg($cardPlatformKey, 24) : '<span class="svc-platform-fallback">' . h($icon) . '</span>' ?></span>
+      <span class="svc-card-platform-icon" aria-hidden="true"><?= platformSvgBrand($cardPlatformKey, 26) ?></span>
       <div class="svc-card-header-right">
         <span class="svc-card-id-badge">#<?= $s['service_id'] ?></span>
-        <span class="svc-card-cat"><span class="cat-icon"><?= h($icon) ?></span> <?= h($s['category']) ?></span>
+        <span class="svc-card-cat"><span class="cat-icon"><?= h(ProviderRegistry::displayCategoryName($s['category'], $tier)) ?></span></span>
         <?php if (!empty($s['refill'])): ?><span class="svc-card-refill">Refill</span><?php endif; ?>
       </div>
     </div>

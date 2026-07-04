@@ -2,16 +2,26 @@
 class OrderManager {
 
     private Database $db;
-    private SmmApi $api;
 
     public function __construct() {
-        $this->db  = Database::getInstance();
-        $this->api = new SmmApi();
+        $this->db = Database::getInstance();
+    }
+
+    private function apiForService(array $service): ?SmmApi {
+        $slug = ProviderRegistry::providerForService($service);
+        return ProviderRegistry::api($slug);
     }
 
     public function placeOrder(int $userId, int $serviceId, string $link, int $quantity, array $extra = []): array {
         $service = $this->db->fetch("SELECT * FROM services WHERE service_id = ? AND status = 'active'", [$serviceId]);
-        if (!$service) return ['success' => false, 'error' => 'Service not found or inactive'];
+        if (!$service) {
+            return ['success' => false, 'error' => 'Service not found or inactive'];
+        }
+
+        $api = $this->apiForService($service);
+        if (!$api) {
+            return ['success' => false, 'error' => 'Provider API not configured for this service. Check Admin → Settings.'];
+        }
 
         if ($quantity < $service['min'] || $quantity > $service['max']) {
             return ['success' => false, 'error' => "Quantity must be between {$service['min']} and {$service['max']}"];
@@ -19,7 +29,9 @@ class OrderManager {
 
         $markup = 1 + ($service['markup'] / 100);
         $charge = round(($service['rate'] / 1000) * $quantity * $markup, 4);
-        $orderData = array_merge(['service' => $serviceId, 'link' => $link, 'quantity' => $quantity], $extra);
+        $upstreamId = ProviderRegistry::upstreamServiceId($service);
+        $provider = ProviderRegistry::providerForService($service);
+        $orderData = array_merge(['service' => $upstreamId, 'link' => $link, 'quantity' => $quantity], $extra);
 
         $balanceBefore = 0.0;
         try {
@@ -47,7 +59,7 @@ class OrderManager {
             return ['success' => false, 'error' => 'Could not place order. Please try again.'];
         }
 
-        $response = $this->api->order($orderData);
+        $response = $api->order($orderData);
         if (!$response || isset($response->error)) {
             $this->refundCharge($userId, $charge);
             return ['success' => false, 'error' => $response->error ?? 'Provider error. Please try again.'];
@@ -57,9 +69,9 @@ class OrderManager {
             $this->db->beginTransaction();
 
             $orderId = $this->db->insert(
-                "INSERT INTO orders (user_id, provider_order_id, service_id, service_name, link, quantity, charge, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')",
-                [$userId, $response->order ?? null, $serviceId, $service['name'], $link, $quantity, $charge]
+                "INSERT INTO orders (user_id, provider, provider_order_id, service_id, service_name, link, quantity, charge, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')",
+                [$userId, $provider, $response->order ?? null, $serviceId, $service['name'], $link, $quantity, $charge]
             );
 
             $balanceAfter = $balanceBefore - $charge;
@@ -82,6 +94,25 @@ class OrderManager {
             }
 
             $this->db->commit();
+
+            $buyerRow = $this->db->fetch("SELECT username, email FROM users WHERE id = ?", [$userId]);
+            if ($buyerRow && !empty($buyerRow['email'])) {
+                try {
+                    $mail = new Mail();
+                    $mail->sendOrderPlaced(
+                        $buyerRow['email'],
+                        $buyerRow['username'],
+                        (int) $orderId,
+                        $service['name'],
+                        $quantity,
+                        $charge,
+                        $link
+                    );
+                } catch (Throwable $e) {
+                    Logger::log('Order placed email failed #' . $orderId . ': ' . $e->getMessage(), 'mail');
+                }
+            }
+
             return ['success' => true, 'order_id' => $orderId, 'charge' => $charge];
         } catch (Throwable $e) {
             $this->db->rollBack();
@@ -110,24 +141,66 @@ class OrderManager {
 
     public function syncOrders(): int {
         $orders = $this->db->fetchAll(
-            "SELECT id, provider_order_id FROM orders WHERE status IN ('Pending','Processing','In progress') AND provider_order_id IS NOT NULL ORDER BY updated_at ASC LIMIT 100"
+            "SELECT id, provider, provider_order_id FROM orders
+             WHERE status IN ('Pending','Processing','In progress') AND provider_order_id IS NOT NULL
+             ORDER BY updated_at ASC LIMIT 200"
         );
-        if (empty($orders)) return 0;
+        if (empty($orders)) {
+            return 0;
+        }
 
-        $providerIds = array_column($orders, 'provider_order_id');
-        $statuses    = $this->api->multiStatus($providerIds);
-        $updated     = 0;
-
+        $byProvider = [];
         foreach ($orders as $order) {
-            $pid    = $order['provider_order_id'];
-            $status = $statuses->$pid ?? null;
-            if (!$status || isset($status->error)) continue;
+            $slug = $order['provider'] ?? ProviderRegistry::PRIMARY;
+            $byProvider[$slug][] = $order;
+        }
 
-            $this->db->execute(
-                "UPDATE orders SET status = ?, start_count = ?, remains = ? WHERE id = ?",
-                [$status->status, $status->start_count ?? 0, $status->remains ?? 0, $order['id']]
-            );
-            $updated++;
+        $updated = 0;
+        foreach ($byProvider as $slug => $providerOrders) {
+            $api = ProviderRegistry::api($slug);
+            if (!$api) {
+                continue;
+            }
+            $providerIds = array_column($providerOrders, 'provider_order_id');
+            $statuses = $api->multiStatus($providerIds);
+            if (!$statuses) {
+                continue;
+            }
+            foreach ($providerOrders as $order) {
+                $pid = $order['provider_order_id'];
+                $status = $statuses->$pid ?? null;
+                if (!$status || isset($status->error)) {
+                    continue;
+                }
+                $row = $this->db->fetch(
+                    "SELECT o.status, o.user_id, o.service_name, u.username, u.email
+                     FROM orders o JOIN users u ON u.id = o.user_id WHERE o.id = ?",
+                    [$order['id']]
+                );
+                $newStatus = (string) ($status->status ?? '');
+                $oldStatus = (string) ($row['status'] ?? '');
+                $this->db->execute(
+                    "UPDATE orders SET status = ?, start_count = ?, remains = ? WHERE id = ?",
+                    [$newStatus, $status->start_count ?? 0, $status->remains ?? 0, $order['id']]
+                );
+                $updated++;
+                if ($row && $oldStatus !== $newStatus && in_array($newStatus, ['Completed', 'Canceled', 'Cancelled', 'Partial'], true)) {
+                    if (!empty($row['email'])) {
+                        try {
+                            $mail = new Mail();
+                            $mail->sendOrderStatusUpdate(
+                                $row['email'],
+                                $row['username'],
+                                (int) $order['id'],
+                                $row['service_name'] ?? '',
+                                $newStatus
+                            );
+                        } catch (Throwable $e) {
+                            Logger::log('Order status email failed #' . $order['id'], 'mail');
+                        }
+                    }
+                }
+            }
         }
         return $updated;
     }
@@ -152,65 +225,105 @@ class OrderManager {
         return (int)($row['cnt'] ?? 0);
     }
 
-    public function syncServices(): array {
+    public function syncServices(?string $onlyProvider = null): array {
         $this->ensureServicesColumnWidths();
-
-        $services = $this->api->services();
-        if (!$services) return ['success' => false, 'error' => 'Could not fetch services from provider'];
+        $this->ensureProviderColumns();
 
         $markup = (float)($this->db->getSetting('markup_percent') ?? MARKUP_PERCENT);
-        $count  = 0;
-        $failed = 0;
+        $totalSynced = 0;
+        $totalFailed = 0;
+        $errors = [];
 
-        foreach ($services as $s) {
-            $name = ContentCorrections::correctServiceName($s['name'] ?? '');
-            $category = ContentCorrections::fitCategory($s['category'] ?? '');
-            $type = ContentCorrections::fitServiceType($s['type'] ?? 'Default');
-            try {
-                $this->db->execute(
-                    "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                     ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
-                     rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
-                    [
-                        $s['service'], $name, $type, $category,
-                        $s['rate'], $s['min'], $s['max'],
-                        ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
-                    ]
-                );
-                $count++;
-            } catch (Throwable $e) {
-                if (str_contains($e->getMessage(), 'Data too long') || str_contains($e->getMessage(), '1406')) {
-                    try {
-                        $categoryShort = ContentCorrections::fitCategory($s['category'] ?? '', 100);
-                        $typeShort = ContentCorrections::fitServiceType($s['type'] ?? 'Default', 50);
-                        $this->db->execute(
-                            "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                             ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
-                             rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
-                            [
-                                $s['service'], $name, $typeShort, $categoryShort,
-                                $s['rate'], $s['min'], $s['max'],
-                                ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
-                            ]
-                        );
-                        $count++;
-                        continue;
-                    } catch (Throwable $e2) {
-                        $e = $e2;
-                    }
+        $providers = $onlyProvider ? [$onlyProvider] : array_keys(ProviderRegistry::definitions());
+        foreach ($providers as $slug) {
+            if (!ProviderRegistry::isEnabled($slug)) {
+                continue;
+            }
+            $api = ProviderRegistry::api($slug);
+            if (!$api) {
+                $def = ProviderRegistry::definitions()[$slug];
+                $errors[] = $def['name'] . ': API key missing';
+                continue;
+            }
+            $test = $api->testConnection();
+            if (!$test['success']) {
+                $errors[] = ProviderRegistry::definitions()[$slug]['name'] . ': ' . ($test['error'] ?? 'connection failed');
+                continue;
+            }
+
+            $services = $api->services();
+            if (!$services) {
+                $errors[] = ProviderRegistry::definitions()[$slug]['name'] . ': could not fetch services';
+                continue;
+            }
+
+            foreach ($services as $s) {
+                $upstreamId = (int) ($s['service'] ?? 0);
+                if ($upstreamId <= 0) {
+                    $totalFailed++;
+                    continue;
                 }
-                $failed++;
-                if (class_exists('Logger')) {
-                    Logger::log('syncServices skip service ' . ($s['service'] ?? '?') . ': ' . $e->getMessage(), 'sync');
+                $panelId = ProviderRegistry::panelServiceId($slug, $upstreamId);
+                $name = ContentCorrections::correctServiceName($s['name'] ?? '');
+                $category = ProviderRegistry::formatServiceCategory($slug, $s['category'] ?? '');
+                $type = ContentCorrections::fitServiceType($s['type'] ?? 'Default');
+                try {
+                    $this->db->execute(
+                        "INSERT INTO services (service_id, provider, provider_service_id, name, type, category, rate, min, max, refill, cancel, markup)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         ON DUPLICATE KEY UPDATE provider=VALUES(provider), provider_service_id=VALUES(provider_service_id),
+                         name=VALUES(name), type=VALUES(type), category=VALUES(category),
+                         rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
+                        [
+                            $panelId, $slug, $upstreamId, $name, $type, $category,
+                            $s['rate'], $s['min'], $s['max'],
+                            ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup,
+                        ]
+                    );
+                    $totalSynced++;
+                } catch (Throwable $e) {
+                    if (str_contains($e->getMessage(), 'Data too long') || str_contains($e->getMessage(), '1406')) {
+                        try {
+                            $categoryShort = ProviderRegistry::formatServiceCategory($slug, $s['category'] ?? '');
+                            $typeShort = ContentCorrections::fitServiceType($s['type'] ?? 'Default', 50);
+                            $this->db->execute(
+                                "INSERT INTO services (service_id, provider, provider_service_id, name, type, category, rate, min, max, refill, cancel, markup)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                 ON DUPLICATE KEY UPDATE provider=VALUES(provider), provider_service_id=VALUES(provider_service_id),
+                                 name=VALUES(name), type=VALUES(type), category=VALUES(category),
+                                 rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
+                                [
+                                    $panelId, $slug, $upstreamId, $name, $typeShort, $categoryShort,
+                                    $s['rate'], $s['min'], $s['max'],
+                                    ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup,
+                                ]
+                            );
+                            $totalSynced++;
+                            continue;
+                        } catch (Throwable $e2) {
+                            $e = $e2;
+                        }
+                    }
+                    $totalFailed++;
+                    if (class_exists('Logger')) {
+                        Logger::log("syncServices {$slug} skip #{$upstreamId}: " . $e->getMessage(), 'sync');
+                    }
                 }
             }
         }
-        return ['success' => true, 'synced' => $count, 'failed' => $failed];
+
+        if ($totalSynced === 0 && $errors !== []) {
+            return ['success' => false, 'error' => implode('; ', $errors)];
+        }
+
+        return [
+            'success' => true,
+            'synced' => $totalSynced,
+            'failed' => $totalFailed,
+            'errors' => $errors,
+        ];
     }
 
-    /** Widen category/type columns for long provider labels (idempotent). */
     private function ensureServicesColumnWidths(): void {
         static $done = false;
         if ($done) {
@@ -222,7 +335,33 @@ class OrderManager {
             $pdo->exec('ALTER TABLE services MODIFY COLUMN category VARCHAR(255) DEFAULT NULL');
             $pdo->exec("ALTER TABLE services MODIFY COLUMN type VARCHAR(100) DEFAULT 'Default'");
         } catch (Throwable $e) {
-            /* column already wide enough or no ALTER privilege */
+            /* already wide enough */
         }
+    }
+
+    private function ensureProviderColumns(): void {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+        try {
+            $pdo = $this->db->getConnection();
+            $pdo->exec("ALTER TABLE services ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
+        } catch (Throwable $e) { /* exists */ }
+        try {
+            $pdo = $this->db->getConnection();
+            $pdo->exec('ALTER TABLE services ADD COLUMN provider_service_id INT UNSIGNED NOT NULL DEFAULT 0');
+        } catch (Throwable $e) { /* exists */ }
+        try {
+            $pdo = $this->db->getConnection();
+            $pdo->exec("ALTER TABLE orders ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
+        } catch (Throwable $e) { /* exists */ }
+        try {
+            $this->db->execute(
+                "UPDATE services SET provider = 'smmfollows', provider_service_id = service_id
+                 WHERE provider_service_id = 0 OR provider = ''"
+            );
+        } catch (Throwable $e) { /* ok */ }
     }
 }

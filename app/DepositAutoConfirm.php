@@ -99,6 +99,9 @@ class DepositAutoConfirm
 
     public static function parseCoinKey(string $description, array $walletCatalog): ?string
     {
+        if (stripos($description, 'USDT TRC20') !== false) {
+            return isset($walletCatalog['wallet_usdt_trc20']) ? 'wallet_usdt_trc20' : null;
+        }
         if (preg_match('/\(crypto\)$/i', $description)) {
             return null;
         }

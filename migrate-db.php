@@ -202,6 +202,20 @@ foreach ([
 }
 
 foreach ([
+    'provider' => "VARCHAR(32) NOT NULL DEFAULT 'smmfollows'",
+    'provider_service_id' => 'INT UNSIGNED NOT NULL DEFAULT 0',
+] as $col => $def) {
+    db_add_column($pdo, 'services', $col, $def);
+}
+db_add_column($pdo, 'orders', 'provider', "VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
+try {
+    $pdo->exec("UPDATE services SET provider = 'smmfollows', provider_service_id = service_id WHERE provider_service_id = 0");
+    db_ok('services provider backfill');
+} catch (PDOException $e) {
+    db_skip('services provider backfill');
+}
+
+foreach ([
     'is_staff'   => 'TINYINT(1) NOT NULL DEFAULT 0',
     'created_at' => 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
 ] as $col => $def) {
@@ -214,6 +228,12 @@ db_apply_sql_file($pdo, __DIR__ . '/migrations/006_tickets_indexes.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/007_performance_indexes.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/008_extra_indexes.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/009_services_category_wider.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/010_mail_settings.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/011_multi_provider.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/012_service_tier_brands.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/013_payment_gateways.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/014_heleket_panel_mode.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/015_mail_lang.sql');
 
 // ─── Analyze tables (refresh optimizer stats) ────────────────────────────────
 echo "\n--- Analyze ---\n";

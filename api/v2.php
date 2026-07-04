@@ -38,7 +38,6 @@ if ($apiRateLimit->isLimited()) {
 $apiRateLimit->recordAttempt();
 
 $om  = new OrderManager();
-$api = new SmmApi();
 
 switch ($action) {
 
@@ -142,37 +141,38 @@ switch ($action) {
         if (isset($_POST['orders'])) {
             $ourIds = array_map('intval', array_filter(explode(',', str_replace(' ', '', $_POST['orders'] ?? ''))));
             $ourIds = array_slice(array_unique($ourIds), 0, 100);
-            $orderList = [];
+            $rows = [];
             if (!empty($ourIds)) {
                 $rows = $db->fetchAll(
-                    "SELECT id, provider_order_id FROM orders WHERE id IN (" . implode(',', array_fill(0, count($ourIds), '?')) . ") AND user_id = ? AND provider_order_id IS NOT NULL",
+                    "SELECT id, provider, provider_order_id FROM orders WHERE id IN (" . implode(',', array_fill(0, count($ourIds), '?')) . ") AND user_id = ? AND provider_order_id IS NOT NULL",
                     array_merge($ourIds, [$user['id']])
                 );
-                $byOur = [];
-                foreach ($rows as $r) {
-                    $byOur[(int)$r['id']] = (int)$r['provider_order_id'];
-                }
-                foreach ($ourIds as $oid) {
-                    if (isset($byOur[$oid])) {
-                        $orderList[] = ['our' => $oid, 'provider' => $byOur[$oid]];
-                    }
-                }
             }
-            $providerIds = array_column($orderList, 'provider');
-            $resp = is_array($providerIds) && count($providerIds) > 0 ? $api->multiRefill($providerIds) : [];
+            $byProvider = [];
+            foreach ($rows as $r) {
+                $slug = $r['provider'] ?? ProviderRegistry::PRIMARY;
+                $byProvider[$slug][] = $r;
+            }
             $out = [];
-            if (is_array($resp)) {
-                foreach ($resp as $i => $item) {
-                    $ourId = isset($orderList[$i]) ? $orderList[$i]['our'] : null;
-                    if ($ourId !== null) {
-                        $refill = $item['refill'] ?? $item;
-                        $out[] = ['order' => $ourId, 'refill' => $refill];
-                    }
+            foreach ($byProvider as $slug => $prow) {
+                $api = ProviderRegistry::api($slug);
+                if (!$api) {
+                    continue;
+                }
+                $providerIds = array_column($prow, 'provider_order_id');
+                $resp = $api->multiRefill($providerIds);
+                if (!is_array($resp)) {
+                    continue;
+                }
+                foreach ($prow as $i => $r) {
+                    $item = $resp[$i] ?? [];
+                    $refill = $item['refill'] ?? $item;
+                    $out[] = ['order' => (int)$r['id'], 'refill' => $refill];
                 }
             }
-            $foundOur = array_column($orderList, 'our');
+            $foundOur = array_column($out, 'order');
             foreach ($ourIds as $oid) {
-                if (!in_array($oid, $foundOur)) {
+                if (!in_array($oid, $foundOur, true)) {
                     $out[] = ['order' => $oid, 'refill' => ['error' => 'Incorrect order ID']];
                 }
             }
@@ -183,6 +183,12 @@ switch ($action) {
             if (!$row || empty($row['provider_order_id'])) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Incorrect order ID']);
+                exit;
+            }
+            $api = ProviderRegistry::apiForOrder($db, $orderId, $user['id']);
+            if (!$api) {
+                http_response_code(503);
+                echo json_encode(['error' => 'Provider not available']);
                 exit;
             }
             $resp = $api->refill((int)$row['provider_order_id']);
@@ -196,10 +202,11 @@ switch ($action) {
         break;
 
     case 'refill_status':
+        $statusApi = ProviderRegistry::api(ProviderRegistry::PRIMARY) ?? ProviderRegistry::api(ProviderRegistry::SMMFA);
         if (isset($_POST['refills'])) {
             $refillIds = array_map('trim', array_filter(explode(',', str_replace(' ', '', $_POST['refills'] ?? ''))));
             $refillIds = array_slice(array_unique($refillIds), 0, 100);
-            $resp = $api->multiRefillStatus($refillIds);
+            $resp = $statusApi ? $statusApi->multiRefillStatus($refillIds) : [];
             echo json_encode(is_array($resp) ? $resp : []);
         } else {
             $refillId = trim($_POST['refill'] ?? '');
@@ -208,7 +215,12 @@ switch ($action) {
                 echo json_encode(['error' => 'Missing refill parameter']);
                 exit;
             }
-            $resp = $api->refillStatus($refillId);
+            if (!$statusApi) {
+                http_response_code(503);
+                echo json_encode(['error' => 'Provider not available']);
+                exit;
+            }
+            $resp = $statusApi->refillStatus($refillId);
             if ($resp && isset($resp->status)) {
                 echo json_encode(['status' => $resp->status]);
             } elseif ($resp && isset($resp->error)) {
@@ -247,12 +259,15 @@ switch ($action) {
                     continue;
                 }
                 if (!empty($order['provider_order_id'])) {
-                    $providerResp = $api->cancel([(int)$order['provider_order_id']]);
-                    $providerItem = is_array($providerResp) ? ($providerResp[0] ?? null) : null;
-                    if (is_array($providerItem) && isset($providerItem['cancel']['error'])) {
-                        $db->rollBack();
-                        $out[] = ['order' => $id, 'cancel' => $providerItem['cancel']];
-                        continue;
+                    $orderApi = ProviderRegistry::apiForOrder($db, $id, $user['id']);
+                    if ($orderApi) {
+                        $providerResp = $orderApi->cancel([(int)$order['provider_order_id']]);
+                        $providerItem = is_array($providerResp) ? ($providerResp[0] ?? null) : null;
+                        if (is_array($providerItem) && isset($providerItem['cancel']['error'])) {
+                            $db->rollBack();
+                            $out[] = ['order' => $id, 'cancel' => $providerItem['cancel']];
+                            continue;
+                        }
                     }
                 }
                 $updated = $db->execute(

@@ -12,9 +12,11 @@ if (!defined('DEPOSITS_CRYPTO_ONLY')) {
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/Mail.php';
+require_once __DIR__ . '/MailLocale.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Totp.php';
 require_once __DIR__ . '/SmmApi.php';
+require_once __DIR__ . '/ProviderRegistry.php';
 require_once __DIR__ . '/ContentCorrections.php';
 require_once __DIR__ . '/Icons.php';
 require_once __DIR__ . '/ProfileHelper.php';
@@ -22,6 +24,8 @@ require_once __DIR__ . '/OrderManager.php';
 require_once __DIR__ . '/DepositManager.php';
 require_once __DIR__ . '/CryptoVerifier.php';
 require_once __DIR__ . '/DepositAutoConfirm.php';
+require_once __DIR__ . '/PaymentRegistry.php';
+require_once __DIR__ . '/PaymentProcessor.php';
 
 // In production, log PHP errors to file (tmp/logs/php_errors.log)
 if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
@@ -93,21 +97,42 @@ function site_base(): string {
 
 /**
  * Convert .php page paths to clean URLs (no .php extension).
- * Assets, api, uploads and non-.php paths are returned unchanged.
+ * Supports query string (?a=1) and fragment (#section).
  */
 function clean_page_path(string $p): string {
+    $fragment = '';
+    if (($hashPos = strpos($p, '#')) !== false) {
+        $fragment = substr($p, $hashPos);
+        $p = substr($p, 0, $hashPos);
+    }
+    $query = '';
+    if (($qPos = strpos($p, '?')) !== false) {
+        $query = substr($p, $qPos);
+        $p = substr($p, 0, $qPos);
+    }
     $p = ltrim($p, '/');
-    if (substr($p, -4) !== '.php') {
-        return '/' . $p;
+    if (str_ends_with($p, '.php')) {
+        $p = substr($p, 0, -4);
+        if ($p === 'index') {
+            $p = '';
+        } elseif ($p === 'admin/index') {
+            $p = 'admin';
+        }
     }
-    $p = substr($p, 0, -4);
-    if ($p === 'index') {
-        return '/';
+    $path = ($p === '') ? '/' : '/' . $p;
+    return $path . $query . $fragment;
+}
+
+/** Full page URL with optional query and hash (for emails and redirects). */
+function page_url(string $script, array $query = [], string $hash = ''): string {
+    $u = url($script);
+    if ($query !== []) {
+        $u .= (str_contains($u, '?') ? '&' : '?') . http_build_query($query);
     }
-    if ($p === 'admin/index') {
-        return '/admin';
+    if ($hash !== '') {
+        $u .= '#' . ltrim($hash, '#');
     }
-    return '/' . $p;
+    return $u;
 }
 
 /** Internal URL: full URL for redirects (use in Location header). */

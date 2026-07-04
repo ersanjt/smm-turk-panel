@@ -62,6 +62,9 @@ class Auth {
             );
             $mail = new Mail();
             $emailSent = $mail->sendVerification($email, $username, $token);
+            if (!$emailSent) {
+                Logger::log('Verification email failed for ' . $email . ': ' . ($mail->getLastError() ?? 'unknown'), 'mail');
+            }
             return [
                 'success' => true,
                 'user_id' => $id,
@@ -104,6 +107,9 @@ class Auth {
 
         $mail = new Mail();
         $emailSent = $mail->sendVerification($email, $user['username'], $token);
+        if (!$emailSent) {
+            Logger::log('Resend verification failed for ' . $email . ': ' . ($mail->getLastError() ?? 'unknown'), 'mail');
+        }
 
         return ['success' => true, 'email_sent' => $emailSent];
     }
@@ -298,7 +304,7 @@ class Auth {
 
     public function postLoginRedirectUrl(array $loginResult = []): string {
         if (!empty($_SESSION['must_change_password']) || !empty($loginResult['must_change_password'])) {
-            return url('account-settings.php?change_password=1');
+            return page_url('account-settings.php', ['change_password' => '1']);
         }
         if (!empty($_SESSION['login_next'])) {
             return consume_login_next();
@@ -318,7 +324,7 @@ class Auth {
             return;
         }
         flash('error', 'Please change your default password before continuing.');
-        redirect(url('account-settings.php?change_password=1'));
+        redirect(page_url('account-settings.php', ['change_password' => '1']));
     }
 
     private function applyPasswordChangeRequirement(array $user): void {
@@ -404,8 +410,11 @@ class Auth {
             return ['success' => false, 'error' => 'Password reset is not available. Please contact support.'];
         }
         $mail = new Mail();
-        $mail->sendPasswordReset($email, $user['username'], $token);
-        return ['success' => true];
+        $emailSent = $mail->sendPasswordReset($email, $user['username'], $token);
+        if (!$emailSent) {
+            Logger::log('Password reset email failed for ' . $email . ': ' . ($mail->getLastError() ?? 'unknown'), 'mail');
+        }
+        return ['success' => true, 'email_sent' => $emailSent];
     }
 
     /**

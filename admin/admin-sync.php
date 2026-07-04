@@ -5,37 +5,97 @@ $pageTitle = 'Sync Services';
 $om = new OrderManager();
 $db = Database::getInstance();
 
-$result = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_verify()) {
-        flash('error', 'Invalid request. Please try again.');
-        redirect(url('admin/admin-sync.php'));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
+    $provider = trim($_POST['provider'] ?? 'all');
+    if ($provider === 'all') {
+        $result = $om->syncServices();
+    } else {
+        $result = $om->syncServices($provider);
     }
-    $result = $om->syncServices();
     if ($result['success']) {
-        $msg = "Synced {$result['synced']} services from provider.";
+        $msg = "Synced {$result['synced']} services.";
         if (!empty($result['failed'])) {
             $msg .= " ({$result['failed']} skipped — see sync log)";
         }
+        if (!empty($result['errors'])) {
+            $msg .= ' Warnings: ' . implode('; ', $result['errors']);
+        }
         flash('success', $msg);
     } else {
-        flash('error', "❌ {$result['error']}");
+        flash('error', $result['error'] ?? 'Sync failed');
     }
-    redirect(url('admin/admin-services.php'));
+    redirect(url('admin/admin-sync.php'));
+}
+
+$providerStatus = [];
+foreach (ProviderRegistry::definitions() as $slug => $def) {
+    $enabled = ProviderRegistry::isEnabled($slug);
+    $api = ProviderRegistry::api($slug);
+    $balance = null;
+    $error = null;
+    if ($api) {
+        $test = $api->testConnection();
+        if ($test['success']) {
+            $balance = ($test['balance'] ?? '?') . ' ' . ($test['currency'] ?? 'USD');
+        } else {
+            $error = $test['error'] ?? 'Connection failed';
+        }
+    } elseif ($enabled) {
+        $error = 'API key not set';
+    } else {
+        $error = 'Disabled';
+    }
+    $count = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE provider = ?", [$slug])['c'];
+    $providerStatus[$slug] = [
+        'name' => $def['name'],
+        'enabled' => $enabled,
+        'balance' => $balance,
+        'error' => $error,
+        'services' => $count,
+    ];
 }
 
 require_once __DIR__ . '/../layouts/header.php';
 ?>
-<div class="card" style="max-width:500px;text-align:center;padding:40px;">
-  <div style="font-size:48px;margin-bottom:16px;">🔄</div>
-  <div class="card-title">Sync Services from Provider</div>
-  <p style="color:var(--text-muted);font-size:13px;margin-bottom:24px;">
-    This will fetch all available services from SmmFollows API and update your services database.
-    Existing services will be updated. Your custom markup will be preserved.
+<div class="card" style="max-width:640px;margin-bottom:18px;">
+  <div class="card-title">🔄 Sync Services from Providers</div>
+  <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;line-height:1.6;">
+    Fetch services from connected APIs. <strong>SMM Turk One</strong> = SmmFollows · <strong>SMM Turk Pro</strong> = SMMFA (IDs 8000000+).
   </p>
-  <form method="POST">
+
+  <?php foreach ($providerStatus as $slug => $st): ?>
+  <div style="padding:14px 16px;border:1px solid var(--border);border-radius:12px;margin-bottom:12px;background:var(--bg);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <strong><?= h($st['name']) ?></strong>
+        <span class="badge <?= $st['enabled'] && $st['balance'] ? 'badge-green' : 'badge-gray' ?>" style="margin-left:8px;">
+          <?= $st['enabled'] ? ($st['balance'] ? 'Connected' : 'Not ready') : 'Off' ?>
+        </span>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+          <?= (int)$st['services'] ?> services in panel
+          <?php if ($st['balance']): ?> · Balance: <strong><?= h($st['balance']) ?></strong><?php endif; ?>
+          <?php if ($st['error'] && !$st['balance']): ?> · <?= h($st['error']) ?><?php endif; ?>
+        </div>
+      </div>
+      <?php if ($st['enabled']): ?>
+      <form method="POST" style="margin:0;">
+        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+        <input type="hidden" name="provider" value="<?= h($slug) ?>">
+        <button type="submit" class="btn btn-primary btn-sm">Sync <?= h($st['name']) ?></button>
+      </form>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php endforeach; ?>
+
+  <form method="POST" style="margin-top:16px;">
     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-    <button type="submit" class="btn btn-primary btn-block">🔄 Sync Now</button>
+    <input type="hidden" name="provider" value="all">
+    <button type="submit" class="btn btn-primary btn-block">🔄 Sync All Providers</button>
   </form>
+  <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">
+    <a href="<?= h(path('admin/admin-settings.php')) ?>">Edit API keys →</a>
+    · <a href="<?= h(path('admin/admin-services.php')) ?>">View services →</a>
+  </p>
 </div>
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

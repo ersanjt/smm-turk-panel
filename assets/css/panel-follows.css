@@ -1,0 +1,611 @@
+/* SMM Turk — Dashboard layout inspired by smmfollows.com (light sidebar, brand platform logos) */
+
+body.panel-follows {
+  --pf-sidebar-bg: #f8fafc;
+  --pf-sidebar-border: #e2e8f0;
+  --pf-sidebar-text: #475569;
+  --pf-sidebar-active: var(--primary);
+  --pf-topbar-bg: #ffffff;
+  --pf-content-bg: #f1f5f9;
+}
+
+body.panel-follows.theme-dark {
+  --pf-sidebar-bg: #1e293b;
+  --pf-sidebar-border: #334155;
+  --pf-sidebar-text: #94a3b8;
+  --pf-topbar-bg: #0f172a;
+  --pf-content-bg: #0b1220;
+}
+
+/* ─── Sidebar (light, smmfollows-style) ─────────────────────────────────── */
+body.panel-follows .sidebar {
+  width: 252px;
+  min-width: 252px;
+  background: var(--pf-sidebar-bg);
+  box-shadow: none;
+  border-right: 1px solid var(--pf-sidebar-border);
+}
+
+body.panel-follows .sidebar-logo {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--pf-sidebar-border);
+  background: transparent;
+}
+
+body.panel-follows .logo-text {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+body.panel-follows.theme-dark .logo-text {
+  color: #f8fafc;
+}
+
+body.panel-follows .sidebar-welcome {
+  padding: 16px 18px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+body.panel-follows .sidebar-welcome .user-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 18px;
+  box-shadow: 0 4px 14px rgba(227, 10, 23, 0.2);
+}
+
+body.panel-follows .sidebar-welcome-text {
+  min-width: 0;
+}
+
+body.panel-follows .sidebar-welcome-text .welcome-label {
+  font-size: 11px;
+  color: var(--pf-sidebar-text);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+body.panel-follows .sidebar-welcome-text .welcome-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.panel-follows.theme-dark .sidebar-welcome-text .welcome-name {
+  color: #f1f5f9;
+}
+
+body.panel-follows .sidebar-user {
+  display: none;
+}
+
+body.panel-follows .sidebar-nav {
+  padding: 8px 12px 16px;
+}
+
+body.panel-follows .nav-label {
+  display: none;
+}
+
+body.panel-follows .nav-item {
+  color: var(--pf-sidebar-text);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+body.panel-follows .nav-item:hover {
+  background: rgba(227, 10, 23, 0.06);
+  color: var(--primary);
+  transform: none;
+  border-color: transparent;
+}
+
+body.panel-follows .nav-item.active,
+body.panel-follows .nav-item.nav-item-cta.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(227, 10, 23, 0.28);
+}
+
+body.panel-follows .nav-item.nav-item-cta {
+  background: transparent;
+  color: var(--pf-sidebar-text);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+body.panel-follows .nav-item.nav-item-cta:hover {
+  background: rgba(227, 10, 23, 0.06);
+  color: var(--primary);
+  transform: none;
+}
+
+body.panel-follows .nav-item.nav-item-funds {
+  background: transparent;
+  font-weight: 600;
+}
+
+body.panel-follows .nav-item svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.85;
+}
+
+body.panel-follows .nav-item.active svg {
+  opacity: 1;
+}
+
+body.panel-follows .sidebar-nav-footer {
+  border-top: 1px solid var(--pf-sidebar-border);
+  padding-top: 8px;
+}
+
+body.panel-follows .sidebar-nav-footer .nav-item {
+  color: #ef4444;
+}
+
+body.panel-follows .sidebar-nav-footer .nav-item:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+}
+
+body.panel-follows .sidebar-mob-balance {
+  background: rgba(227, 10, 23, 0.08);
+  color: var(--primary);
+  border-bottom: 1px solid var(--pf-sidebar-border);
+}
+
+/* ─── Main + topbar ─────────────────────────────────────────────────────── */
+body.panel-follows .main {
+  margin-left: 252px;
+  background: var(--pf-content-bg);
+}
+
+body.panel-follows .topbar {
+  background: var(--pf-topbar-bg);
+  border-bottom: 1px solid var(--pf-sidebar-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  min-height: 64px;
+  padding: 0 28px;
+}
+
+body.panel-follows .topbar::after {
+  display: none;
+}
+
+body.panel-follows .topbar-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  box-shadow: none;
+  font-size: 11px;
+  padding: 6px 12px;
+}
+
+body.panel-follows .topbar-stat-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--pf-sidebar-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pf-sidebar-text);
+}
+
+body.panel-follows.theme-dark .topbar-stat-card {
+  background: #1e293b;
+}
+
+body.panel-follows .topbar-stat-card .tsc-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+body.panel-follows .topbar-stat-card .tsc-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+body.panel-follows .tsc-icon-balance {
+  background: rgba(227, 10, 23, 0.1);
+  color: var(--primary);
+}
+
+body.panel-follows .tsc-icon-spent {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+body.panel-follows .tsc-icon-status {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+body.panel-follows .topbar-stat-card .tsc-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #94a3b8;
+  display: block;
+  line-height: 1.2;
+}
+
+body.panel-follows .topbar-stat-card .tsc-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: 'Syne', sans-serif;
+}
+
+body.panel-follows.theme-dark .topbar-stat-card .tsc-value {
+  color: #f1f5f9;
+}
+
+body.panel-follows .topbar-stats {
+  gap: 10px;
+}
+
+body.panel-follows .stat-pill {
+  display: none;
+}
+
+body.panel-follows .topbar-right .icon-btn {
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  background: #f8fafc;
+  border-color: var(--pf-sidebar-border);
+}
+
+body.panel-follows .content {
+  padding: 24px 28px;
+}
+
+body.panel-follows .card {
+  border-radius: 14px;
+  border-color: var(--pf-sidebar-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+/* ─── Promo banner (smmfollows bonus style) ─────────────────────────────── */
+.panel-promo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 22px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary) 0%, #b90812 100%);
+  color: #fff;
+  box-shadow: 0 8px 28px rgba(227, 10, 23, 0.25);
+}
+
+.panel-promo-banner strong {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+}
+
+.panel-promo-banner p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+.panel-promo-banner .btn-promo {
+  background: #fff;
+  color: var(--primary);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.panel-promo-banner .btn-promo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Platform strip — real brand logos ─────────────────────────────────── */
+.platform-strip-wrap {
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.platform-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 2px 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.platform-strip::-webkit-scrollbar {
+  height: 5px;
+}
+
+.platform-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 56px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid var(--pf-sidebar-border, #e2e8f0);
+  text-decoration: none;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.platform-chip:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(227, 10, 23, 0.12);
+}
+
+.platform-chip.active {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(227, 10, 23, 0.15);
+}
+
+.platform-chip-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.platform-chip-icon svg,
+.platform-logo-svg {
+  display: block;
+}
+
+.platform-chip-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.platform-chip:first-child .platform-chip-label {
+  font-size: 11px;
+}
+
+/* ─── Service tier: SMM Turk One / SMM Turk Pro ─────────────────────────── */
+.service-tier-wrap {
+  margin-bottom: 20px;
+}
+
+.service-tier-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.service-tier-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 2px solid var(--pf-sidebar-border, #e2e8f0);
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.service-tier-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.service-tier-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(227, 10, 23, 0.12);
+}
+
+.service-tier-card.tier-one.active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.service-tier-card.tier-pro.active {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.service-tier-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.service-tier-desc {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.service-tier-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4px;
+}
+
+.service-tier-card.tier-one .service-tier-count { color: #3b82f6; }
+.service-tier-card.tier-pro .service-tier-count { color: #7c3aed; }
+
+.svc-card-tier {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  z-index: 1;
+}
+
+.svc-card-tier-one {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.svc-card-tier-pro {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+/* Services page platform buttons — keep brand colors when active */
+.svc-platform-btn.active svg {
+  color: inherit !important;
+}
+
+.svc-platform-btn.active {
+  background: #fff;
+  border-color: var(--primary);
+  color: inherit;
+  box-shadow: 0 0 0 2px rgba(227, 10, 23, 0.2);
+}
+
+.svc-card-platform-icon svg {
+  display: block;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────────── */
+body.panel-follows .footer {
+  background: var(--pf-topbar-bg);
+  border-top: 1px solid var(--pf-sidebar-border);
+  color: var(--pf-sidebar-text);
+  padding: 18px 28px;
+}
+
+body.panel-follows .footer-copy {
+  color: var(--pf-sidebar-text);
+}
+
+body.panel-follows .footer-contact {
+  color: var(--pf-sidebar-text);
+}
+
+body.panel-follows .footer-contact:hover {
+  color: var(--primary);
+}
+
+body.panel-follows .footer-ticket {
+  background: var(--primary);
+  color: #fff;
+}
+
+body.panel-follows .footer-ticket:hover {
+  background: var(--primary-dark);
+  color: #fff;
+}
+
+body.panel-follows .footer-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+body.panel-follows .footer-or {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+/* ─── Order tabs (smmfollows pill style) ────────────────────────────────── */
+body.panel-follows .order-tabs {
+  border-bottom: none;
+  gap: 6px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--pf-sidebar-border);
+  width: fit-content;
+  max-width: 100%;
+}
+
+body.panel-follows .order-tab {
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 0;
+}
+
+body.panel-follows .order-tab.active {
+  box-shadow: 0 2px 8px rgba(227, 10, 23, 0.25);
+}
+
+/* ─── Mobile ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body.panel-follows .main {
+    margin-left: 0;
+  }
+
+  body.panel-follows .topbar {
+    padding: 10px 16px;
+  }
+
+  body.panel-follows .topbar-stat-card:nth-child(n+3) {
+    display: none;
+  }
+
+  body.panel-follows .content {
+    padding: 16px;
+  }
+
+  .platform-chip {
+    min-width: 50px;
+    padding: 6px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .platform-chip:hover {
+    transform: none;
+  }
+}

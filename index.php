@@ -44,26 +44,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 }
 
 // Load categories and services (dedupe by trimmed category to avoid duplicate filter tags)
-$categoriesRaw = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+require_once __DIR__ . '/app/ProviderRegistry.php';
+
+$tier = strtolower(trim($_GET['tier'] ?? ''));
+if (!in_array($tier, ['', 'one', 'pro'], true)) {
+    $tier = '';
+}
+$providerFilter = ProviderRegistry::providerFromTier($tier);
+$catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
+$platform = trim($_GET['platform'] ?? '');
+$preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
+$searchQ = trim($_GET['q'] ?? '');
+
+$catSql = "SELECT DISTINCT category FROM services WHERE status='active'";
+$catParams = [];
+if ($providerFilter) {
+    $catSql .= ' AND provider = ?';
+    $catParams[] = $providerFilter;
+}
+$catSql .= ' ORDER BY category';
+$categoriesRaw = $db->fetchAll($catSql, $catParams);
 $seen = [];
 $categories = [];
 foreach ($categoriesRaw as $row) {
     $cat = trim($row['category'] ?? '');
     if ($cat !== '' && !isset($seen[$cat])) {
+        if ($platform !== '' && stripos($cat, $platform) === false) {
+            continue;
+        }
         $seen[$cat] = true;
         $categories[] = ['category' => $cat];
     }
 }
-// Per-category service counts for tooltips and badges
-$categoryCounts = $db->fetchAll("SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active' GROUP BY TRIM(COALESCE(category,''))");
+
+$countSql = "SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active'";
+$countParams = [];
+if ($providerFilter) {
+    $countSql .= ' AND provider = ?';
+    $countParams[] = $providerFilter;
+}
+$countSql .= ' GROUP BY TRIM(COALESCE(category,\'\'))';
+$categoryCounts = $db->fetchAll($countSql, $countParams);
 $countByCategory = [];
 foreach ($categoryCounts as $r) {
     $countByCategory[trim($r['category'] ?? '')] = (int) $r['cnt'];
 }
-$totalServicesCount = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
-$catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
-$preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
-$searchQ = trim($_GET['q'] ?? '');
+
+$totalSql = "SELECT COUNT(*) c FROM services WHERE status='active'";
+$totalParams = [];
+if ($providerFilter) {
+    $totalSql .= ' AND provider = ?';
+    $totalParams[] = $providerFilter;
+}
+$totalServicesCount = (int) $db->fetch($totalSql, $totalParams)['c'];
+
 if ($preselectServiceId) {
     $preselect = $db->fetch("SELECT category FROM services WHERE service_id=? AND status='active'", [$preselectServiceId]);
     if ($preselect && ($catParam === null || trim($preselect['category'] ?? '') !== $catParam)) {
@@ -74,23 +108,33 @@ $selectedCat = ($catParam !== null && $catParam !== '') ? $catParam : '';
 $requireCategory = false;
 $showAllLimitHint = false;
 
+$svcProviderClause = $providerFilter ? ' AND provider = ?' : '';
+$svcProviderParam = $providerFilter ? [$providerFilter] : [];
+
 if ($searchQ !== '') {
     $like = '%' . $searchQ . '%';
     if ($selectedCat !== '') {
         $services = $db->fetchAll(
-            "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?) ORDER BY service_id LIMIT 500",
-            [$selectedCat, $like, $like]
+            "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?)" . $svcProviderClause . " ORDER BY service_id LIMIT 500",
+            array_merge([$selectedCat, $like, $like], $svcProviderParam)
         );
     } else {
-        $services = $db->fetchAll(
-            "SELECT * FROM services WHERE status='active' AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?) ORDER BY service_id LIMIT 500",
-            [$like, $like]
-        );
+        $sql = "SELECT * FROM services WHERE status='active' AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?)";
+        $params = [$like, $like];
+        if ($platform !== '') {
+            $sql .= " AND category LIKE ?";
+            $params[] = '%' . $platform . '%';
+        }
+        if ($providerFilter) {
+            $sql .= ' AND provider = ?';
+            $params[] = $providerFilter;
+        }
+        $services = $db->fetchAll($sql . " ORDER BY service_id LIMIT 500", $params);
     }
 } elseif ($selectedCat !== '') {
     $services = $db->fetchAll(
-        "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? ORDER BY service_id",
-        [$selectedCat]
+        "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=?" . $svcProviderClause . " ORDER BY service_id",
+        array_merge([$selectedCat], $svcProviderParam)
     );
 } else {
     $services = [];
@@ -103,13 +147,21 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/order.css')) ?>">
 
+<div class="panel-promo-banner" data-reveal>
+  <div>
+    <strong>🎁 Crypto deposits — fast balance credit</strong>
+    <p>Add funds via BTC, ETH, USDT and start ordering in minutes.</p>
+  </div>
+  <a href="<?= h(path('add-funds.php')) ?>" class="btn-promo">Add Funds →</a>
+</div>
+
 <div class="page-header">
   <div>
     <div class="page-title-row">
       <?= iconBox('plus', 'primary', 22) ?>
       <div>
         <h1 class="page-title">New Order</h1>
-        <p class="page-subtitle"><?= number_format($totalServicesCount) ?> active services — pick category, paste link, submit</p>
+        <p class="page-subtitle"><?= number_format($totalServicesCount) ?> services<?= $tier === 'one' ? ' · ' . ProviderRegistry::BRAND_ONE : ($tier === 'pro' ? ' · ' . ProviderRegistry::BRAND_PRO : '') ?> — pick tier, category, submit</p>
       </div>
     </div>
   </div>
@@ -127,6 +179,8 @@ require_once __DIR__ . '/layouts/header.php';
 <div class="order-toolbar">
   <form method="GET" class="order-toolbar-search" role="search" aria-label="Search services">
     <?php if ($selectedCat): ?><input type="hidden" name="cat" value="<?= h($selectedCat) ?>"><?php endif; ?>
+    <?php if ($platform): ?><input type="hidden" name="platform" value="<?= h($platform) ?>"><?php endif; ?>
+    <?php if ($tier): ?><input type="hidden" name="tier" value="<?= h($tier) ?>"><?php endif; ?>
     <label for="search-service" class="sr-only">Search services</label>
     <input type="search" id="search-service" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search services…" autocomplete="off">
     <button type="submit" class="btn btn-primary"><?= icon('search', 16) ?> Search</button>
@@ -136,10 +190,16 @@ require_once __DIR__ . '/layouts/header.php';
   </label>
 </div>
 
+<?php
+$tierExtra = array_filter(['cat' => $selectedCat ?: null, 'tier' => $tier ?: null]);
+echo ProviderRegistry::serviceTierStrip('index.php', $tier, $searchQ, $tierExtra);
+echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
+?>
+
 <!-- Category quick filter: labeled pills (name + count), scrollable -->
-<p class="order-section-label">Category</p>
+<p class="order-section-label"><?= $tier === 'one' ? ProviderRegistry::BRAND_ONE : ($tier === 'pro' ? ProviderRegistry::BRAND_PRO : 'Category') ?></p>
 <div class="order-cat-pills">
-  <a class="order-cat-pill <?= $selectedCat === '' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?><?= $searchQ ? '?q=' . urlencode($searchQ) : '' ?>" title="All — <?= (int)$totalServicesCount ?> services">
+  <a class="order-cat-pill <?= $selectedCat === '' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?><?= ($q = http_build_query(array_filter(['q' => $searchQ ?: null, 'platform' => $platform ?: null, 'tier' => $tier ?: null]))) ? '?' . $q : '' ?>" title="All — <?= (int)$totalServicesCount ?> services">
     <span class="order-cat-name">All</span>
     <span class="order-cat-count" aria-hidden="true"><?= (int)$totalServicesCount ?></span>
   </a>
@@ -148,9 +208,9 @@ require_once __DIR__ . '/layouts/header.php';
     $isActive = $selectedCat !== '' && $cat['category'] === $selectedCat;
     $cnt = $countByCategory[$cat['category']] ?? 0;
   ?>
-  <a class="order-cat-pill <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?cat=<?= urlencode($cat['category']) ?><?= $searchQ ? '&q=' . urlencode($searchQ) : '' ?>" title="<?= h($cat['category']) ?> — <?= $cnt ?> services">
-    <?php $catIcon = platformSvg($pKey, 18); if ($catIcon !== '') echo $catIcon; ?>
-    <span class="order-cat-name"><?= h($cat['category']) ?></span>
+  <a class="order-cat-pill <?= $isActive ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>?<?= h(http_build_query(array_filter(['cat' => $cat['category'], 'q' => $searchQ ?: null, 'platform' => $platform ?: null, 'tier' => $tier ?: null]))) ?>" title="<?= h($cat['category']) ?> — <?= $cnt ?> services">
+    <?php $catIcon = platformSvgBrand($pKey, 18); if ($catIcon !== '') echo $catIcon; ?>
+    <span class="order-cat-name"><?= h(ProviderRegistry::displayCategoryName($cat['category'], $tier)) ?></span>
     <span class="order-cat-count" aria-hidden="true"><?= $cnt ?></span>
   </a>
   <?php endforeach; ?>
@@ -178,7 +238,7 @@ require_once __DIR__ . '/layouts/header.php';
 <?php endif; ?>
 
 <?php if ($requireCategory && !$searchQ): ?>
-<div class="alert alert-info">Select a category below or search to load services (<?= (int)$totalServicesCount ?> total).</div>
+<div class="alert alert-info">Choose <strong>SMM Turk One</strong> or <strong>SMM Turk Pro</strong> above, then pick a category to load services (<?= (int)$totalServicesCount ?> in this view).</div>
 <?php endif; ?>
 <?php if ($showAllLimitHint): ?>
 <div class="alert alert-info" style="margin-bottom:12px;">Showing first 1,500 services. Select a category above to narrow down.</div>

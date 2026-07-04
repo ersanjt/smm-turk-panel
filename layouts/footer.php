@@ -3,12 +3,15 @@
   <footer class="footer">
     <div class="footer-inner">
       <span class="footer-copy">© <?= date('Y') ?> <?= h(defined('SITE_NAME') ? SITE_NAME : 'SMM Turk') ?>. All Rights Reserved.</span>
+      <div class="footer-links">
       <?php
       $contactEmail = class_exists('Database') ? (Database::getInstance()->getSetting('contact_email') ?: '') : '';
       if ($contactEmail): ?>
       <a href="mailto:<?= h($contactEmail) ?>" class="footer-contact"><?= h($contactEmail) ?></a>
+      <span class="footer-or">OR</span>
       <?php endif; ?>
       <a href="<?= h(path('tickets.php')) ?>" class="footer-ticket">Open a ticket</a>
+      </div>
     </div>
   </footer>
   <!-- Mobile bottom navigation (visible only on small screens) -->

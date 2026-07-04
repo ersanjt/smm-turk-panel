@@ -17,7 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         if ($msg !== '') {
             $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 1)", [$id, $auth->getUserId(), $msg]);
             $db->execute("UPDATE tickets SET status = 'answered', updated_at = NOW() WHERE id = ?", [$id]);
-            flash('success', 'Reply sent.');
+            $mail = new Mail();
+            $sent = $mail->sendTicketStaffReply(
+                $ticket['email'],
+                $ticket['username'],
+                $id,
+                $ticket['subject'],
+                $msg
+            );
+            if ($sent) {
+                flash('success', 'Reply sent and user notified by email.');
+            } else {
+                flash('success', 'Reply saved. Email notification failed — check Email settings.');
+                Logger::log('Ticket #' . $id . ' reply email failed: ' . ($mail->getLastError() ?? 'unknown'), 'mail');
+            }
             redirect(url('admin/admin-ticket.php') . '?id=' . (int)$id);
         }
     }

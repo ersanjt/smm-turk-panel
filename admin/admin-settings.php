@@ -5,13 +5,24 @@ $pageTitle = 'Settings';
 $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
-    $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
-        'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
+    $fields = ['site_name','site_url','api_key','api_url','api_key_smmfa','api_url_smmfa','provider_smmfa_enabled','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
+        'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','mail_mode','smtp_encryption','mail_lang','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
         'deposit_auto_confirm','deposit_min_confirmations','deposit_amount_tolerance','api_etherscan','api_trongrid','api_bscscan',
+        'payment_smmpaygate_enabled','payment_smmpaygate_api_url','payment_smmpaygate_api_key','payment_smmpaygate_merchant_id','payment_smmpaygate_secret',
+        'payment_heleket_enabled','payment_heleket_merchant_id','payment_heleket_api_key',
+        'payment_heleket_mode','payment_heleket_currency','payment_heleket_network',
+        'payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_binance_pay_api_key','payment_binance_pay_secret',
+        'payment_zarinpal_enabled','payment_zarinpal_merchant_id','payment_zarinpal_usd_rate','payment_zarinpal_sandbox',
+        'payment_cryptocloud_enabled','payment_cryptocloud_shop_id','payment_cryptocloud_api_key',
         'child_panel_price','child_panel_ns1','child_panel_ns2'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
+        }
+    }
+    foreach (['provider_smmfa_enabled','payment_smmpaygate_enabled','payment_heleket_enabled','payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_zarinpal_enabled','payment_cryptocloud_enabled'] as $cb) {
+        if (!isset($_POST[$cb])) {
+            $db->setSetting($cb, '0');
         }
     }
     flash('success', '✅ Settings saved successfully.');
@@ -70,48 +81,111 @@ require_once __DIR__ . '/../layouts/header.php';
 
     <div class="card" style="margin-bottom:18px;">
       <div class="card-title">📧 Email</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Leave SMTP empty to use PHP mail() (cPanel). To use Gmail/SendGrid etc., fill SMTP Host and credentials.</p>
-      <div class="form-group">
-        <label class="form-label">Mail From (sender address)</label>
-        <input type="text" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@yourdomain.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Contact Email (shown in footer)</label>
-        <input type="email" name="contact_email" class="form-control" value="<?= s($settings,'contact_email') ?>" placeholder="contact@yourdomain.com">
-      </div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-        <strong style="font-size:13px;">SMTP (optional)</strong>
-      </div>
-      <div class="grid2" style="margin-top:10px;">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.65;">
+        <strong>cPanel setup (recommended):</strong> Email Accounts → create <code>noreply@smm-turk.com</code> → use SMTP below.<br>
+        Host: <code>mail.smm-turk.com</code> · Port: <code>465</code> (SSL) or <code>587</code> (TLS) · User: full email · Password: mailbox password.<br>
+        <strong>Mail From</strong> must match the mailbox address. <a href="<?= h(path('admin/admin-mail.php')) ?>" style="color:var(--primary);font-weight:700;">Test email →</a>
+      </p>
+      <div class="grid2">
         <div class="form-group">
-          <label class="form-label">SMTP Host</label>
-          <input type="text" name="smtp_host" class="form-control" value="<?= s($settings,'smtp_host') ?>" placeholder="smtp.gmail.com">
+          <label class="form-label">Mail mode</label>
+          <select name="mail_mode" class="form-control">
+            <option value="auto" <?= ($settings['mail_mode']??'auto')==='auto'?'selected':'' ?>>Auto — SMTP if configured, else PHP mail()</option>
+            <option value="smtp" <?= ($settings['mail_mode']??'')==='smtp'?'selected':'' ?>>SMTP only</option>
+            <option value="mail" <?= ($settings['mail_mode']??'')==='mail'?'selected':'' ?>>PHP mail() only (cPanel)</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label">SMTP Port</label>
-          <input type="text" name="smtp_port" class="form-control" value="<?= s($settings,'smtp_port') ?: '587' ?>" placeholder="587 or 465">
+          <label class="form-label">Email language</label>
+          <select name="mail_lang" class="form-control">
+            <option value="tr" <?= ($settings['mail_lang']??'tr')==='tr'?'selected':'' ?>>Türkçe (Turkish)</option>
+            <option value="en" <?= ($settings['mail_lang']??'')==='en'?'selected':'' ?>>English</option>
+          </select>
         </div>
       </div>
       <div class="grid2">
         <div class="form-group">
-          <label class="form-label">SMTP User</label>
-          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="your@email.com">
+          <label class="form-label">SMTP encryption</label>
+          <select name="smtp_encryption" class="form-control">
+            <option value="auto" <?= ($settings['smtp_encryption']??'auto')==='auto'?'selected':'' ?>>Auto (465=SSL, 587=TLS)</option>
+            <option value="ssl" <?= ($settings['smtp_encryption']??'')==='ssl'?'selected':'' ?>>SSL</option>
+            <option value="tls" <?= ($settings['smtp_encryption']??'')==='tls'?'selected':'' ?>>TLS (STARTTLS)</option>
+            <option value="none" <?= ($settings['smtp_encryption']??'')==='none'?'selected':'' ?>>None</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mail From (sender — must exist in cPanel)</label>
+        <input type="email" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@smm-turk.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact / Reply-To email</label>
+        <input type="email" name="contact_email" class="form-control" value="<?= s($settings,'contact_email') ?>" placeholder="contact@smm-turk.com">
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <strong style="font-size:13px;">SMTP (cPanel or Gmail/SendGrid)</strong>
+      </div>
+      <div class="grid2" style="margin-top:10px;">
+        <div class="form-group">
+          <label class="form-label">SMTP Host</label>
+          <input type="text" name="smtp_host" class="form-control" value="<?= s($settings,'smtp_host') ?>" placeholder="mail.smm-turk.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SMTP Port</label>
+          <input type="text" name="smtp_port" class="form-control" value="<?= s($settings,'smtp_port') ?: '465' ?>" placeholder="465 or 587">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">SMTP User (full email)</label>
+          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="noreply@smm-turk.com">
         </div>
         <div class="form-group">
           <label class="form-label">SMTP Password</label>
-          <input type="password" name="smtp_pass" class="form-control" value="<?= s($settings,'smtp_pass') ?>" placeholder="••••••••" autocomplete="new-password">
+          <input type="password" name="smtp_pass" class="form-control" value="<?= s($settings,'smtp_pass') ?>" placeholder="Mailbox password" autocomplete="new-password">
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:18px;">
-      <div class="card-title">🔑 Provider API</div>
+      <div class="card-title">🔑 Provider API — SmmFollows (primary)</div>
       <div class="form-group">
-        <label class="form-label">SmmFollows API Key</label>
+        <label class="form-label">API URL</label>
+        <input type="url" name="api_url" class="form-control" value="<?= s($settings,'api_url') ?: 'https://smmfollows.com/api/v2' ?>" placeholder="https://smmfollows.com/api/v2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">API Key</label>
         <input type="text" name="api_key" class="form-control" value="<?= s($settings,'api_key') ?>" placeholder="Your API key from smmfollows.com">
       </div>
       <div style="font-size:12px;color:var(--text-muted);">
-        Get your API key from <a href="https://smmfollows.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">smmfollows.com</a> → Account → API
+        Get your key from <a href="https://smmfollows.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">smmfollows.com</a> → Account → API
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">🔑 Provider API — SMMFA (smmfa.com)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+        Second provider (premium catalog). Panel category: <strong>SMM Turk Pro</strong>.
+        Standard catalog from SmmFollows: <strong>SMM Turk One</strong>.
+      </p>
+      <div class="form-group">
+        <label class="form-label">
+          <input type="hidden" name="provider_smmfa_enabled" value="0">
+          <input type="checkbox" name="provider_smmfa_enabled" value="1" <?= ($settings['provider_smmfa_enabled']??'0')==='1'?'checked':'' ?>>
+          Enable SMMFA provider
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMMFA API URL</label>
+        <input type="url" name="api_url_smmfa" class="form-control" value="<?= s($settings,'api_url_smmfa') ?: 'https://smmfa.com/api/v2' ?>" placeholder="https://smmfa.com/api/v2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMMFA API Key (token)</label>
+        <input type="text" name="api_key_smmfa" class="form-control" value="<?= s($settings,'api_key_smmfa') ?>" placeholder="API key from smmfa.com">
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);">
+        Register at <a href="https://smmfa.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">smmfa.com</a> → API → copy key, then
+        <a href="<?= h(path('admin/admin-sync.php')) ?>" style="color:var(--primary);font-weight:700;">Sync services →</a>
       </div>
     </div>
 
@@ -134,7 +208,107 @@ require_once __DIR__ . '/../layouts/header.php';
     </div>
 
     <div class="card" style="margin-bottom:18px;">
-      <div class="card-title">₿ Crypto Wallets (for receiving deposits)</div>
+      <div class="card-title">💳 Payment Gateways (Add Funds)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.65;">
+        Enable each method and paste API credentials. Users see enabled methods in <strong>Add Funds → Method</strong> dropdown (like SMMFA).<br>
+        Webhook URLs: <code><?= h(PaymentRegistry::webhookUrl('heleket')) ?></code> (Heleket) ·
+        <code><?= h(PaymentRegistry::webhookUrl('cryptocloud')) ?></code> (CryptoCloud) ·
+        <code><?= h(PaymentRegistry::webhookUrl('binance_pay')) ?></code> (Binance Pay) ·
+        <code><?= h(PaymentRegistry::webhookUrl('smmpaygate')) ?></code> (SmmPayGate)
+      </p>
+
+      <div class="payment-gw-block">
+        <h4>SmmPayGate (own)</h4>
+        <label class="form-label"><input type="hidden" name="payment_smmpaygate_enabled" value="0"><input type="checkbox" name="payment_smmpaygate_enabled" value="1" <?= ($settings['payment_smmpaygate_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <div class="form-group"><label class="form-label">API URL</label><input type="url" name="payment_smmpaygate_api_url" class="form-control" value="<?= s($settings,'payment_smmpaygate_api_url') ?>" placeholder="https://api.smmpaygate.com"></div>
+        <div class="grid2">
+          <div class="form-group"><label class="form-label">API Key</label><input type="text" name="payment_smmpaygate_api_key" class="form-control" value="<?= s($settings,'payment_smmpaygate_api_key') ?>"></div>
+          <div class="form-group"><label class="form-label">Merchant ID</label><input type="text" name="payment_smmpaygate_merchant_id" class="form-control" value="<?= s($settings,'payment_smmpaygate_merchant_id') ?>"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Webhook Secret (optional)</label><input type="text" name="payment_smmpaygate_secret" class="form-control" value="<?= s($settings,'payment_smmpaygate_secret') ?>"></div>
+      </div>
+
+      <div class="payment-gw-block">
+        <h4>Heleket</h4>
+        <label class="form-label"><input type="hidden" name="payment_heleket_enabled" value="0"><input type="checkbox" name="payment_heleket_enabled" value="1" <?= ($settings['payment_heleket_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <p style="font-size:11px;color:var(--text-muted);">
+          <a href="https://heleket.com" target="_blank" rel="noopener">heleket.com</a> → Business → API keys.
+          Docs: <a href="https://doc.heleket.com" target="_blank" rel="noopener">doc.heleket.com</a> ·
+          Webhook IP: <code>31.133.220.8</code>
+        </p>
+        <div class="grid2">
+          <div class="form-group"><label class="form-label">Merchant UUID</label><input type="text" name="payment_heleket_merchant_id" class="form-control" value="<?= s($settings,'payment_heleket_merchant_id') ?>" placeholder="From Heleket dashboard"></div>
+          <div class="form-group"><label class="form-label">Payment API Key</label><input type="text" name="payment_heleket_api_key" class="form-control" value="<?= s($settings,'payment_heleket_api_key') ?>"></div>
+        </div>
+        <div class="grid3" style="margin-top:10px;">
+          <div class="form-group">
+            <label class="form-label">Display mode</label>
+            <select name="payment_heleket_mode" class="form-control">
+              <option value="panel" <?= ($settings['payment_heleket_mode']??'panel')==='panel'?'selected':'' ?>>Panel — address + QR in Add Funds (recommended)</option>
+              <option value="redirect" <?= ($settings['payment_heleket_mode']??'')==='redirect'?'selected':'' ?>>Redirect — open pay.heleket.com</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Crypto</label>
+            <input type="text" name="payment_heleket_currency" class="form-control" value="<?= s($settings,'payment_heleket_currency') ?: 'USDT' ?>" placeholder="USDT">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Network</label>
+            <select name="payment_heleket_network" class="form-control">
+              <?php
+              $hkNet = $settings['payment_heleket_network'] ?? 'bsc';
+              foreach (['tron' => 'TRC20 (Tron)', 'bsc' => 'BEP-20 (BSC)', 'eth' => 'ERC20 (ETH)', 'btc' => 'BTC'] as $val => $lbl):
+              ?>
+              <option value="<?= h($val) ?>" <?= $hkNet === $val ? 'selected' : '' ?>><?= h($lbl) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+          Webhook URL (paste in Heleket project): <code><?= h(PaymentRegistry::webhookUrl('heleket')) ?></code>
+        </p>
+      </div>
+
+      <div class="payment-gw-block">
+        <h4>USDT TRC20 (direct wallet)</h4>
+        <label class="form-label"><input type="hidden" name="payment_usdt_trc20_enabled" value="0"><input type="checkbox" name="payment_usdt_trc20_enabled" value="1" <?= ($settings['payment_usdt_trc20_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <p style="font-size:11px;color:var(--text-muted);">Uses <strong>USDT (TRC20)</strong> wallet below + auto on-chain verification.</p>
+      </div>
+
+      <div class="payment-gw-block">
+        <h4>Binance Pay</h4>
+        <label class="form-label"><input type="hidden" name="payment_binance_pay_enabled" value="0"><input type="checkbox" name="payment_binance_pay_enabled" value="1" <?= ($settings['payment_binance_pay_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <p style="font-size:11px;color:var(--text-muted);"><a href="https://merchant.binance.com" target="_blank" rel="noopener">merchant.binance.com</a> → Certificate SN + Secret Key</p>
+        <div class="grid2">
+          <div class="form-group"><label class="form-label">Certificate SN (API Key)</label><input type="text" name="payment_binance_pay_api_key" class="form-control" value="<?= s($settings,'payment_binance_pay_api_key') ?>"></div>
+          <div class="form-group"><label class="form-label">Secret Key</label><input type="password" name="payment_binance_pay_secret" class="form-control" value="<?= s($settings,'payment_binance_pay_secret') ?>" autocomplete="new-password"></div>
+        </div>
+      </div>
+
+      <div class="payment-gw-block">
+        <h4>ZarinPal</h4>
+        <label class="form-label"><input type="hidden" name="payment_zarinpal_enabled" value="0"><input type="checkbox" name="payment_zarinpal_enabled" value="1" <?= ($settings['payment_zarinpal_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <p style="font-size:11px;color:var(--text-muted);"><a href="https://www.zarinpal.com" target="_blank" rel="noopener">zarinpal.com</a> → 36-char Merchant ID. Amount converted USD→IRR using rate below.</p>
+        <div class="form-group"><label class="form-label">Merchant ID</label><input type="text" name="payment_zarinpal_merchant_id" class="form-control" value="<?= s($settings,'payment_zarinpal_merchant_id') ?>"></div>
+        <div class="grid2">
+          <div class="form-group"><label class="form-label">USD → IRR rate</label><input type="number" name="payment_zarinpal_usd_rate" class="form-control" value="<?= s($settings,'payment_zarinpal_usd_rate') ?: '600000' ?>" min="10000"></div>
+          <div class="form-group"><label class="form-label">Sandbox</label><select name="payment_zarinpal_sandbox" class="form-control"><option value="0" <?= ($settings['payment_zarinpal_sandbox']??'0')==='0'?'selected':'' ?>>Live</option><option value="1" <?= ($settings['payment_zarinpal_sandbox']??'0')==='1'?'selected':'' ?>>Sandbox (test)</option></select></div>
+        </div>
+      </div>
+
+      <div class="payment-gw-block">
+        <h4>CryptoCloud</h4>
+        <label class="form-label"><input type="hidden" name="payment_cryptocloud_enabled" value="0"><input type="checkbox" name="payment_cryptocloud_enabled" value="1" <?= ($settings['payment_cryptocloud_enabled']??'0')==='1'?'checked':'' ?>> Enable</label>
+        <p style="font-size:11px;color:var(--text-muted);"><a href="https://cryptocloud.plus" target="_blank" rel="noopener">cryptocloud.plus</a> → Shop ID + API Token</p>
+        <div class="grid2">
+          <div class="form-group"><label class="form-label">Shop ID</label><input type="text" name="payment_cryptocloud_shop_id" class="form-control" value="<?= s($settings,'payment_cryptocloud_shop_id') ?>"></div>
+          <div class="form-group"><label class="form-label">API Key (Token)</label><input type="text" name="payment_cryptocloud_api_key" class="form-control" value="<?= s($settings,'payment_cryptocloud_api_key') ?>"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">₿ Crypto Wallets (USDT TRC20 + optional manual coins)</div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
         Copy <strong>Receive</strong> addresses from your wallet (Trust Wallet, MetaMask, etc.) and paste them here.
         Users send crypto to these addresses — the panel verifies payments on the blockchain automatically (no wallet extension connection needed).

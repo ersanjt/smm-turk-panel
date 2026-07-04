@@ -123,6 +123,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('settings', 16) ?> Settings</a>
   <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('tickets', 16) ?> Tickets</a>
   <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn"><?= icon('deposit', 16) ?> Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
+  <a href="<?= h(path('admin/admin-mail.php')) ?>" class="qa-btn"><?= icon('message', 16) ?> Test Email</a>
   <a href="<?= h(path('admin/admin-child-panels.php')) ?>" class="qa-btn"><?= icon('server', 16) ?> Child Panels<?= $pendingChildPanels > 0 ? ' (' . $pendingChildPanels . ')' : '' ?></a>
 </div>
 

@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply']) && csrf_veri
         $db->insert("INSERT INTO ticket_replies (ticket_id, user_id, message, is_staff) VALUES (?, ?, ?, 0)", [$id, $uid, $msg]);
         $db->execute("UPDATE tickets SET status = 'open', updated_at = NOW() WHERE id = ?", [$id]);
         flash('success', 'Reply sent.');
-        redirect(url('ticket.php') . '?id=' . (int)$id);
+        redirect(page_url('ticket.php', ['id' => (int) $id]));
     }
 }
 
