@@ -260,6 +260,10 @@ class Auth {
         if (!$this->isLoggedIn()) {
             return false;
         }
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
         $user = $this->db->fetch("SELECT role, status FROM users WHERE id = ?", [$this->getUserId()]);
         if (!$user || ($user['status'] ?? '') === 'banned') {
             return false;
@@ -267,7 +271,8 @@ class Auth {
         if (($user['role'] ?? '') !== ($_SESSION['role'] ?? '')) {
             $_SESSION['role'] = $user['role'];
         }
-        return ($user['role'] ?? '') === 'admin';
+        $cached = ($user['role'] ?? '') === 'admin';
+        return $cached;
     }
 
     public function requireLogin(): void {

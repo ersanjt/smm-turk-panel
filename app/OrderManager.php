@@ -19,16 +19,16 @@ class OrderManager {
 
         $markup = 1 + ($service['markup'] / 100);
         $charge = round(($service['rate'] / 1000) * $quantity * $markup, 4);
+        $orderData = array_merge(['service' => $serviceId, 'link' => $link, 'quantity' => $quantity], $extra);
 
+        $balanceBefore = 0.0;
         try {
             $this->db->beginTransaction();
-
             $user = $this->db->fetch("SELECT balance FROM users WHERE id = ? FOR UPDATE", [$userId]);
             if (!$user || (float)$user['balance'] < $charge) {
                 $this->db->rollBack();
                 return ['success' => false, 'error' => 'Insufficient balance. Add funds with crypto first.'];
             }
-
             $balanceBefore = (float)$user['balance'];
             $deducted = $this->db->execute(
                 "UPDATE users SET balance = balance - ?, spent = spent + ? WHERE id = ? AND balance >= ?",
@@ -38,14 +38,23 @@ class OrderManager {
                 $this->db->rollBack();
                 return ['success' => false, 'error' => 'Insufficient balance. Add funds with crypto first.'];
             }
-
-            $orderData = array_merge(['service' => $serviceId, 'link' => $link, 'quantity' => $quantity], $extra);
-            $response  = $this->api->order($orderData);
-
-            if (!$response || isset($response->error)) {
-                $this->db->rollBack();
-                return ['success' => false, 'error' => $response->error ?? 'Provider error. Please try again.'];
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            if (class_exists('Logger')) {
+                Logger::log('placeOrder deduct failed: ' . $e->getMessage(), 'orders');
             }
+            return ['success' => false, 'error' => 'Could not place order. Please try again.'];
+        }
+
+        $response = $this->api->order($orderData);
+        if (!$response || isset($response->error)) {
+            $this->refundCharge($userId, $charge);
+            return ['success' => false, 'error' => $response->error ?? 'Provider error. Please try again.'];
+        }
+
+        try {
+            $this->db->beginTransaction();
 
             $orderId = $this->db->insert(
                 "INSERT INTO orders (user_id, provider_order_id, service_id, service_name, link, quantity, charge, status)
@@ -60,10 +69,9 @@ class OrderManager {
                 [$userId, -$charge, $balanceBefore, $balanceAfter, "Order #{$orderId}: " . substr($service['name'], 0, 60), (string)$orderId]
             );
 
-            // Referral commission
             $buyer = $this->db->fetch("SELECT referred_by FROM users WHERE id = ?", [$userId]);
             if (!empty($buyer['referred_by'])) {
-                $pct = (float)($this->db->getSetting('referral_commission') ?: 2);
+                $pct = (float)($this->db->getSetting('referral_commission') ?: (defined('REFERRAL_COMMISSION') ? REFERRAL_COMMISSION : 2));
                 if ($pct > 0) {
                     $commission = round($charge * ($pct / 100), 4);
                     $this->db->execute("UPDATE users SET referral_earnings = referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
@@ -78,15 +86,31 @@ class OrderManager {
         } catch (Throwable $e) {
             $this->db->rollBack();
             if (class_exists('Logger')) {
-                Logger::log('placeOrder failed: ' . $e->getMessage(), 'orders');
+                Logger::log('placeOrder insert failed after provider OK: ' . $e->getMessage(), 'orders');
             }
-            return ['success' => false, 'error' => 'Could not place order. Please try again.'];
+            return ['success' => false, 'error' => 'Order placed at provider but local save failed. Contact support with your link and service ID.'];
+        }
+    }
+
+    private function refundCharge(int $userId, float $charge): void {
+        try {
+            $this->db->beginTransaction();
+            $this->db->execute(
+                "UPDATE users SET balance = balance + ?, spent = GREATEST(spent - ?, 0) WHERE id = ?",
+                [$charge, $charge, $userId]
+            );
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            if (class_exists('Logger')) {
+                Logger::log("refundCharge failed user#{$userId}: " . $e->getMessage(), 'orders');
+            }
         }
     }
 
     public function syncOrders(): int {
         $orders = $this->db->fetchAll(
-            "SELECT id, provider_order_id FROM orders WHERE status IN ('Pending','Processing','In progress') AND provider_order_id IS NOT NULL LIMIT 100"
+            "SELECT id, provider_order_id FROM orders WHERE status IN ('Pending','Processing','In progress') AND provider_order_id IS NOT NULL ORDER BY updated_at ASC LIMIT 100"
         );
         if (empty($orders)) return 0;
 

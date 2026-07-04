@@ -16,19 +16,37 @@
   var langDropdown = document.getElementById('langDropdown');
   if (langBtn && langDropdown) {
     langBtn.addEventListener('click', function () {
-      langDropdown.classList.toggle('open');
+      var open = langDropdown.classList.toggle('open');
+      langBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.nav-lang')) langDropdown.classList.remove('open');
+      if (!e.target.closest('.nav-lang')) {
+        langDropdown.classList.remove('open');
+        langBtn.setAttribute('aria-expanded', 'false');
+      }
     });
   }
 
   document.querySelectorAll('.faq-q').forEach(function (el) {
+    if (el.tagName !== 'BUTTON') return;
     el.addEventListener('click', function () {
       var item = this.closest('.faq-item');
       var open = item.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(function (i) { i.classList.remove('open'); });
-      if (!open) item.classList.add('open');
+      document.querySelectorAll('.faq-item').forEach(function (i) {
+        i.classList.remove('open');
+        var q = i.querySelector('.faq-q');
+        if (q) q.setAttribute('aria-expanded', 'false');
+      });
+      if (!open) {
+        item.classList.add('open');
+        this.setAttribute('aria-expanded', 'true');
+      }
+    });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.click();
+      }
     });
   });
 })();

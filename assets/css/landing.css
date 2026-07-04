@@ -14,6 +14,7 @@
             --light-warm: #fef5f6;
             --white: #ffffff;
             --border-light: #f0e6e8;
+            --border: #f0e6e8;
             --shadow-sm: 0 2px 8px rgba(26, 10, 14, 0.06);
             --shadow-md: 0 12px 40px rgba(26, 10, 14, 0.08);
             --shadow-lg: 0 24px 64px rgba(26, 10, 14, 0.1);
@@ -299,6 +300,7 @@
         .faq-item:hover { border-color: rgba(227, 10, 23, .18); box-shadow: var(--shadow-sm); }
         .faq-item.open { border-color: var(--primary); box-shadow: 0 8px 24px rgba(227, 10, 23, .1); }
         .faq-q { padding: 22px 26px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--dark); transition: color var(--duration-fast) var(--ease-smooth); }
+        button.faq-q { width: 100%; border: none; background: transparent; text-align: left; font-family: inherit; }
         .faq-item.open .faq-q { color: var(--primary); }
         .faq-q span { color: var(--primary); font-size: 22px; transition: transform var(--duration-normal) var(--ease-spring); flex-shrink: 0; margin-left: 12px; }
         .faq-item.open .faq-q span { transform: rotate(45deg); }

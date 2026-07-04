@@ -6,26 +6,31 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/../app/init.php';
 require_once __DIR__ . '/../app/RateLimit.php';
 
-// API key: only from POST body or X-API-Key header (not from URL to avoid logging/referrer exposure)
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'POST required']);
+    exit;
+}
+
 $key    = trim((string)($_POST['key'] ?? $_SERVER['HTTP_X_API_KEY'] ?? ''));
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
+$action = trim((string)($_POST['action'] ?? ''));
 
 if (!$key || !$action) {
+    http_response_code(400);
     echo json_encode(['error' => 'Missing key or action']);
     exit;
 }
 
-// Validate API key
-$user = $db->fetch("SELECT * FROM users WHERE api_key = ? AND status = 'active'", [$key]);
+$user = $db->fetch("SELECT id, balance, status FROM users WHERE api_key = ? AND status = 'active'", [$key]);
 if (!$user) {
+    http_response_code(403);
     echo json_encode(['error' => 'Invalid API key']);
     exit;
 }
 
-// Rate limit: 120 requests per minute per API key
 $apiRateLimit = new RateLimit(120, 60, $key);
 if ($apiRateLimit->isLimited()) {
-    header('HTTP/1.1 429 Too Many Requests');
+    http_response_code(429);
     header('Retry-After: 60');
     echo json_encode(['error' => 'Rate limit exceeded. Try again later.']);
     exit;
@@ -38,7 +43,9 @@ $api = new SmmApi();
 switch ($action) {
 
     case 'services':
-        $services = $db->fetchAll("SELECT * FROM services WHERE status='active' ORDER BY service_id");
+        $services = $db->fetchAll(
+            "SELECT service_id, name, type, category, rate, min, max, refill, cancel, markup FROM services WHERE status='active' ORDER BY service_id"
+        );
         $output = [];
         foreach ($services as $s) {
             $output[] = [
@@ -65,13 +72,24 @@ switch ($action) {
         if (isset($_POST['interval']) && $_POST['interval'] !== '') $extra['interval'] = (int)$_POST['interval'];
 
         if (!$serviceId || !$link || !$quantity) {
-            echo json_encode(['error' => 'Missing required parameters']); exit;
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing required parameters']);
+            exit;
+        }
+
+        $link = normalize_order_link($link);
+        if ($link === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid link']);
+            exit;
         }
 
         $result = $om->placeOrder($user['id'], $serviceId, $link, $quantity, $extra);
         if ($result['success']) {
             echo json_encode(['order' => $result['order_id']]);
         } else {
+            $code = stripos($result['error'], 'Insufficient') !== false ? 402 : 400;
+            http_response_code($code);
             echo json_encode(['error' => $result['error']]);
         }
         break;
@@ -104,8 +122,12 @@ switch ($action) {
             echo json_encode($out);
         } else {
             $orderId = (int)($_POST['order'] ?? 0);
-            $row = $db->fetch("SELECT * FROM orders WHERE id=? AND user_id=?", [$orderId, $user['id']]);
-            if (!$row) { echo json_encode(['error' => 'Incorrect order ID']); exit; }
+            $row = $db->fetch("SELECT charge, status, start_count, remains FROM orders WHERE id=? AND user_id=?", [$orderId, $user['id']]);
+            if (!$row) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Incorrect order ID']);
+                exit;
+            }
             echo json_encode([
                 'charge'      => number_format((float)$row['charge'], 5),
                 'start_count' => (string)($row['start_count'] ?? '0'),
@@ -144,11 +166,7 @@ switch ($action) {
                     $ourId = isset($orderList[$i]) ? $orderList[$i]['our'] : null;
                     if ($ourId !== null) {
                         $refill = $item['refill'] ?? $item;
-                        if (is_array($refill) && isset($refill['error'])) {
-                            $out[] = ['order' => $ourId, 'refill' => $refill];
-                        } else {
-                            $out[] = ['order' => $ourId, 'refill' => $refill];
-                        }
+                        $out[] = ['order' => $ourId, 'refill' => $refill];
                     }
                 }
             }
@@ -163,12 +181,15 @@ switch ($action) {
             $orderId = (int)($_POST['order'] ?? 0);
             $row = $db->fetch("SELECT id, provider_order_id FROM orders WHERE id=? AND user_id=?", [$orderId, $user['id']]);
             if (!$row || empty($row['provider_order_id'])) {
-                echo json_encode(['error' => 'Incorrect order ID']); exit;
+                http_response_code(404);
+                echo json_encode(['error' => 'Incorrect order ID']);
+                exit;
             }
             $resp = $api->refill((int)$row['provider_order_id']);
             if ($resp && isset($resp->refill)) {
                 echo json_encode(['refill' => (string)$resp->refill]);
             } else {
+                http_response_code(400);
                 echo json_encode(['error' => $resp->error ?? 'Refill failed']);
             }
         }
@@ -183,7 +204,9 @@ switch ($action) {
         } else {
             $refillId = trim($_POST['refill'] ?? '');
             if ($refillId === '') {
-                echo json_encode(['error' => 'Missing refill parameter']); exit;
+                http_response_code(400);
+                echo json_encode(['error' => 'Missing refill parameter']);
+                exit;
             }
             $resp = $api->refillStatus($refillId);
             if ($resp && isset($resp->status)) {
@@ -197,8 +220,9 @@ switch ($action) {
         break;
 
     case 'balance':
+        $fresh = $db->fetch("SELECT balance FROM users WHERE id = ?", [$user['id']]);
         echo json_encode([
-            'balance'  => number_format($user['balance'], 5),
+            'balance'  => number_format((float)($fresh['balance'] ?? 0), 5),
             'currency' => 'USD',
         ]);
         break;
@@ -240,11 +264,21 @@ switch ($action) {
                     $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
                     continue;
                 }
-                $db->execute("UPDATE users SET balance = balance + ? WHERE id = ?", [$order['charge'], $user['id']]);
+                $userRow = $db->fetch("SELECT balance FROM users WHERE id = ? FOR UPDATE", [$user['id']]);
+                $balanceBefore = (float)($userRow['balance'] ?? 0);
+                $db->execute("UPDATE users SET balance = balance + ? WHERE id = ?", [(float)$order['charge'], $user['id']]);
+                $balanceAfter = round($balanceBefore + (float)$order['charge'], 4);
+                $db->insert(
+                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference, status) VALUES (?, 'refund', ?, ?, ?, ?, ?, 'completed')",
+                    [$user['id'], (float)$order['charge'], $balanceBefore, $balanceAfter, "Refund order #{$id}", (string)$id]
+                );
                 $db->commit();
                 $out[] = ['order' => $id, 'cancel' => 1];
             } catch (Throwable $e) {
                 $db->rollBack();
+                if (class_exists('Logger')) {
+                    Logger::log("API cancel failed order#{$id}: " . $e->getMessage(), 'api');
+                }
                 $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
             }
         }
@@ -252,5 +286,6 @@ switch ($action) {
         break;
 
     default:
+        http_response_code(400);
         echo json_encode(['error' => 'Unknown action']);
 }

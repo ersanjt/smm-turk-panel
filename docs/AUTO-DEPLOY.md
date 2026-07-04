@@ -78,7 +78,7 @@ git push origin main
 
 | بررسی | آدرس / کار |
 |--------|------------|
-| Webhook زنده | https://smm-turk.com/deploy-webhook.php → `{"ok":true,...}` |
+| Webhook زنده | https://smm-turk.com/deploy-webhook.php?diag=1&key=WEBHOOK_SECRET |
 | تحویل webhook | GitHub → Settings → Webhooks → Recent Deliveries → **200** |
 | سایت | https://smm-turk.com/ |
 | Health | https://smm-turk.com/health → `{"status":"ok","db":"ok"}` |

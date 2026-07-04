@@ -23,6 +23,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $homeSecret = dirname(__DIR__) . '/deploy-secret.txt';
         $localSecret = __DIR__ . '/deploy-secret.txt';
         $secretPath = is_readable($localSecret) ? $localSecret : (is_readable($homeSecret) ? $homeSecret : '');
+        $diagKey = trim((string)($_GET['key'] ?? ''));
+        if ($secretPath === '' || $diagKey === '') {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'diag requires ?key=WEBHOOK_SECRET']);
+            exit;
+        }
+        $config = [];
+        foreach (file($secretPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') continue;
+            if (preg_match('/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/', $line, $m)) {
+                $config[$m[1]] = trim($m[2], " \t\"'");
+            }
+        }
+        $webhookSecret = $config['WEBHOOK_SECRET'] ?? '';
+        if ($webhookSecret === '' || !hash_equals($webhookSecret, $diagKey)) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+            exit;
+        }
         $deployScript = '/home/smmturk/deploy-smm.sh';
         $cronScript = '/home/smmturk/deploy-cron.sh';
         $repoDir = '/home/smmturk/repositories/smm-turk-panel';

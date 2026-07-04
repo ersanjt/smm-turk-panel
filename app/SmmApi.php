@@ -4,9 +4,16 @@ class SmmApi {
     private string $api_url;
     private string $api_key;
 
-    public function __construct(string $api_url = PROVIDER_API_URL, string $api_key = PROVIDER_API_KEY) {
-        $this->api_url = $api_url;
-        $this->api_key = $api_key;
+    public function __construct(?string $api_url = null, ?string $api_key = null) {
+        $this->api_url = $api_url ?? (defined('PROVIDER_API_URL') ? PROVIDER_API_URL : 'https://smmfollows.com/api/v2');
+        if ($api_key !== null && $api_key !== '') {
+            $this->api_key = $api_key;
+            return;
+        }
+        $dbKey = Database::getInstance()->getSetting('api_key');
+        $this->api_key = ($dbKey !== null && $dbKey !== '')
+            ? $dbKey
+            : (defined('PROVIDER_API_KEY') ? PROVIDER_API_KEY : '');
     }
 
     public function order(array $data): ?object {

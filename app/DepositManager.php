@@ -14,10 +14,10 @@ class DepositManager {
     /** Approve a pending crypto deposit transaction. */
     public function approvePendingDeposit(int $transactionId): array {
         $tx = $this->db->fetch(
-            "SELECT * FROM transactions WHERE id = ? AND type = 'deposit' AND status = 'pending'",
+            "SELECT id, user_id, amount, description, status FROM transactions WHERE id = ? AND type = 'deposit'",
             [$transactionId]
         );
-        if (!$tx) {
+        if (!$tx || $tx['status'] !== 'pending') {
             return ['success' => false, 'error' => 'Deposit not found or already processed.'];
         }
 
@@ -39,23 +39,43 @@ class DepositManager {
             return ['success' => false, 'error' => 'Invalid amount.'];
         }
 
-        $user = $this->db->fetch("SELECT id, username, email, balance FROM users WHERE id = ?", [$userId]);
-        if (!$user) {
-            return ['success' => false, 'error' => 'User not found.'];
-        }
-
-        $balanceBefore = (float) $user['balance'];
-        $balanceAfter = round($balanceBefore + $amount, 4);
-
-        $this->db->getConnection()->beginTransaction();
+        $this->db->beginTransaction();
         try {
+            if ($existingTransactionId) {
+                $tx = $this->db->fetch(
+                    "SELECT id, user_id, amount, status FROM transactions WHERE id = ? AND type = 'deposit' FOR UPDATE",
+                    [$existingTransactionId]
+                );
+                if (!$tx || $tx['status'] !== 'pending' || (int) $tx['user_id'] !== $userId) {
+                    $this->db->rollBack();
+                    return ['success' => false, 'error' => 'Deposit not found or already processed.'];
+                }
+                $amount = (float) $tx['amount'];
+            }
+
+            $user = $this->db->fetch(
+                "SELECT id, username, email, balance FROM users WHERE id = ? FOR UPDATE",
+                [$userId]
+            );
+            if (!$user) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'User not found.'];
+            }
+
+            $balanceBefore = (float) $user['balance'];
+            $balanceAfter = round($balanceBefore + $amount, 4);
+
             $this->db->execute("UPDATE users SET balance = balance + ? WHERE id = ?", [$amount, $userId]);
 
             if ($existingTransactionId) {
-                $this->db->execute(
+                $updated = $this->db->execute(
                     "UPDATE transactions SET status = 'completed', balance_after = ? WHERE id = ? AND status = 'pending'",
                     [$balanceAfter, $existingTransactionId]
                 );
+                if ($updated === 0) {
+                    $this->db->rollBack();
+                    return ['success' => false, 'error' => 'Deposit already processed.'];
+                }
             } else {
                 $this->db->insert(
                     "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, status) VALUES (?, ?, ?, ?, ?, ?, 'completed')",
@@ -63,9 +83,9 @@ class DepositManager {
                 );
             }
 
-            $this->db->getConnection()->commit();
+            $this->db->commit();
         } catch (Throwable $e) {
-            $this->db->getConnection()->rollBack();
+            $this->db->rollBack();
             Logger::log("Deposit credit failed user#{$userId}: " . $e->getMessage(), 'deposits');
             return ['success' => false, 'error' => 'Failed to credit balance. Please try again.'];
         }

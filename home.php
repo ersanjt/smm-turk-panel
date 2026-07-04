@@ -93,6 +93,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
 </head>
 <body data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
+<script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
 
 <header class="nav" role="banner">
     <div class="nav-inner">
@@ -154,17 +155,17 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
             <form method="POST" action="<?= h(path('login.php')) ?>">
                 <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
                 <div class="form-group">
-                    <label class="form-label"><?= h(__('login_username')) ?></label>
+                    <label class="form-label" for="hero-email"><?= h(__('login_username')) ?></label>
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-                        <input type="text" name="email" class="form-control" placeholder="<?= h(__('login_username')) ?>" required <?= $googleAuth ? '' : 'autofocus' ?>>
+                        <input type="text" name="email" id="hero-email" class="form-control" placeholder="<?= h(__('login_username')) ?>" required <?= $googleAuth ? '' : 'autofocus' ?>>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label"><?= h(__('login_password')) ?></label>
+                    <label class="form-label" for="hero-password"><?= h(__('login_password')) ?></label>
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        <input type="password" name="password" id="hero-password" class="form-control" placeholder="••••••••" required>
                     </div>
                 </div>
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
@@ -260,12 +261,12 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <div class="section-label"><?= h(__('faq_label')) ?></div>
     <h2 class="section-title"><?= h(__('faq_title')) ?></h2>
     <div class="faq-list">
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_1')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_1_a')) ?></div></div>
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_2')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_2_a')) ?></div></div>
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_3')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_3_a')) ?></div></div>
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_4')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_4_a')) ?></div></div>
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_5')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_5_a')) ?></div></div>
-        <div class="faq-item"><div class="faq-q"><?= h(__('faq_6')) ?> <span>+</span></div><div class="faq-a"><?= h(__('faq_6_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_1')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_1_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_2')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_2_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_3')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_3_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_4')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_4_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_5')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_5_a')) ?></div></div>
+        <div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><?= h(__('faq_6')) ?> <span aria-hidden="true">+</span></button><div class="faq-a"><?= h(__('faq_6_a')) ?></div></div>
     </div>
 </section>
 
