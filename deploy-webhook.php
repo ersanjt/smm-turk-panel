@@ -19,7 +19,30 @@
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    echo json_encode(['ok' => true, 'message' => 'Deploy webhook endpoint. Use POST from GitHub.']);
+    if (isset($_GET['diag'])) {
+        $homeSecret = dirname(__DIR__) . '/deploy-secret.txt';
+        $localSecret = __DIR__ . '/deploy-secret.txt';
+        $secretPath = is_readable($localSecret) ? $localSecret : (is_readable($homeSecret) ? $homeSecret : '');
+        $deployScript = '/home/smmturk/deploy-smm.sh';
+        $cronScript = '/home/smmturk/deploy-cron.sh';
+        $repoDir = '/home/smmturk/repositories/smm-turk-panel';
+        $disabled = strtolower((string) ini_get('disable_functions'));
+        $execOff = !function_exists('exec') || ($disabled !== '' && in_array('exec', array_map('trim', explode(',', $disabled)), true));
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'ok' => true,
+            'diag' => [
+                'deploy_secret' => $secretPath !== '' ? 'found' : 'missing — upload deploy-secret.txt to /home/smmturk/',
+                'deploy_script' => is_readable($deployScript) ? 'found' : 'missing — upload deploy-cpanel.sh as /home/smmturk/deploy-smm.sh (755)',
+                'deploy_cron' => is_readable($cronScript) ? 'found' : 'missing — upload deploy-cron.sh to /home/smmturk/ (755)',
+                'git_repo' => is_dir($repoDir . '/.git') ? 'found' : 'missing — clone repo in cPanel Git Version Control',
+                'exec_disabled' => $execOff,
+                'hint' => $execOff ? 'Set Cron: * * * * * /home/smmturk/deploy-cron.sh' : 'exec OK — webhook can run deploy directly',
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    echo json_encode(['ok' => true, 'message' => 'Deploy webhook endpoint. Use POST from GitHub. Add ?diag=1 to check server setup.']);
     exit;
 }
 
