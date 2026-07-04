@@ -145,7 +145,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_
                 "UPDATE transactions SET reference = ? WHERE id = ?",
                 [substr($txId, 0, 100), $tx['id']]
             );
-            flash('success', 'Payment submitted! We are verifying your transaction — you will receive an email when your balance is credited.');
+            $fullTx = $db->fetch(
+                "SELECT id, user_id, amount, description, reference, status, created_at FROM transactions WHERE id = ?",
+                [$tx['id']]
+            );
+            $walletCatalog = DepositAutoConfirm::buildWalletCatalog($db);
+            $auto = new DepositAutoConfirm();
+            $check = $auto->processTransaction($fullTx, $walletCatalog);
+            if ($check['approved']) {
+                flash('success', 'Payment confirmed on-chain! Your balance has been credited — you can place orders now.');
+            } else {
+                flash('success', 'Payment submitted. ' . ($check['message'] ?? 'We are verifying your transaction automatically.'));
+            }
         }
     }
     redirect(url('add-funds.php'));
@@ -450,9 +461,9 @@ require_once __DIR__ . '/layouts/header.php';
 
     <div class="add-funds-next-box">
       <strong>What happens next?</strong><br>
-      1. We verify your payment on the blockchain (usually within a few hours).<br>
-      2. Your balance is credited after admin confirmation.<br>
-      3. You receive an <strong>email</strong> — then place your first order.
+      1. Paste your TxHash — we verify it on the blockchain automatically.<br>
+      2. USDT TRC20 is usually confirmed within 1–3 minutes.<br>
+      3. Balance updates and you receive an <strong>email</strong> — then place your first order.
     </div>
     <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">
       Wrong coin selected? <a href="<?= h(path('add-funds.php')) ?>?new=1">Start over</a> or
@@ -462,22 +473,31 @@ require_once __DIR__ . '/layouts/header.php';
 
 <?php elseif ($step === 'awaiting'): ?>
   <div class="card">
-    <div class="deposit-status-card">
-      <div class="status-icon"><?= icon('clock', 28) ?></div>
-      <h3>Payment submitted — awaiting confirmation</h3>
-      <p>We received your transaction details and are verifying your payment. You will get an email when <strong>$<?= number_format($amount, 2) ?></strong> is added to your balance.</p>
+    <div class="deposit-status-card" id="depositStatusCard">
+      <div class="status-icon" id="depositStatusIcon"><?= icon('clock', 28) ?></div>
+      <h3 id="depositStatusTitle">Verifying payment on blockchain…</h3>
+      <p id="depositStatusMsg">We are checking your transaction automatically. This page updates every few seconds.</p>
       <div class="deposit-status-meta">
         <div><strong>Deposit ID:</strong> #<?= $depositId ?></div>
         <?php if ($selectedWallet): ?>
         <div><strong>Method:</strong> <?= h($selectedWallet['display']) ?></div>
         <?php endif; ?>
+        <div><strong>Amount:</strong> $<?= number_format($amount, 2) ?></div>
         <div><strong>TxHash:</strong> <code style="font-size:11px;word-break:break-all;"><?= h($pendingDeposit['reference'] ?? '') ?></code></div>
-        <div><strong>Submitted:</strong> <?= h(date('Y-m-d H:i', strtotime($pendingDeposit['created_at']))) ?></div>
+        <div><strong>Status:</strong> <span id="depositLiveStatus">Checking…</span></div>
       </div>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Browse services while you wait</a>
-      <a href="<?= h(path('tickets.php')) ?>" class="btn">Contact support</a>
+    <div id="depositConfirmedActions" style="display:none;">
+      <div class="add-funds-ready" style="margin-bottom:16px;">
+        <p><?= icon('check-circle', 18, '', ['style' => 'vertical-align:-4px;margin-right:6px']) ?> <span id="depositConfirmedText">Payment confirmed!</span></p>
+        <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place your first order →</a>
+      </div>
+    </div>
+    <div id="depositWaitingActions">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="<?= h(path('index.php')) ?>" class="btn">Browse services while you wait</a>
+        <a href="<?= h(path('tickets.php')) ?>" class="btn">Contact support</a>
+      </div>
     </div>
     <p style="margin-top:16px;font-size:12px;color:var(--text-muted);">
       Need to deposit more? <a href="<?= h(path('add-funds.php')) ?>?new=1">Start a new deposit</a>
@@ -548,6 +568,40 @@ require_once __DIR__ . '/layouts/header.php';
     }, function(err){
       if (err) console.warn('QR generation failed', err);
     });
+  }
+
+  var depositPoll = document.getElementById('depositLiveStatus');
+  if (depositPoll) {
+    var statusUrl = <?= json_encode(path('api/deposit-status.php')) ?>;
+    function pollDeposit() {
+      fetch(statusUrl, { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (!data.ok) return;
+          var live = document.getElementById('depositLiveStatus');
+          var msg = document.getElementById('depositStatusMsg');
+          var title = document.getElementById('depositStatusTitle');
+          if (live) live.textContent = data.status || 'pending';
+          if (msg && data.message) msg.textContent = data.message;
+          if (data.approved || data.status === 'confirmed') {
+            if (title) title.textContent = 'Payment confirmed!';
+            var card = document.getElementById('depositStatusCard');
+            if (card) card.style.borderColor = '#bbf7d0';
+            var confirmed = document.getElementById('depositConfirmedActions');
+            var waiting = document.getElementById('depositWaitingActions');
+            if (confirmed) confirmed.style.display = 'block';
+            if (waiting) waiting.style.display = 'none';
+            if (data.balance != null) {
+              var t = document.getElementById('depositConfirmedText');
+              if (t) t.textContent = 'Payment confirmed! New balance: $' + Number(data.balance).toFixed(3);
+            }
+            return;
+          }
+          setTimeout(pollDeposit, 8000);
+        })
+        .catch(function(){ setTimeout(pollDeposit, 12000); });
+    }
+    setTimeout(pollDeposit, 3000);
   }
 })();
 </script>

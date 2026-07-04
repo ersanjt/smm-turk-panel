@@ -20,6 +20,8 @@ require_once __DIR__ . '/Icons.php';
 require_once __DIR__ . '/ProfileHelper.php';
 require_once __DIR__ . '/OrderManager.php';
 require_once __DIR__ . '/DepositManager.php';
+require_once __DIR__ . '/CryptoVerifier.php';
+require_once __DIR__ . '/DepositAutoConfirm.php';
 
 // In production, log PHP errors to file (tmp/logs/php_errors.log)
 if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {

@@ -7,6 +7,7 @@ $db = Database::getInstance();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
         'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
+        'deposit_auto_confirm','deposit_min_confirmations','deposit_amount_tolerance','api_etherscan','api_trongrid','api_bscscan',
         'child_panel_price','child_panel_ns1','child_panel_ns2'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
@@ -134,7 +135,10 @@ require_once __DIR__ . '/../layouts/header.php';
 
     <div class="card" style="margin-bottom:18px;">
       <div class="card-title">₿ Crypto Wallets (for receiving deposits)</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Enter your wallet addresses. Users will send crypto to these addresses to top up. Leave empty to hide that option.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+        Copy <strong>Receive</strong> addresses from your wallet (Trust Wallet, MetaMask, etc.) and paste them here.
+        Users send crypto to these addresses — the panel verifies payments on the blockchain automatically (no wallet extension connection needed).
+      </p>
       <div class="form-group">
         <label class="form-label">Bitcoin (BTC)</label>
         <input type="text" name="wallet_btc" class="form-control" value="<?= s($settings,'wallet_btc') ?>" placeholder="bc1... or 1...">
@@ -159,6 +163,48 @@ require_once __DIR__ . '/../layouts/header.php';
         <label class="form-label">Solana (SOL)</label>
         <input type="text" name="wallet_sol" class="form-control" value="<?= s($settings,'wallet_sol') ?>" placeholder="...">
       </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">🔗 Auto deposit verification</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+        When a user submits a TxHash, the panel checks the blockchain and credits balance automatically.
+        <strong>USDT TRC20</strong> works without API keys. For ETH/ERC20/BNB add free API keys from Etherscan / BscScan.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Auto-confirm deposits</label>
+        <select name="deposit_auto_confirm" class="form-control">
+          <option value="1" <?= ($settings['deposit_auto_confirm']??'1')==='1'?'selected':'' ?>>On — verify on-chain and credit balance</option>
+          <option value="0" <?= ($settings['deposit_auto_confirm']??'1')==='0'?'selected':'' ?>>Off — admin approves manually</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Min confirmations</label>
+          <input type="number" name="deposit_min_confirmations" class="form-control" value="<?= s($settings,'deposit_min_confirmations') ?: '1' ?>" min="1" max="12">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount tolerance (0.03 = ±3%)</label>
+          <input type="number" name="deposit_amount_tolerance" class="form-control" value="<?= s($settings,'deposit_amount_tolerance') ?: '0.03' ?>" min="0.01" max="0.15" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etherscan API key (ETH + USDT ERC20)</label>
+        <input type="text" name="api_etherscan" class="form-control" value="<?= s($settings,'api_etherscan') ?>" placeholder="Free at etherscan.io/apis">
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">TronGrid API key (optional, USDT TRC20)</label>
+          <input type="text" name="api_trongrid" class="form-control" value="<?= s($settings,'api_trongrid') ?>" placeholder="Optional — trongrid.io">
+        </div>
+        <div class="form-group">
+          <label class="form-label">BscScan API key (BNB)</label>
+          <input type="text" name="api_bscscan" class="form-control" value="<?= s($settings,'api_bscscan') ?>" placeholder="Free at bscscan.com/apis">
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+        Cron: <code>*/2 * * * * php /home/smmturk/public_html/cron-verify-deposits.php</code>
+      </p>
     </div>
 
     <div class="card" style="margin-bottom:18px;">

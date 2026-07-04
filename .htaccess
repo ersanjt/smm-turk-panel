@@ -10,7 +10,7 @@
 </IfModule>
 
 # Block direct web access to setup/migration/cron scripts (use CLI or cron token)
-<FilesMatch "^(install-db|migrate-.*|seed-blog|cron-sync)\.php$">
+<FilesMatch "^(install-db|migrate-.*|seed-blog|cron-sync|cron-verify-deposits)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
