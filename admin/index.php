@@ -13,6 +13,10 @@ $pendingOrders= $db->fetch("SELECT COUNT(*) c FROM orders WHERE status='Pending'
 $openTickets  = $db->fetch("SELECT COUNT(*) c FROM tickets WHERE status='open'")['c'];
 $totalServices= $db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'];
 $pendingDeposits = $db->fetch("SELECT COUNT(*) c FROM transactions WHERE type='deposit' AND status='pending'")['c'];
+$pendingChildPanels = 0;
+try {
+    $pendingChildPanels = (int) $db->fetch("SELECT COUNT(*) c FROM child_panels WHERE status='pending'")['c'];
+} catch (Throwable $e) {}
 
 // Provider balance
 $providerBalance = null;
@@ -119,6 +123,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('settings', 16) ?> Settings</a>
   <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('tickets', 16) ?> Tickets</a>
   <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn"><?= icon('deposit', 16) ?> Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
+  <a href="<?= h(path('admin/admin-child-panels.php')) ?>" class="qa-btn"><?= icon('server', 16) ?> Child Panels<?= $pendingChildPanels > 0 ? ' (' . $pendingChildPanels . ')' : '' ?></a>
 </div>
 
 <div class="admin-charts">

@@ -71,6 +71,7 @@ require_once __DIR__ . '/layouts/header.php';
 
 <style>
 .cp-intro { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 20px; }
+.cp-status-hint { font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px; max-width: 140px; line-height: 1.4; }
 .cp-nsbox { background: #fff3e0; border: 1px solid #fcd34d; color: #b45309; padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; font-size: 13px; }
 .cp-nsbox strong { display: block; margin-bottom: 6px; }
 .cp-faq { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
@@ -144,11 +145,24 @@ require_once __DIR__ . '/layouts/header.php';
       <table class="table">
         <thead><tr><th>Domain</th><th>Currency</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>
-        <?php foreach ($myPanels as $p): ?>
+        <?php foreach ($myPanels as $p):
+            $st = $p['status'] ?? 'pending';
+            $badge = $st === 'active' ? 'badge-green' : ($st === 'cancelled' ? 'badge-red' : 'badge-orange');
+            $hint = match ($st) {
+                'pending' => 'Waiting for admin activation (24–48h after NS setup)',
+                'active' => 'Your panel is live',
+                'suspended' => 'Contact support',
+                'cancelled' => 'Order cancelled',
+                default => '',
+            };
+        ?>
         <tr>
           <td><?= h($p['domain']) ?></td>
           <td><?= h($p['currency']) ?></td>
-          <td><span class="badge <?= $p['status'] === 'active' ? 'badge-green' : 'badge-orange' ?>"><?= h($p['status']) ?></span></td>
+          <td>
+            <span class="badge <?= $badge ?>"><?= h($st) ?></span>
+            <?php if ($hint !== ''): ?><span class="cp-status-hint"><?= h($hint) ?></span><?php endif; ?>
+          </td>
           <td style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($p['created_at'] ?? ''))) ?></td>
         </tr>
         <?php endforeach; ?>
