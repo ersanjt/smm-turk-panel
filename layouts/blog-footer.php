@@ -1,11 +1,29 @@
-</main>
 <footer class="blog-footer" role="contentinfo">
-    <a href="<?= h(path('home.php')) ?>"><?= h($siteName ?? 'SMM Turk') ?></a> —
-    <a href="<?= h(path('blog.php')) ?>">Blog</a> —
-    <a href="<?= h(path('help.php')) ?>"><?= function_exists('__') ? h(__('help_nav')) : 'Help' ?></a> —
-    <a href="<?= h(path('terms.php')) ?>"><?= function_exists('__') ? h(__('nav_terms')) : 'Terms' ?></a> —
-    <a href="<?= h(path('api-page.php')) ?>">API</a>
-    <br><br>© <?= date('Y') ?> <?= h($siteName ?? 'SMM Turk') ?>.
+    <div class="blog-footer-inner">
+        <div>
+            <div class="blog-footer-brand">SMM <span>TURK</span></div>
+            <p><?= h($siteName ?? 'SMM Turk') ?> — cheapest SMM panel for Instagram, YouTube, TikTok growth. Crypto deposits, reseller API, 24/7 support.</p>
+        </div>
+        <div>
+            <h4>Explore</h4>
+            <div class="blog-footer-links">
+                <a href="<?= h(path('home.php')) ?>"><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
+                <a href="<?= h(path('blog.php')) ?>"><?= function_exists('__') ? h(__('blog_nav_blog')) : 'Blog' ?></a>
+                <a href="<?= h(path('help.php')) ?>"><?= function_exists('__') ? h(__('help_nav')) : 'Help' ?></a>
+                <a href="<?= h(path('services.php')) ?>">Services</a>
+            </div>
+        </div>
+        <div>
+            <h4>Panel</h4>
+            <div class="blog-footer-links">
+                <a href="<?= h(path('login.php')) ?>?mode=register"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Sign Up' ?></a>
+                <a href="<?= h(path('add-funds.php')) ?>">Add Funds</a>
+                <a href="<?= h(path('api-page.php')) ?>">API</a>
+                <a href="<?= h(path('terms.php')) ?>"><?= function_exists('__') ? h(__('nav_terms')) : 'Terms' ?></a>
+            </div>
+        </div>
+    </div>
+    <div class="blog-footer-bottom">© <?= date('Y') ?> <?= h($siteName ?? 'SMM Turk') ?>. All rights reserved.</div>
 </footer>
 </body>
 </html>

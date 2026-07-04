@@ -16,12 +16,12 @@ $pageNum      = max(1, (int)($_GET['p'] ?? 1));
 $perPage      = 12;
 $offset       = ($pageNum - 1) * $perPage;
 
-// Build query and SEO title/description
 $where = ["a.status = 'published'", "a.published_at IS NOT NULL AND a.published_at <= NOW()"];
 $params = [];
 $pageTitle = function_exists('__') ? __('blog_title') : 'Blog';
 $pageDescription = function_exists('__') ? __('blog_meta_desc') : 'SMM Turk Blog — Social media marketing tips, SMM panel guides, Instagram, YouTube, TikTok growth.';
 $canonicalUrl = $baseBlogUrl;
+$filterActive = false;
 
 if ($categorySlug !== '') {
     $cat = $db->fetch("SELECT id, name, meta_description FROM blog_categories WHERE slug = ?", [$categorySlug]);
@@ -34,6 +34,7 @@ if ($categorySlug !== '') {
     $pageTitle = $cat['name'];
     $pageDescription = $cat['meta_description'] ?: ($pageTitle . ' — ' . $siteName . ' Blog.');
     $canonicalUrl = $baseBlogUrl . '?category=' . $categorySlug;
+    $filterActive = true;
 }
 
 if ($tagSlug !== '') {
@@ -49,13 +50,15 @@ if ($tagSlug !== '') {
         $pageDescription = 'Articles tagged with ' . $tag['name'] . ' — ' . $siteName . ' Blog.';
         $canonicalUrl = $baseBlogUrl . '?tag=' . $tagSlug;
     }
+    $filterActive = true;
 }
 
 $whereSql = implode(' AND ', $where);
-$countSql = "SELECT COUNT(*) FROM blog_articles a WHERE $whereSql";
-$total = (int) $db->fetch($countSql, $params)['COUNT(*)'];
+$total = (int) $db->fetch("SELECT COUNT(*) FROM blog_articles a WHERE $whereSql", $params)['COUNT(*)'];
 $totalPages = max(1, (int) ceil($total / $perPage));
-if ($pageNum > $totalPages) $pageNum = 1;
+if ($pageNum > $totalPages) {
+    $pageNum = 1;
+}
 $offset = ($pageNum - 1) * $perPage;
 
 $articles = $db->fetchAll(
@@ -69,14 +72,23 @@ $articles = $db->fetchAll(
 );
 
 foreach ($articles as &$row) {
-    $row['tags'] = $db->fetchAll("SELECT t.name, t.slug FROM blog_tags t INNER JOIN blog_article_tags at ON at.tag_id = t.id WHERE at.article_id = ?", [$row['id']]);
+    $row['tags'] = $db->fetchAll(
+        "SELECT t.name, t.slug FROM blog_tags t INNER JOIN blog_article_tags at ON at.tag_id = t.id WHERE at.article_id = ?",
+        [$row['id']]
+    );
 }
 unset($row);
 
 $categories = $db->fetchAll("SELECT slug, name FROM blog_categories ORDER BY name");
 $tags = $db->fetchAll("SELECT slug, name FROM blog_tags ORDER BY name LIMIT 30");
+$totalPublished = (int) $db->fetch(
+    "SELECT COUNT(*) FROM blog_articles WHERE status = 'published' AND published_at IS NOT NULL AND published_at <= NOW()"
+)['COUNT(*)'];
 
-// JSON-LD for Blog/ItemList (SEO + AI)
+$showFeatured = !$filterActive && $pageNum === 1 && count($articles) > 0;
+$featured = $showFeatured ? array_shift($articles) : null;
+$gridArticles = $articles;
+
 $jsonLd = [
     '@context' => 'https://schema.org',
     '@type' => 'Blog',
@@ -86,15 +98,14 @@ $jsonLd = [
     'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'url' => $siteUrl],
     'blogPost' => array_map(function ($a) use ($siteUrl) {
         $base = $siteUrl ? $siteUrl . path('blog') : path('blog');
-        $postUrl = rtrim($base, '/') . '/' . $a['slug'];
         return [
             '@type' => 'BlogPosting',
             'headline' => $a['title'],
             'description' => $a['excerpt'] ?? '',
-            'url' => $postUrl,
+            'url' => rtrim($base, '/') . '/' . $a['slug'],
             'datePublished' => $a['published_at'],
         ];
-    }, $articles),
+    }, $featured ? array_merge([$featured], $gridArticles) : $gridArticles),
 ];
 
 $pageImage = og_image_url();
@@ -114,62 +125,154 @@ if ($totalPages > 1) {
         $paginationNext = ($siteUrl ? $siteUrl : '') . $nextUrl;
     }
 }
+
 $blogNavActive = 'blog';
 require __DIR__ . '/layouts/blog-header.php';
+
+function blog_post_url(array $a): string {
+    return path('blog') . '/' . rawurlencode($a['slug']);
+}
+
+function blog_category_initial(?string $name): string {
+    if ($name === null || $name === '') return 'S';
+    return mb_strtoupper(mb_substr(trim($name), 0, 1));
+}
 ?>
-<h1><?= h($pageTitle) ?></h1>
-<p><?= h($pageDescription) ?></p>
+
+<header class="blog-hero">
+  <div class="blog-hero-inner">
+    <div class="blog-hero-badge">📚 <?= h($siteName) ?> Blog</div>
+    <h1><?= h($pageTitle) ?></h1>
+    <p><?= h($pageDescription) ?></p>
+    <?php if (!$filterActive): ?>
+    <div class="blog-hero-stats">
+      <div class="blog-hero-stat"><strong><?= (int) $totalPublished ?></strong><span>Articles</span></div>
+      <div class="blog-hero-stat"><strong><?= count($categories) ?></strong><span>Categories</span></div>
+      <div class="blog-hero-stat"><strong>Free</strong><span>Guides & tips</span></div>
+    </div>
+    <?php else: ?>
+    <p style="margin-top:8px;font-size:14px;opacity:.85;">
+      <a href="<?= h(path('blog.php')) ?>" style="color:#fff;text-decoration:underline;">← <?= function_exists('__') ? h(__('blog_all')) : 'All articles' ?></a>
+      · <?= (int) $total ?> result<?= $total !== 1 ? 's' : '' ?>
+    </p>
+    <?php endif; ?>
+  </div>
+</header>
+
+<main class="blog-wrap" role="main">
 
 <?php if (!empty($categories) || !empty($tags)): ?>
-<div class="blog-cats">
+<div class="blog-filters">
+  <?php if (!empty($categories)): ?>
+  <div class="blog-filters-label"><?= function_exists('__') ? h(__('blog_categories')) : 'Categories' ?></div>
+  <div class="blog-cats">
     <a href="<?= h(path('blog.php')) ?>" class="<?= $categorySlug === '' && $tagSlug === '' ? 'active' : '' ?>"><?= function_exists('__') ? h(__('blog_all')) : 'All' ?></a>
     <?php foreach ($categories as $c): ?>
     <a href="<?= h(path('blog.php') . '?category=' . rawurlencode($c['slug'])) ?>" class="<?= $categorySlug === $c['slug'] ? 'active' : '' ?>"><?= h($c['name']) ?></a>
     <?php endforeach; ?>
-    <?php foreach (array_slice($tags, 0, 15) as $t): ?>
-    <a href="<?= h(path('blog.php') . '?tag=' . rawurlencode($t['slug'])) ?>" class="<?= $tagSlug === $t['slug'] ? 'active' : '' ?>"><?= h($t['name']) ?></a>
+  </div>
+  <?php endif; ?>
+  <?php if (!empty($tags)): ?>
+  <div class="blog-filters-label" style="margin-top:12px;"><?= function_exists('__') ? h(__('blog_tags')) : 'Popular tags' ?></div>
+  <div class="blog-tags-row">
+    <?php foreach ($tags as $t): ?>
+    <a href="<?= h(path('blog.php') . '?tag=' . rawurlencode($t['slug'])) ?>" class="blog-tag<?= $tagSlug === $t['slug'] ? ' active' : '' ?>"><?= h($t['name']) ?></a>
     <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
-<div class="blog-list">
-<?php if (empty($articles)): ?>
-    <p><?= function_exists('__') ? h(__('blog_no_posts')) : 'No posts yet.' ?></p>
-<?php else: ?>
-    <?php foreach ($articles as $a): 
-        $postUrl = path('blog') . '/' . rawurlencode($a['slug']);
-        $dateStr = $a['published_at'] ? date('M j, Y', strtotime($a['published_at'])) : '';
-    ?>
-    <article class="blog-card">
-        <?php if (!empty($a['category_name'])): ?>
-        <div class="meta"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($a['category_slug'])) ?>"><?= h($a['category_name']) ?></a></div>
-        <?php endif; ?>
-        <h2><a href="<?= h($postUrl) ?>"><?= h($a['title']) ?></a></h2>
-        <div class="meta"><?= $dateStr ?><?php if (!empty($a['reading_time_min'])): ?> · <?= (int)$a['reading_time_min'] ?> min read<?php endif; ?></div>
-        <?php if (!empty($a['excerpt'])): ?><p class="excerpt"><?= h($a['excerpt']) ?></p><?php endif; ?>
-        <?php if (!empty($a['tags'])): ?>
-        <div class="blog-tags">
-            <?php foreach ($a['tags'] as $t): ?><a href="<?= h(path('blog.php') . '?tag=' . rawurlencode($t['slug'])) ?>" class="blog-tag"><?= h($t['name']) ?></a><?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-        <a href="<?= h($postUrl) ?>" class="read-more"><?= function_exists('__') ? h(__('blog_read_more')) : 'Read more' ?> →</a>
-    </article>
-    <?php endforeach; ?>
+<?php if ($featured): ?>
+<?php
+  $fUrl = blog_post_url($featured);
+  $fDate = $featured['published_at'] ? date('M j, Y', strtotime($featured['published_at'])) : '';
+?>
+<article class="blog-featured">
+  <div class="blog-featured-visual">
+    <?php if (!empty($featured['featured_image'])): ?>
+    <img src="<?= h($featured['featured_image'][0] === '/' ? $featured['featured_image'] : path($featured['featured_image'])) ?>" alt="<?= h($featured['title']) ?>" loading="eager" width="480" height="270">
+    <?php else: ?>
+    <div class="blog-featured-icon" aria-hidden="true"><?= h(blog_category_initial($featured['category_name'] ?? null)) ?></div>
+    <?php endif; ?>
+  </div>
+  <div class="blog-featured-body">
+    <div class="blog-featured-label"><?= function_exists('__') ? h(__('blog_featured')) : 'Featured' ?></div>
+    <?php if (!empty($featured['category_name'])): ?>
+    <div class="meta"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($featured['category_slug'])) ?>"><?= h($featured['category_name']) ?></a></div>
+    <?php endif; ?>
+    <h2><a href="<?= h($fUrl) ?>"><?= h($featured['title']) ?></a></h2>
+    <div class="meta"><?= h($fDate) ?><?php if (!empty($featured['reading_time_min'])): ?> · <?= (int)$featured['reading_time_min'] ?> min read<?php endif; ?></div>
+    <?php if (!empty($featured['excerpt'])): ?><p class="excerpt"><?= h($featured['excerpt']) ?></p><?php endif; ?>
+    <a href="<?= h($fUrl) ?>" class="read-more"><?= function_exists('__') ? h(__('blog_read_more')) : 'Read article' ?> →</a>
+  </div>
+</article>
 <?php endif; ?>
+
+<?php if (empty($gridArticles) && !$featured): ?>
+<div class="blog-empty">
+  <p><?= function_exists('__') ? h(__('blog_no_posts')) : 'No posts yet.' ?></p>
 </div>
+<?php else: ?>
+<div class="blog-grid">
+  <?php foreach ($gridArticles as $a):
+      $postUrl = blog_post_url($a);
+      $dateStr = $a['published_at'] ? date('M j, Y', strtotime($a['published_at'])) : '';
+  ?>
+  <article class="blog-card">
+    <?php if (!empty($a['category_name'])): ?>
+    <div class="blog-card-cat"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($a['category_slug'])) ?>"><?= h($a['category_name']) ?></a></div>
+    <?php endif; ?>
+    <h2><a href="<?= h($postUrl) ?>"><?= h($a['title']) ?></a></h2>
+    <div class="meta"><?= h($dateStr) ?><?php if (!empty($a['reading_time_min'])): ?> · <?= (int)$a['reading_time_min'] ?> min<?php endif; ?></div>
+    <?php if (!empty($a['excerpt'])): ?><p class="excerpt"><?= h($a['excerpt']) ?></p><?php endif; ?>
+    <div class="blog-card-footer">
+      <?php if (!empty($a['tags'])): ?>
+      <div class="blog-card-tags">
+        <?php foreach (array_slice($a['tags'], 0, 3) as $t): ?>
+        <a href="<?= h(path('blog.php') . '?tag=' . rawurlencode($t['slug'])) ?>" class="blog-tag"><?= h($t['name']) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+      <a href="<?= h($postUrl) ?>" class="read-more"><?= function_exists('__') ? h(__('blog_read_more')) : 'Read' ?> →</a>
+    </div>
+  </article>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
 
 <?php if ($totalPages > 1): ?>
 <nav class="blog-pagination" aria-label="Pagination">
-    <?php if ($pageNum > 1): $prevUrl = path('blog.php') . '?p=' . ($pageNum - 1); if ($categorySlug) $prevUrl .= '&category=' . rawurlencode($categorySlug); if ($tagSlug) $prevUrl .= '&tag=' . rawurlencode($tagSlug); ?>
+    <?php if ($pageNum > 1):
+        $prevUrl = path('blog.php') . '?p=' . ($pageNum - 1);
+        if ($categorySlug) $prevUrl .= '&category=' . rawurlencode($categorySlug);
+        if ($tagSlug) $prevUrl .= '&tag=' . rawurlencode($tagSlug);
+    ?>
     <a href="<?= h($prevUrl) ?>">← <?= function_exists('__') ? h(__('blog_prev')) : 'Previous' ?></a>
     <?php endif; ?>
-    <?php for ($i = max(1, $pageNum - 2); $i <= min($totalPages, $pageNum + 2); $i++): 
-        $pUrl = path('blog.php') . '?p=' . $i; if ($categorySlug) $pUrl .= '&category=' . rawurlencode($categorySlug); if ($tagSlug) $pUrl .= '&tag=' . rawurlencode($tagSlug);
+    <?php for ($i = max(1, $pageNum - 2); $i <= min($totalPages, $pageNum + 2); $i++):
+        $pUrl = path('blog.php') . '?p=' . $i;
+        if ($categorySlug) $pUrl .= '&category=' . rawurlencode($categorySlug);
+        if ($tagSlug) $pUrl .= '&tag=' . rawurlencode($tagSlug);
     ?><a href="<?= h($pUrl) ?>" class="<?= $i === $pageNum ? 'current' : '' ?>"><?= $i ?></a><?php endfor; ?>
-    <?php if ($pageNum < $totalPages): $nextUrl = path('blog.php') . '?p=' . ($pageNum + 1); if ($categorySlug) $nextUrl .= '&category=' . rawurlencode($categorySlug); if ($tagSlug) $nextUrl .= '&tag=' . rawurlencode($tagSlug); ?>
+    <?php if ($pageNum < $totalPages):
+        $nextUrl = path('blog.php') . '?p=' . ($pageNum + 1);
+        if ($categorySlug) $nextUrl .= '&category=' . rawurlencode($categorySlug);
+        if ($tagSlug) $nextUrl .= '&tag=' . rawurlencode($tagSlug);
+    ?>
     <a href="<?= h($nextUrl) ?>"><?= function_exists('__') ? h(__('blog_next')) : 'Next' ?> →</a>
     <?php endif; ?>
 </nav>
 <?php endif; ?>
+
+<div class="blog-cta">
+  <div>
+    <h3>Ready to grow your social media?</h3>
+    <p>Join <?= h($siteName) ?> — add funds with crypto and start ordering in minutes.</p>
+  </div>
+  <a href="<?= h(path('login.php')) ?>?mode=register" class="blog-cta-btn"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Create free account' ?></a>
+</div>
+
+</main>
 
 <?php require __DIR__ . '/layouts/blog-footer.php'; ?>
