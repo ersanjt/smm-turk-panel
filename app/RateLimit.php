@@ -23,9 +23,17 @@ class RateLimit {
         if ($this->customKey !== null) {
             return 'api_' . md5($this->customKey);
         }
-        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $ip = trim(explode(',', $ip)[0]);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $ip = trim($_SERVER['HTTP_CF_CONNECTING_IP']);
+        } elseif ($this->isTrustedProxy($ip) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = trim(explode(',', (string)$_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+        }
         return md5($ip);
+    }
+
+    private function isTrustedProxy(string $ip): bool {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
     }
 
     private function filePath(): string {

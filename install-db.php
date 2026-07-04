@@ -5,6 +5,13 @@
  * بعد از موفقیت این فایل را حذف کن!
  */
 header('Content-Type: text/html; charset=utf-8');
+
+$configPath = __DIR__ . '/config.php';
+if (file_exists($configPath)) {
+    http_response_code(403);
+    echo '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8"><title>غیرفعال</title></head><body style="font-family:tahoma;background:#1a1a2e;color:#eee;padding:40px;text-align:center;"><h1>install-db.php غیرفعال است</h1><p>فایل config.php از قبل وجود دارد. برای امنیت این فایل را از سرور حذف کنید.</p></body></html>';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
@@ -78,15 +85,16 @@ define(\'DB_CHARSET\', \'utf8mb4\');
 define(\'SITE_URL\', \'https://smm-turk.com\');
 define(\'SITE_NAME\', \'SMM Turk\');
 define(\'PROVIDER_API_URL\', \'https://smmfollows.com/api/v2\');
-define(\'PROVIDER_API_KEY\', \'688c2ed64a9fbb548eb99e1873702027\');
-define(\'SECRET_KEY\', bin2hex(random_bytes(16)));
+define(\'PROVIDER_API_KEY\', \'\');
+define(\'SECRET_KEY\', \'' . bin2hex(random_bytes(32)) . '\');
 define(\'SESSION_LIFETIME\', 86400);
 define(\'MARKUP_PERCENT\', 10);
 define(\'MIN_DEPOSIT\', 10);
 define(\'REFERRAL_COMMISSION\', 2);
+define(\'SMM_PRODUCTION\', true);
 date_default_timezone_set(\'UTC\');
 error_reporting(E_ALL);
-ini_set(\'display_errors\', 1);
+ini_set(\'display_errors\', 0);
 ';
             $path = __DIR__ . '/config.php';
             if (file_put_contents($path, $config)) {

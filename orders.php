@@ -130,7 +130,7 @@ require_once __DIR__ . '/layouts/header.php';
         </table>
       </div>
 
-      <div class="orders-cards" aria-hidden="true">
+      <div class="orders-cards">
         <?php foreach ($orders as $o): ?>
         <div class="orders-card">
           <div class="orders-card-top">

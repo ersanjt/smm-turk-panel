@@ -2,6 +2,7 @@
 class Auth {
 
     private Database $db;
+    private const DEFAULT_PASSWORD_HASH = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -32,6 +33,9 @@ class Auth {
             return ['success' => false, 'error' => 'Password must be at least 6 characters'];
         }
 
+        $email = strtolower(trim($email));
+        $username = trim($username);
+
         $existing = $this->db->fetch("SELECT id FROM users WHERE username = ? OR email = ?", [$username, $email]);
         if ($existing) {
             return ['success' => false, 'error' => 'Username or email already exists'];
@@ -43,24 +47,77 @@ class Auth {
             if ($referrer) $referred_by = $referrer['id'];
         }
 
+        // Email verification is required by default; admin can disable in Settings.
+        $verifyRequired = ($this->db->getSetting('email_verification_required') ?? '1') !== '0';
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $ref_code = strtolower(substr(md5(uniqid()), 0, 8));
         $api_key = bin2hex(random_bytes(20));
-        $token = bin2hex(random_bytes(24));
-        $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours
+
+        if ($verifyRequired) {
+            $token = bin2hex(random_bytes(24));
+            $expires = date('Y-m-d H:i:s', time() + 86400);
+            $id = $this->db->insert(
+                "INSERT INTO users (username, email, password, referral_code, referred_by, api_key, status, email_verification_token, email_verification_expires) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+                [$username, $email, $hashed, $ref_code, $referred_by, $api_key, $token, $expires]
+            );
+            $mail = new Mail();
+            $emailSent = $mail->sendVerification($email, $username, $token);
+            return [
+                'success' => true,
+                'user_id' => $id,
+                'verify_required' => true,
+                'email_sent' => $emailSent,
+            ];
+        }
 
         $id = $this->db->insert(
-            "INSERT INTO users (username, email, password, referral_code, referred_by, api_key, status, email_verification_token, email_verification_expires) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
-            [$username, $email, $hashed, $ref_code, $referred_by, $api_key, $token, $expires]
+            "INSERT INTO users (username, email, password, referral_code, referred_by, api_key, status) VALUES (?, ?, ?, ?, ?, ?, 'active')",
+            [$username, $email, $hashed, $ref_code, $referred_by, $api_key]
+        );
+
+        return ['success' => true, 'user_id' => $id, 'verify_required' => false, 'email_sent' => false];
+    }
+
+    /**
+     * Resend verification email for pending accounts. Returns success even if email not found (avoid enumeration).
+     */
+    public function resendVerificationEmail(string $email): array {
+        $email = strtolower(trim($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Invalid email address.'];
+        }
+
+        $user = $this->db->fetch(
+            "SELECT id, username, status FROM users WHERE email = ? AND status != 'banned'",
+            [$email]
+        );
+        if (!$user || ($user['status'] ?? '') === 'active') {
+            return ['success' => true, 'email_sent' => false];
+        }
+
+        $token = bin2hex(random_bytes(24));
+        $expires = date('Y-m-d H:i:s', time() + 86400);
+        $this->db->execute(
+            "UPDATE users SET email_verification_token = ?, email_verification_expires = ?, status = 'pending' WHERE id = ?",
+            [$token, $expires, $user['id']]
         );
 
         $mail = new Mail();
-        $mail->sendVerification($email, $username, $token);
+        $emailSent = $mail->sendVerification($email, $user['username'], $token);
 
-        return ['success' => true, 'user_id' => $id];
+        return ['success' => true, 'email_sent' => $emailSent];
+    }
+
+    public function loginById(int $userId): array {
+        $user = $this->db->fetch("SELECT * FROM users WHERE id = ? AND status != 'banned'", [$userId]);
+        if (!$user) {
+            return ['success' => false, 'error' => 'Account not found.'];
+        }
+        return $this->finalizeLogin($user);
     }
 
     public function login(string $email_or_username, string $password): array {
+        $email_or_username = trim($email_or_username);
         $user = $this->db->fetch(
             "SELECT * FROM users WHERE (email = ? OR username = ?) AND status != 'banned'",
             [$email_or_username, $email_or_username]
@@ -70,17 +127,120 @@ class Auth {
             return ['success' => false, 'error' => 'Invalid credentials'];
         }
         if (($user['status'] ?? 'active') === 'pending') {
-            return ['success' => false, 'error' => 'Please verify your email first. Check your inbox for the verification link.'];
+            return ['success' => false, 'error' => 'Please verify your email first. Check your inbox and click the activation link.'];
         }
 
-        $_SESSION['user_id']   = $user['id'];
-        $_SESSION['username']  = $user['username'];
-        $_SESSION['role']      = $user['role'];
-        $_SESSION['logged_in'] = true;
+        return $this->finalizeLogin($user);
+    }
 
+    public function hasPendingTwoFactor(): bool {
+        if (empty($_SESSION['pending_2fa_user_id'])) {
+            return false;
+        }
+        if (!empty($_SESSION['pending_2fa_expires']) && time() > (int)$_SESSION['pending_2fa_expires']) {
+            $this->clearPendingTwoFactor();
+            return false;
+        }
+        return true;
+    }
+
+    public function completeTwoFactorLogin(string $code): array {
+        if (!$this->hasPendingTwoFactor()) {
+            return ['success' => false, 'error' => 'Two-factor session expired. Please sign in again.'];
+        }
+        $userId = (int)$_SESSION['pending_2fa_user_id'];
+        $user = $this->db->fetch("SELECT * FROM users WHERE id = ? AND status != 'banned'", [$userId]);
+        if (!$user || empty($user['two_factor_secret']) || empty($user['two_factor_enabled'])) {
+            $this->clearPendingTwoFactor();
+            return ['success' => false, 'error' => 'Invalid two-factor session. Please sign in again.'];
+        }
+        if (!Totp::verify($user['two_factor_secret'], $code)) {
+            return ['success' => false, 'error' => 'Invalid authentication code. Try again.'];
+        }
+        $this->clearPendingTwoFactor();
+        return $this->finalizeLogin($user, false);
+    }
+
+    public function startTwoFactorSetup(int $userId): array {
+        $user = $this->db->fetch("SELECT id, username, email FROM users WHERE id = ?", [$userId]);
+        if (!$user) {
+            return ['success' => false, 'error' => 'User not found.'];
+        }
+        $secret = Totp::generateSecret();
+        $_SESSION['2fa_setup_secret'] = $secret;
+        $_SESSION['2fa_setup_user_id'] = $userId;
+        $_SESSION['2fa_setup_expires'] = time() + 600;
+        $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+        $label = $user['email'] ?: $user['username'];
+        $uri = Totp::getProvisioningUri($secret, $label, $siteName);
+        return ['success' => true, 'secret' => $secret, 'uri' => $uri];
+    }
+
+    public function confirmTwoFactorSetup(int $userId, string $code): array {
+        if (empty($_SESSION['2fa_setup_secret']) || (int)($_SESSION['2fa_setup_user_id'] ?? 0) !== $userId) {
+            return ['success' => false, 'error' => 'Setup session expired. Start again.'];
+        }
+        if (!empty($_SESSION['2fa_setup_expires']) && time() > (int)$_SESSION['2fa_setup_expires']) {
+            unset($_SESSION['2fa_setup_secret'], $_SESSION['2fa_setup_user_id'], $_SESSION['2fa_setup_expires']);
+            return ['success' => false, 'error' => 'Setup session expired. Start again.'];
+        }
+        $secret = (string)$_SESSION['2fa_setup_secret'];
+        if (!Totp::verify($secret, $code)) {
+            return ['success' => false, 'error' => 'Invalid code. Check your authenticator app and try again.'];
+        }
+        try {
+            $this->db->execute(
+                "UPDATE users SET two_factor_enabled = 1, two_factor_secret = ? WHERE id = ?",
+                [$secret, $userId]
+            );
+        } catch (Throwable $e) {
+            return ['success' => false, 'error' => 'Could not enable 2FA. Run php migrate-two-factor.php first.'];
+        }
+        unset($_SESSION['2fa_setup_secret'], $_SESSION['2fa_setup_user_id'], $_SESSION['2fa_setup_expires']);
+        return ['success' => true];
+    }
+
+    public function disableTwoFactor(int $userId, string $password, string $code): array {
+        $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+        if (!$user || !password_verify($password, $user['password'])) {
+            return ['success' => false, 'error' => 'Current password is incorrect.'];
+        }
+        if (empty($user['two_factor_secret']) || !Totp::verify($user['two_factor_secret'], $code)) {
+            return ['success' => false, 'error' => 'Invalid authentication code.'];
+        }
+        $this->db->execute(
+            "UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL WHERE id = ?",
+            [$userId]
+        );
+        return ['success' => true];
+    }
+
+    private function clearPendingTwoFactor(): void {
+        unset($_SESSION['pending_2fa_user_id'], $_SESSION['pending_2fa_expires']);
+    }
+
+    private function userNeedsTwoFactor(array $user): bool {
+        return !empty($user['two_factor_enabled']) && !empty($user['two_factor_secret']);
+    }
+
+    private function beginPendingTwoFactor(array $user): array {
+        $_SESSION['pending_2fa_user_id'] = (int)$user['id'];
+        $_SESSION['pending_2fa_expires'] = time() + 300;
+        return ['success' => true, 'needs_2fa' => true];
+    }
+
+    private function finalizeLogin(array $user, bool $checkTwoFactor = true): array {
+        if ($checkTwoFactor && $this->userNeedsTwoFactor($user)) {
+            return $this->beginPendingTwoFactor($user);
+        }
+        $this->setSession($user);
+        $this->applyPasswordChangeRequirement($user);
         $this->db->execute("UPDATE users SET last_login = NOW() WHERE id = ?", [$user['id']]);
-
-        return ['success' => true, 'role' => $user['role']];
+        return [
+            'success' => true,
+            'role' => $user['role'],
+            'must_change_password' => !empty($_SESSION['must_change_password']),
+        ];
     }
 
     public function logout(): void {
@@ -90,24 +250,90 @@ class Auth {
     }
 
     public function isLoggedIn(): bool {
-        return !empty($_SESSION['logged_in']) && !empty($_SESSION['user_id']);
+        if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
+            return false;
+        }
+        return $this->refreshSessionLifetime();
     }
 
     public function isAdmin(): bool {
-        return $this->isLoggedIn() && ($_SESSION['role'] ?? '') === 'admin';
+        if (!$this->isLoggedIn()) {
+            return false;
+        }
+        $user = $this->db->fetch("SELECT role, status FROM users WHERE id = ?", [$this->getUserId()]);
+        if (!$user || ($user['status'] ?? '') === 'banned') {
+            return false;
+        }
+        if (($user['role'] ?? '') !== ($_SESSION['role'] ?? '')) {
+            $_SESSION['role'] = $user['role'];
+        }
+        return ($user['role'] ?? '') === 'admin';
     }
 
     public function requireLogin(): void {
         if (!$this->isLoggedIn()) {
-            header('Location: ' . url('login.php'));
+            $returnPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+            $query = $_SERVER['QUERY_STRING'] ?? '';
+            if ($query !== '') {
+                $returnPath .= '?' . $query;
+            }
+            header('Location: ' . url('login.php') . '?next=' . urlencode($returnPath));
             exit;
         }
+        $this->enforcePasswordChangeIfNeeded();
     }
 
     public function requireAdmin(): void {
         if (!$this->isAdmin()) {
             header('Location: ' . url('index.php'));
             exit;
+        }
+        $this->enforcePasswordChangeIfNeeded();
+    }
+
+    public function postLoginRedirectUrl(array $loginResult = []): string {
+        if (!empty($_SESSION['must_change_password']) || !empty($loginResult['must_change_password'])) {
+            return url('account-settings.php?change_password=1');
+        }
+        if (!empty($_SESSION['login_next'])) {
+            return consume_login_next();
+        }
+        if (($loginResult['role'] ?? $_SESSION['role'] ?? '') === 'admin') {
+            return url('admin/index.php');
+        }
+        return url('index.php');
+    }
+
+    private function enforcePasswordChangeIfNeeded(): void {
+        if (empty($_SESSION['must_change_password'])) {
+            return;
+        }
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (preg_match('#account-settings|logout#', $uri)) {
+            return;
+        }
+        flash('error', 'Please change your default password before continuing.');
+        redirect(url('account-settings.php?change_password=1'));
+    }
+
+    private function applyPasswordChangeRequirement(array $user): void {
+        if (!empty($user['must_change_password']) || $this->usesDefaultPasswordHash($user['password'] ?? '')) {
+            $_SESSION['must_change_password'] = true;
+            return;
+        }
+        unset($_SESSION['must_change_password']);
+    }
+
+    private function usesDefaultPasswordHash(string $hash): bool {
+        return hash_equals(self::DEFAULT_PASSWORD_HASH, $hash);
+    }
+
+    private function clearPasswordChangeRequirement(int $userId): void {
+        unset($_SESSION['must_change_password']);
+        try {
+            $this->db->execute("UPDATE users SET must_change_password = 0 WHERE id = ?", [$userId]);
+        } catch (Throwable $e) {
+            // column may not exist on older installs until migration runs
         }
     }
 
@@ -146,6 +372,7 @@ class Auth {
         }
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $this->db->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
+        $this->clearPasswordChangeRequirement($userId);
         return ['success' => true];
     }
 
@@ -157,7 +384,7 @@ class Auth {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'error' => 'Invalid email address'];
         }
-        $user = $this->db->fetch("SELECT id, username FROM users WHERE email = ? AND status = 'active'", [$email]);
+        $user = $this->db->fetch("SELECT id, username FROM users WHERE email = ? AND status != 'banned'", [$email]);
         if (!$user) {
             return ['success' => true];
         }
@@ -199,6 +426,7 @@ class Auth {
             "UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?",
             [$hash, $user['id']]
         );
+        $this->clearPasswordChangeRequirement((int)$user['id']);
         return ['success' => true];
     }
 
@@ -219,21 +447,27 @@ class Auth {
         // Existing user by google_id
         $user = $this->db->fetch("SELECT * FROM users WHERE google_id = ? AND status != 'banned'", [$googleId]);
         if ($user) {
-            $this->setSession($user);
             $this->db->execute("UPDATE users SET last_login = NOW(), email = ? WHERE id = ?", [$email, $user['id']]);
-            return ['success' => true];
+            $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$user['id']]) ?: $user;
+            return $this->finalizeLogin($user);
         }
 
-        // Existing user by email (link Google)
+        // Existing user by email — only link verified (active) accounts without Google linked yet
         $user = $this->db->fetch("SELECT * FROM users WHERE email = ? AND status != 'banned'", [$email]);
         if ($user) {
+            if (($user['status'] ?? '') === 'pending') {
+                return ['success' => false, 'error' => 'Please verify your email first, then sign in with Google again.'];
+            }
+            if (!empty($user['google_id']) && $user['google_id'] !== $googleId) {
+                return ['success' => false, 'error' => 'This email is linked to another Google account. Sign in with your password.'];
+            }
             try {
                 $this->db->execute("UPDATE users SET google_id = ?, last_login = NOW() WHERE id = ?", [$googleId, $user['id']]);
             } catch (Throwable $e) {
-                // column may not exist yet
+                return ['success' => false, 'error' => 'Google sign-in is not available yet. Please contact support.'];
             }
-            $this->setSession($user);
-            return ['success' => true];
+            $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$user['id']]) ?: $user;
+            return $this->finalizeLogin($user);
         }
 
         // New user: create (no email verification for Google sign-in)
@@ -251,16 +485,52 @@ class Auth {
         );
         $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
         if ($user) {
-            $this->setSession($user);
-            return ['success' => true];
+            return $this->finalizeLogin($user);
         }
         return ['success' => false, 'error' => 'Could not create account'];
     }
 
     private function setSession(array $user): void {
+        session_regenerate_id(true);
         $_SESSION['user_id']   = $user['id'];
         $_SESSION['username']  = $user['username'];
         $_SESSION['role']      = $user['role'];
         $_SESSION['logged_in'] = true;
+        $_SESSION['last_activity'] = time();
+    }
+
+    private function refreshSessionLifetime(): bool {
+        $lifetime = defined('SESSION_LIFETIME') ? (int)SESSION_LIFETIME : 0;
+        if ($lifetime <= 0) {
+            $_SESSION['last_activity'] = time();
+            return true;
+        }
+        $now = time();
+        $last = (int)($_SESSION['last_activity'] ?? $now);
+        if ($now - $last > $lifetime) {
+            $this->destroySessionQuietly();
+            return false;
+        }
+        $_SESSION['last_activity'] = $now;
+        return true;
+    }
+
+    private function destroySessionQuietly(): void {
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
     }
 }

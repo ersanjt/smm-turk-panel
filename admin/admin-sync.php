@@ -7,6 +7,10 @@ $db = Database::getInstance();
 
 $result = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_verify()) {
+        flash('error', 'Invalid request. Please try again.');
+        redirect(url('admin/admin-sync.php'));
+    }
     $result = $om->syncServices();
     if ($result['success']) {
         flash('success', "✅ Synced {$result['synced']} services from provider.");

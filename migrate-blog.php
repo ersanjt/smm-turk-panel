@@ -4,6 +4,7 @@
  * Run once: php migrate-blog.php
  */
 require_once __DIR__ . '/app/init.php';
+require_cli();
 $db = Database::getInstance();
 $pdo = $db->getConnection();
 

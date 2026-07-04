@@ -18,6 +18,8 @@ define('SITE_URL', 'https://smm-turk.com');
 define('SITE_NAME', 'SMM Turk');
 // Geo/SEO: primary region for meta geo.region (ISO 3166-1 alpha-2, e.g. TR for Turkey)
 define('GEO_REGION', 'TR');
+// Social sharing image (1200x630 PNG/JPG). Relative path or full URL.
+define('OG_IMAGE_URL', 'assets/img/og-default.png');
 define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verification emails (cPanel: use an email from your domain)
 
 // SmmFollows API - Get key from https://smmfollows.com → Account → API
@@ -27,10 +29,17 @@ define('PROVIDER_API_KEY', 'YOUR_SMMFOLLOWS_API_KEY');
 // Security - Session/CSRF key. In production you MUST use a fixed value:
 // 1) Set env SMM_SECRET_KEY to a 32-char hex, or 2) define a constant below.
 // Do NOT use bin2hex(random_bytes(16)) at runtime in production (sessions break on restart).
-define('SECRET_KEY', getenv('SMM_SECRET_KEY') ?: bin2hex(random_bytes(16)));
-define('SESSION_LIFETIME', 86400);  // 24 hours
+define('SECRET_KEY', getenv('SMM_SECRET_KEY') ?: 'CHANGE_ME_TO_A_FIXED_32_CHAR_HEX_SECRET');
+// Optional: separate secret for cron HTTP triggers. Falls back to SECRET_KEY.
+define('CRON_SECRET', getenv('CRON_SECRET') ?: '');
+// Set true to use CSP report-only mode instead of enforcing headers.
+define('SMM_CSP_REPORT_ONLY', false);
+define('SESSION_LIFETIME', 86400);  // Idle timeout in seconds (24h). Session expires after inactivity.
 
-// Crypto deposit — single wallet address (ETH/ERC20/USDT etc.). Customers can only deposit via crypto.
+// Payments: this panel accepts cryptocurrency deposits ONLY (no cards, PayPal, or bank transfer).
+define('DEPOSITS_CRYPTO_ONLY', true);
+
+// Crypto deposit — fallback wallet when Admin → Settings → Crypto Wallets are empty.
 define('CRYPTO_WALLET_ADDRESS', 'YOUR_ETH_OR_USDT_ADDRESS');
 
 define('MARKUP_PERCENT', 10);

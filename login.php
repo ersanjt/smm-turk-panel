@@ -5,6 +5,7 @@ require_once __DIR__ . '/app/RateLimit.php';
 if ($auth->isLoggedIn()) {
     redirect(url('index.php'));
 }
+store_login_next($_GET['next'] ?? null);
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 
 $mode  = $_GET['mode'] ?? 'login';
@@ -22,27 +23,55 @@ if ($flash) {
     else $success = $flash['message'];
 }
 $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
+$registerRateLimit = new RateLimit(5, 3600, 'register_' . ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfOk = isset($_POST['csrf_token']) && hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '');
     if (!$csrfOk) {
         $error = 'Invalid request. Please try again.';
+    } elseif (isset($_POST['action']) && $_POST['action'] === 'resend_verification') {
+        $resendEmail = trim($_POST['resend_email'] ?? '');
+        $resend = $auth->resendVerificationEmail($resendEmail);
+        if ($resend['success']) {
+            if (!empty($resend['email_sent'])) {
+                $success = 'Verification email sent! Check your inbox and click the link to activate your account.';
+            } else {
+                $success = 'If that email has a pending account, a new verification link was sent. Check your inbox and spam folder.';
+            }
+            $_SESSION['pending_verify_email'] = strtolower($resendEmail);
+            $mode = 'login';
+        } else {
+            $error = $resend['error'] ?? 'Could not resend verification email.';
+        }
     } elseif ($mode === 'login') {
-        if ($rateLimit->isLimited()) {
+        $loginId = strtolower(trim($_POST['email'] ?? ''));
+        $accountRateLimit = $loginId !== '' ? new RateLimit(8, 900, 'login_user_' . md5($loginId)) : null;
+        if ($rateLimit->isLimited() || ($accountRateLimit && $accountRateLimit->isLimited())) {
             $error = 'Too many login attempts. Please try again in 15 minutes.';
         } else {
             $result = $auth->login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
             if ($result['success']) {
                 $rateLimit->clear();
-                redirect(url('index.php'));
+                if ($accountRateLimit) {
+                    $accountRateLimit->clear();
+                }
+                if (!empty($result['needs_2fa'])) {
+                    redirect(url('login-2fa.php'));
+                }
+                redirect($auth->postLoginRedirectUrl($result));
             } else {
                 $rateLimit->recordAttempt();
+                if ($accountRateLimit) {
+                    $accountRateLimit->recordAttempt();
+                }
                 $error = $result['error'];
             }
         }
-    } else {
+    } elseif ($mode === 'register') {
         if (!$registrationEnabled) {
             $error = 'Registration is currently disabled.';
+        } elseif ($registerRateLimit->isLimited()) {
+            $error = 'Too many registration attempts. Please try again in 1 hour.';
         } else {
             $result = $auth->register(
                 trim($_POST['username'] ?? ''),
@@ -51,12 +80,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['ref'] ?? '')
             );
             if ($result['success']) {
-                $success = '✅ Account created! Check your email for the verification link, then login.';
-                $mode = 'login';
+                $registerRateLimit->clear();
+                if (!empty($result['verify_required'])) {
+                    if (!empty($result['email_sent'])) {
+                        $success = 'Account created! We sent a verification email — click the link to activate your account, then sign in.';
+                    } else {
+                        $success = 'Account created, but we could not send the email. Use “Resend verification email” below or contact support.';
+                    }
+                    $_SESSION['pending_verify_email'] = strtolower(trim($_POST['email'] ?? ''));
+                    $mode = 'login';
+                } else {
+                    $loginResult = $auth->login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
+                    if ($loginResult['success']) {
+                        if (!empty($loginResult['needs_2fa'])) {
+                            redirect(url('login-2fa.php'));
+                        }
+                        flash('success', 'Welcome! Add funds with crypto to start placing orders.');
+                        redirect($auth->postLoginRedirectUrl($loginResult));
+                    }
+                    $success = 'Account created! You can sign in now.';
+                    $mode = 'login';
+                }
             } else {
+                $registerRateLimit->recordAttempt();
                 $error = $result['error'];
             }
         }
+    } else {
+        $error = 'Invalid request.';
     }
 }
 // Ensure CSRF token exists for forms
@@ -122,6 +173,9 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 .footer-link{text-align:center;margin-top:22px;padding-top:20px;border-top:1px solid rgba(227,10,23,.1);font-size:14px;color:var(--muted)}
 .footer-link a{color:var(--primary);font-weight:700;transition:color .2s}
 .footer-link a:hover{color:var(--primary-dark)}
+.resend-box{margin-top:20px;padding-top:18px;border-top:1px dashed rgba(227,10,23,.15)}
+.resend-box p{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.resend-box .btn{margin-top:0;font-size:14px;padding:12px 16px}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .auth-box{animation:fadeInUp .45s ease both}
 @media(max-width:480px){.auth-box{padding:28px 22px;border-radius:20px}.auth-logo .logo{font-size:26px}.auth-logo img{width:44px;height:44px}}
@@ -180,6 +234,18 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
     <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" style="font-size:14px;color:var(--primary);font-weight:600;text-decoration:none;">Forgot password?</a></div>
     <button type="submit" class="btn">Sign in to Dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
   </form>
+  <div class="resend-box">
+    <p>Didn’t get the verification email? Enter your address and we’ll send a new activation link.</p>
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+      <input type="hidden" name="action" value="resend_verification">
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Email for verification</label>
+        <input type="email" name="resend_email" class="form-control" placeholder="your@email.com" required value="<?= htmlspecialchars($_SESSION['pending_verify_email'] ?? '') ?>">
+      </div>
+      <button type="submit" class="btn">Resend verification email</button>
+    </form>
+  </div>
   <?php else: ?>
   <form method="POST">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -209,6 +275,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
     <?php endif; ?>
     <button type="submit" class="btn btn-register">Create Account</button>
   </form>
+  <p style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.5;text-align:center">After registering, check your email and click the verification link to activate your account.</p>
   <?php endif; ?>
 
   <div class="footer-link">

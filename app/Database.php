@@ -58,6 +58,20 @@ class Database {
         return $this->query($sql, $params)->rowCount();
     }
 
+    public function beginTransaction(): void {
+        $this->pdo->beginTransaction();
+    }
+
+    public function commit(): void {
+        $this->pdo->commit();
+    }
+
+    public function rollBack(): void {
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->rollBack();
+        }
+    }
+
     public function getSetting(string $key): ?string {
         $row = $this->fetch("SELECT value FROM settings WHERE `key` = ?", [$key]);
         return $row ? $row['value'] : null;

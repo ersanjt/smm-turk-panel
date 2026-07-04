@@ -25,6 +25,10 @@ if ($post) {
 
 // POST save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_verify()) {
+        flash('error', 'Invalid request. Please try again.');
+        redirect(url('admin/admin-blog.php'));
+    }
     $title = trim((string)($_POST['title'] ?? ''));
     $slug = trim(preg_replace('/[^a-z0-9\-]/', '-', strtolower((string)($_POST['slug'] ?? ''))));
     $categoryId = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
@@ -38,11 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tagIds = isset($_POST['tag_ids']) && is_array($_POST['tag_ids']) ? array_map('intval', array_filter($_POST['tag_ids'])) : [];
 
     if ($title === '' || $slug === '') {
-        setFlash('Title and slug required.', 'error');
+        flash('error', 'Title and slug required.');
     } else {
         $existing = $db->fetch("SELECT id FROM blog_articles WHERE slug = ? AND id != ?", [$slug, $id ?: 0]);
         if ($existing) {
-            setFlash('Slug already used.', 'error');
+            flash('error', 'Slug already used.');
         } else {
             if ($isNew) {
                 $newId = $db->insert(
@@ -52,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($tagIds as $tid) {
                     $db->execute("INSERT IGNORE INTO blog_article_tags (article_id, tag_id) VALUES (?, ?)", [$newId, $tid]);
                 }
-                setFlash('Article created.', 'success');
+                flash('success', 'Article created.');
             } else {
                 $db->execute(
                     "UPDATE blog_articles SET category_id = ?, slug = ?, title = ?, meta_description = ?, meta_keywords = ?, excerpt = ?, body = ?, status = ?, published_at = ?, reading_time_min = ?, updated_at = NOW() WHERE id = ?",
@@ -62,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($tagIds as $tid) {
                     $db->execute("INSERT IGNORE INTO blog_article_tags (article_id, tag_id) VALUES (?, ?)", [$id, $tid]);
                 }
-                setFlash('Article updated.', 'success');
+                flash('success', 'Article updated.');
             }
             header('Location: ' . url('admin/admin-blog.php'));
             exit;
@@ -90,6 +94,7 @@ require_once __DIR__ . '/../layouts/header.php';
 <div class="card">
   <h2 class="card-title"><?= $isNew ? 'New Article' : 'Edit Article' ?></h2>
   <form method="post">
+    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
     <div class="form-group">
       <label class="form-label">Title *</label>
       <input type="text" name="title" class="form-control" value="<?= h($post['title'] ?? '') ?>" required>

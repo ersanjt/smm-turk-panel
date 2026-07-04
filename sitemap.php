@@ -17,21 +17,20 @@ $base = $siteUrl . (function_exists('base_path') ? base_path() : '');
 
 $urls = [];
 
-// Static public pages
+// Public marketing and auth pages only (no login-gated routes)
 $static = [
-    '/' => 'daily',
-    '/login' => 'monthly',
-    '/terms' => 'monthly',
-    '/blog' => 'daily',
-    '/api-page' => 'monthly',
-    '/forgot-password' => 'monthly',
+    '/home' => ['freq' => 'daily', 'priority' => '1.0'],
+    '/help' => ['freq' => 'weekly', 'priority' => '0.85'],
+    '/blog' => ['freq' => 'daily', 'priority' => '0.9'],
+    '/login' => ['freq' => 'monthly', 'priority' => '0.6'],
+    '/forgot-password' => ['freq' => 'yearly', 'priority' => '0.4'],
 ];
-foreach ($static as $path => $freq) {
+foreach ($static as $path => $meta) {
     $urls[] = [
         'loc' => $base . $path,
         'lastmod' => date('Y-m-d'),
-        'changefreq' => $freq,
-        'priority' => $path === '/' ? '1.0' : ($path === '/blog' ? '0.9' : '0.7'),
+        'changefreq' => $meta['freq'],
+        'priority' => $meta['priority'],
     ];
 }
 

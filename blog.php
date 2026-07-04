@@ -97,7 +97,24 @@ $jsonLd = [
     }, $articles),
 ];
 
-$pageImage = $siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=3') : path('assets/img/logo-icon.svg?v=3');
+$pageImage = og_image_url();
+$paginationPrev = null;
+$paginationNext = null;
+if ($totalPages > 1) {
+    if ($pageNum > 1) {
+        $prevUrl = path('blog.php') . '?p=' . ($pageNum - 1);
+        if ($categorySlug) $prevUrl .= '&category=' . rawurlencode($categorySlug);
+        if ($tagSlug) $prevUrl .= '&tag=' . rawurlencode($tagSlug);
+        $paginationPrev = ($siteUrl ? $siteUrl : '') . $prevUrl;
+    }
+    if ($pageNum < $totalPages) {
+        $nextUrl = path('blog.php') . '?p=' . ($pageNum + 1);
+        if ($categorySlug) $nextUrl .= '&category=' . rawurlencode($categorySlug);
+        if ($tagSlug) $nextUrl .= '&tag=' . rawurlencode($tagSlug);
+        $paginationNext = ($siteUrl ? $siteUrl : '') . $nextUrl;
+    }
+}
+$blogNavActive = 'blog';
 require __DIR__ . '/layouts/blog-header.php';
 ?>
 <h1><?= h($pageTitle) ?></h1>

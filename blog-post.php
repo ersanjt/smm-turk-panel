@@ -37,7 +37,12 @@ $metaKeywords = $post['meta_keywords'];
 $canonicalUrl = ($siteUrl ? $siteUrl . path('blog') : path('blog')) . '/' . rawurlencode($post['slug']);
 $pageImage = $post['featured_image']
     ? ($siteUrl ? $siteUrl . '/' . ltrim($post['featured_image'], '/') : path($post['featured_image']))
-    : ($siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=3') : path('assets/img/logo-icon.svg?v=3'));
+    : og_image_url();
+$ogType = 'article';
+$articlePublished = $post['published_at'];
+$articleModified = $post['updated_at'] ?? $post['published_at'];
+$articleSection = $post['category_name'] ?? '';
+$articleTags = array_column($tags, 'name');
 
 // JSON-LD Article for SEO and AI crawlers
 $jsonLd = [
@@ -54,7 +59,7 @@ $jsonLd = [
         '@type' => 'Organization',
         'name' => $siteName,
         'url' => $siteUrl,
-        'logo' => ['@type' => 'ImageObject', 'url' => $siteUrl ? $siteUrl . path('assets/img/logo-icon.svg?v=3') : path('assets/img/logo-icon.svg?v=3')],
+        'logo' => ['@type' => 'ImageObject', 'url' => og_image_url()],
     ],
     'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonicalUrl],
 ];
@@ -76,6 +81,7 @@ $extraStyles = '
 .article-meta{font-size:14px;color:var(--muted);margin-bottom:20px;}
 .article-meta a{margin-right:12px;}
 ';
+$blogNavActive = 'blog';
 require __DIR__ . '/layouts/blog-header.php';
 
 // Add extra styles for this page

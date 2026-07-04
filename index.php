@@ -1,13 +1,19 @@
 <?php
 require_once __DIR__ . '/app/init.php';
 if (!$auth->isLoggedIn()) {
-    header('Location: ' . url('home.php'), true, 302);
+    $returnPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $query = $_SERVER['QUERY_STRING'] ?? '';
+    if ($query !== '') {
+        $returnPath .= '?' . $query;
+    }
+    header('Location: ' . url('login.php') . '?next=' . urlencode($returnPath), true, 302);
     exit;
 }
 
 $pageTitle = 'New Order';
 $db = Database::getInstance();
 $om = new OrderManager();
+$userBalance = (float)($db->fetch("SELECT balance FROM users WHERE id = ?", [$auth->getUserId()])['balance'] ?? 0);
 
 $message = '';
 $error   = '';
@@ -20,9 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 
     if (!$serviceId || !$link || !$quantity) {
         $error = 'Please fill in all required fields.';
-    } elseif (!filter_var($link, FILTER_VALIDATE_URL)) {
-        $error = 'Please enter a valid URL.';
     } else {
+        $link = normalize_order_link($link);
+        if ($link === '') {
+            $error = 'Please enter a valid link (e.g. https://instagram.com/username).';
+        } else {
         $result = $om->placeOrder($auth->getUserId(), $serviceId, $link, $quantity);
         if ($result['success']) {
             flash('success', "✅ Order #{$result['order_id']} placed! Charged: \${$result['charge']}");
@@ -30,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
             exit;
         } else {
             $error = $result['error'];
+        }
         }
     }
 }
@@ -74,10 +83,19 @@ if ($selectedCat !== '') {
 }
 $searchQ = trim($_GET['q'] ?? '');
 if ($searchQ !== '') {
-    $services = array_filter($services, function($s) use ($searchQ) {
-        return stripos($s['name'], $searchQ) !== false;
-    });
-    $services = array_values($services);
+    $like = '%' . $searchQ . '%';
+    if ($selectedCat !== '') {
+        $services = $db->fetchAll(
+            "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=? AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?) ORDER BY service_id LIMIT 500",
+            [$selectedCat, $like, $like]
+        );
+    } else {
+        $services = $db->fetchAll(
+            "SELECT * FROM services WHERE status='active' AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?) ORDER BY service_id LIMIT 500",
+            [$like, $like]
+        );
+    }
+    $showAllLimitHint = false;
 }
 $hasServices = count($services) > 0;
 
@@ -121,6 +139,10 @@ require_once __DIR__ . '/layouts/header.php';
 .desc-notes .asterisk{color:var(--primary);font-weight:700;flex-shrink:0}
 #desc-panel pre{word-break:break-all;overflow-x:auto;max-width:100%}
 .order-form-row form{min-width:0}
+.order-onboard{background:linear-gradient(135deg,rgba(227,10,23,.08),rgba(227,10,23,.03));border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:18px}
+.order-onboard h2{font-family:'Syne',sans-serif;font-size:15px;margin-bottom:10px}
+.order-onboard ol{margin:0 0 14px 18px;font-size:13px;color:var(--text-muted);line-height:1.7}
+.order-onboard .btn{margin-top:4px}
 @media(max-width:768px){
   .order-toolbar{flex-direction:column;align-items:stretch}
   .order-toolbar .form-control,.order-toolbar #cat-select{min-width:0;width:100%}
@@ -181,7 +203,24 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <?php if ($error): ?>
-<div class="alert alert-error"><?= h($error) ?></div>
+<div class="alert alert-error">
+  <?= h($error) ?>
+  <?php if (stripos($error, 'Insufficient balance') !== false): ?>
+  <div style="margin-top:10px;"><a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary" style="padding:8px 16px;font-size:12px;">Add Funds →</a></div>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if ($userBalance <= 0): ?>
+<div class="order-onboard">
+  <h2>Get started in 3 steps</h2>
+  <ol>
+    <li><strong>Add Funds (crypto)</strong> — send BTC, ETH, USDT, or other supported coins; we email you when credited</li>
+    <li><strong>Pick a service</strong> — choose category and service below</li>
+    <li><strong>Submit order</strong> — paste your link and quantity</li>
+  </ol>
+  <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary">Step 1: Add Funds</a>
+</div>
 <?php endif; ?>
 
 <?php if ($showAllLimitHint): ?>
@@ -198,8 +237,11 @@ require_once __DIR__ . '/layouts/header.php';
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
       <div class="form-group">
-        <label class="form-label" for="service-select">Service</label>
-        <select name="service_id" id="service-select" class="form-control" onchange="updateDesc()" required aria-required="true" <?= !$hasServices ? 'disabled' : '' ?>>
+        <label class="form-label" for="service-filter">Find service</label>
+        <input type="search" id="service-filter" class="form-control service-picker-filter" placeholder="Type ID or service name…" autocomplete="off" aria-controls="service-select" <?= !$hasServices ? 'disabled' : '' ?>>
+        <div class="service-picker-meta" id="service-filter-meta"><?= count($services) ?> services in list</div>
+        <label class="form-label" for="service-select" style="margin-top:12px;">Service</label>
+        <select name="service_id" id="service-select" class="form-control" onchange="updateDesc()" required aria-required="true" <?= !$hasServices ? 'disabled' : '' ?> size="8">
           <option value="">— Select a service —</option>
           <?php foreach ($services as $s):
             $updatedAt = isset($s['updated_at']) ? strtotime($s['updated_at']) : 0;
@@ -220,7 +262,7 @@ require_once __DIR__ . '/layouts/header.php';
 
       <div class="form-group">
         <label class="form-label" for="order-link">Link</label>
-        <input type="url" name="link" id="order-link" class="form-control" placeholder="https://..." required aria-required="true">
+        <input type="text" name="link" id="order-link" class="form-control" placeholder="instagram.com/username or full URL" required aria-required="true">
       </div>
 
       <div class="form-group">
@@ -228,12 +270,6 @@ require_once __DIR__ . '/layouts/header.php';
         <input type="number" name="quantity" id="order-qty" class="form-control"
                placeholder="Enter quantity" oninput="calcPrice()" required min="1" aria-describedby="qty-hint">
         <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;" id="qty-hint" aria-live="polite">—</div>
-      </div>
-
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" name="drip_feed" value="1"> Drip-feed
-        </label>
       </div>
 
       <div class="price-box">
@@ -318,16 +354,34 @@ function updateDesc() {
 }
 
 function filterNew() {
+  applyServiceFilters();
+}
+
+function applyServiceFilters() {
   var check = document.getElementById('newOnlyCheck');
+  var input = document.getElementById('service-filter');
   var sel = document.getElementById('service-select');
-  if (!check || !sel || sel.disabled) return;
-  var cutoff = (Date.now()/1000) - (7*24*60*60);
+  var meta = document.getElementById('service-filter-meta');
+  if (!sel || sel.disabled) return;
+  var q = input ? input.value.trim().toLowerCase() : '';
+  var cutoff = (Date.now() / 1000) - (7 * 24 * 60 * 60);
+  var visible = 0;
   for (var i = 1; i < sel.options.length; i++) {
     var opt = sel.options[i];
     var updated = parseInt(opt.dataset.updated || 0, 10);
-    opt.style.display = check.checked && updated < cutoff ? 'none' : '';
+    var tooOld = check && check.checked && updated < cutoff;
+    var match = q === '' || opt.text.toLowerCase().indexOf(q) !== -1;
+    opt.hidden = tooOld || !match;
+    if (!opt.hidden) visible++;
   }
+  if (meta) meta.textContent = visible + ' matching services';
 }
+
+(function(){
+  var input = document.getElementById('service-filter');
+  if (input) input.addEventListener('input', applyServiceFilters);
+  applyServiceFilters();
+})();
 
 function calcPrice() {
   var sel = document.getElementById('service-select');

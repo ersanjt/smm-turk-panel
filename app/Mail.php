@@ -166,7 +166,7 @@ class Mail {
     public function sendVerification(string $to, string $username, string $token): bool {
         $siteUrl = rtrim($this->db->getSetting('site_url') ?: (defined('SITE_URL') ? SITE_URL : ''), '/');
         $siteName = $this->db->getSetting('site_name') ?: (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
-        $link = $siteUrl . '/verify-email.php?token=' . urlencode($token);
+        $link = url('verify-email.php?token=' . urlencode($token));
         $subject = '[' . $siteName . '] Verify your email';
         $body = '<p>Hi ' . htmlspecialchars($username) . ',</p>';
         $body .= '<p>Please verify your email by clicking the link below:</p>';
@@ -181,7 +181,7 @@ class Mail {
     public function sendPasswordReset(string $to, string $username, string $token): bool {
         $siteUrl = rtrim($this->db->getSetting('site_url') ?: (defined('SITE_URL') ? SITE_URL : ''), '/');
         $siteName = $this->db->getSetting('site_name') ?: (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
-        $link = $siteUrl . '/reset-password.php?token=' . urlencode($token);
+        $link = url('reset-password.php?token=' . urlencode($token));
         $subject = '[' . $siteName . '] Reset your password';
         $body = '<p>Hi ' . htmlspecialchars($username) . ',</p>';
         $body .= '<p>You requested a password reset. Click the link below to set a new password:</p>';
@@ -189,6 +189,28 @@ class Mail {
         $body .= '<p>Or copy this URL: ' . htmlspecialchars($link) . '</p>';
         $body .= '<p>This link expires in 1 hour. If you did not request this, ignore this email.</p>';
         $body .= '<p>— ' . htmlspecialchars($siteName) . '</p>';
+        return $this->send($to, $subject, strip_tags($body), $body);
+    }
+
+    /** Notify user that their balance was credited after a deposit. */
+    public function sendDepositConfirmed(string $to, string $username, float $amount, float $balanceAfter, ?int $transactionId = null): bool {
+        $siteName = $this->db->getSetting('site_name') ?: (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
+        $orderLink = url('index.php');
+        $fundsLink = url('add-funds.php') . '?tab=history';
+        $amountFmt = number_format($amount, 2);
+        $balanceFmt = number_format($balanceAfter, 2);
+        $ref = $transactionId ? " (#{$transactionId})" : '';
+
+        $subject = '[' . $siteName . '] Crypto deposit confirmed — $' . $amountFmt;
+        $body = '<p>Hi ' . htmlspecialchars($username) . ',</p>';
+        $body .= '<p>Your <strong>crypto deposit</strong> of <strong>$' . htmlspecialchars($amountFmt) . '</strong> has been confirmed and added to your balance' . htmlspecialchars($ref) . '.</p>';
+        $body .= '<p><strong>New balance:</strong> $' . htmlspecialchars($balanceFmt) . '</p>';
+        $body .= '<p>You can now place orders in the panel:</p>';
+        $body .= '<p><a href="' . htmlspecialchars($orderLink) . '" style="display:inline-block;background:#E30A17;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:700;">Place an order</a></p>';
+        $body .= '<p style="font-size:13px;color:#666;">View deposit history: <a href="' . htmlspecialchars($fundsLink) . '">' . htmlspecialchars($fundsLink) . '</a></p>';
+        $body .= '<p>If you did not make this deposit, contact support immediately.</p>';
+        $body .= '<p>— ' . htmlspecialchars($siteName) . '</p>';
+
         return $this->send($to, $subject, strip_tags($body), $body);
     }
 }

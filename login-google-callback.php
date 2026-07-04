@@ -67,7 +67,10 @@ if ($clientId === '' || $clientSecret === '' || $siteUrl === '') {
                 $name     = $profile['name'] ?? $profile['given_name'] ?? 'User';
                 $result   = $auth->loginOrCreateFromGoogle($googleId, $email, $name);
                 if ($result['success']) {
-                    redirect(url('index.php'));
+                    if (!empty($result['needs_2fa'])) {
+                        redirect(url('login-2fa.php'));
+                    }
+                    redirect($auth->postLoginRedirectUrl($result));
                 }
                 $error = $result['error'] ?? 'Login failed.';
             }

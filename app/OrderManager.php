@@ -20,47 +20,68 @@ class OrderManager {
         $markup = 1 + ($service['markup'] / 100);
         $charge = round(($service['rate'] / 1000) * $quantity * $markup, 4);
 
-        $user = $this->db->fetch("SELECT balance FROM users WHERE id = ?", [$userId]);
-        if (!$user || $user['balance'] < $charge) {
-            return ['success' => false, 'error' => 'Insufficient balance. Please add funds.'];
-        }
+        try {
+            $this->db->beginTransaction();
 
-        $orderData = array_merge(['service' => $serviceId, 'link' => $link, 'quantity' => $quantity], $extra);
-        $response  = $this->api->order($orderData);
-
-        if (!$response || isset($response->error)) {
-            return ['success' => false, 'error' => $response->error ?? 'Provider error. Please try again.'];
-        }
-
-        $this->db->execute("UPDATE users SET balance = balance - ?, spent = spent + ? WHERE id = ?", [$charge, $charge, $userId]);
-
-        $orderId = $this->db->insert(
-            "INSERT INTO orders (user_id, provider_order_id, service_id, service_name, link, quantity, charge, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')",
-            [$userId, $response->order ?? null, $serviceId, $service['name'], $link, $quantity, $charge]
-        );
-
-        $balanceAfter = $user['balance'] - $charge;
-        $this->db->insert(
-            "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference)
-             VALUES (?, 'order', ?, ?, ?, ?, ?)",
-            [$userId, -$charge, $user['balance'], $balanceAfter, "Order #{$orderId}: " . substr($service['name'], 0, 60), (string)$orderId]
-        );
-
-        // Referral commission
-        $buyer = $this->db->fetch("SELECT referred_by FROM users WHERE id = ?", [$userId]);
-        if (!empty($buyer['referred_by'])) {
-            $pct = (float)($this->db->getSetting('referral_commission') ?: 2);
-            if ($pct > 0) {
-                $commission = round($charge * ($pct / 100), 4);
-                $this->db->execute("UPDATE users SET referral_earnings = referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
-                try {
-                    $this->db->execute("UPDATE users SET total_referral_earnings = total_referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
-                } catch (Throwable $e) { /* column may not exist */ }
+            $user = $this->db->fetch("SELECT balance FROM users WHERE id = ? FOR UPDATE", [$userId]);
+            if (!$user || (float)$user['balance'] < $charge) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'Insufficient balance. Add funds with crypto first.'];
             }
-        }
 
-        return ['success' => true, 'order_id' => $orderId, 'charge' => $charge];
+            $balanceBefore = (float)$user['balance'];
+            $deducted = $this->db->execute(
+                "UPDATE users SET balance = balance - ?, spent = spent + ? WHERE id = ? AND balance >= ?",
+                [$charge, $charge, $userId, $charge]
+            );
+            if ($deducted === 0) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'Insufficient balance. Add funds with crypto first.'];
+            }
+
+            $orderData = array_merge(['service' => $serviceId, 'link' => $link, 'quantity' => $quantity], $extra);
+            $response  = $this->api->order($orderData);
+
+            if (!$response || isset($response->error)) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => $response->error ?? 'Provider error. Please try again.'];
+            }
+
+            $orderId = $this->db->insert(
+                "INSERT INTO orders (user_id, provider_order_id, service_id, service_name, link, quantity, charge, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')",
+                [$userId, $response->order ?? null, $serviceId, $service['name'], $link, $quantity, $charge]
+            );
+
+            $balanceAfter = $balanceBefore - $charge;
+            $this->db->insert(
+                "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference)
+                 VALUES (?, 'order', ?, ?, ?, ?, ?)",
+                [$userId, -$charge, $balanceBefore, $balanceAfter, "Order #{$orderId}: " . substr($service['name'], 0, 60), (string)$orderId]
+            );
+
+            // Referral commission
+            $buyer = $this->db->fetch("SELECT referred_by FROM users WHERE id = ?", [$userId]);
+            if (!empty($buyer['referred_by'])) {
+                $pct = (float)($this->db->getSetting('referral_commission') ?: 2);
+                if ($pct > 0) {
+                    $commission = round($charge * ($pct / 100), 4);
+                    $this->db->execute("UPDATE users SET referral_earnings = referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
+                    try {
+                        $this->db->execute("UPDATE users SET total_referral_earnings = total_referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
+                    } catch (Throwable $e) { /* column may not exist */ }
+                }
+            }
+
+            $this->db->commit();
+            return ['success' => true, 'order_id' => $orderId, 'charge' => $charge];
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            if (class_exists('Logger')) {
+                Logger::log('placeOrder failed: ' . $e->getMessage(), 'orders');
+            }
+            return ['success' => false, 'error' => 'Could not place order. Please try again.'];
+        }
     }
 
     public function syncOrders(): int {

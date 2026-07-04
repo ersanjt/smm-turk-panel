@@ -29,65 +29,81 @@ $recentOrders = $db->fetchAll(
 // Recent users
 $recentUsers = $db->fetchAll("SELECT * FROM users ORDER BY created_at DESC LIMIT 5");
 
+// Chart data — last 7 days
+$chartLabels = [];
+$chartOrders = [];
+$chartRevenue = [];
+$rawChart = $db->fetchAll(
+    "SELECT DATE(created_at) AS d, COUNT(*) AS cnt, COALESCE(SUM(charge), 0) AS rev
+     FROM orders WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+     GROUP BY DATE(created_at)"
+);
+$byDate = [];
+foreach ($rawChart as $row) {
+    $byDate[$row['d']] = $row;
+}
+for ($i = 6; $i >= 0; $i--) {
+    $d = date('Y-m-d', strtotime("-$i days"));
+    $chartLabels[] = date('M j', strtotime($d));
+    $chartOrders[] = (int)($byDate[$d]['cnt'] ?? 0);
+    $chartRevenue[] = round((float)($byDate[$d]['rev'] ?? 0), 2);
+}
+
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<style>
-.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.admin-card{background:#fff;border-radius:14px;padding:20px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;align-items:center;gap:16px}
-.admin-card .ac-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.admin-card .ac-info .ac-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
-.admin-card .ac-info .ac-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-top:2px}
-.quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
-.qa-btn{padding:10px 20px;border-radius:10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;text-decoration:none;display:inline-block;transition:all .2s}
-</style>
-
-<!-- Stats -->
 <div class="admin-grid">
   <div class="admin-card">
-    <div class="ac-icon" style="background:#e8e8ff;">👥</div>
+    <div class="ac-icon">US</div>
     <div class="ac-info">
       <div class="ac-label">Total Users</div>
       <div class="ac-value"><?= number_format($totalUsers) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#e8ffe8;">📦</div>
+    <div class="ac-icon ac-icon-green">OR</div>
     <div class="ac-info">
       <div class="ac-label">Total Orders</div>
       <div class="ac-value"><?= number_format($totalOrders) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#fff3e0;">💰</div>
+    <div class="ac-icon ac-icon-orange">$</div>
     <div class="ac-info">
       <div class="ac-label">Total Revenue</div>
       <div class="ac-value">$<?= number_format($totalRevenue, 2) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#ffe8e8;">⏳</div>
+    <div class="ac-icon">PD</div>
     <div class="ac-info">
       <div class="ac-label">Pending Orders</div>
       <div class="ac-value"><?= number_format($pendingOrders) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#e8ffe8;">🎫</div>
+    <div class="ac-icon ac-icon-green">TK</div>
     <div class="ac-info">
       <div class="ac-label">Open Tickets</div>
       <div class="ac-value"><?= number_format($openTickets) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#f0e8ff;">🌐</div>
+    <div class="ac-icon">SV</div>
+    <div class="ac-info">
+      <div class="ac-label">Active Services</div>
+      <div class="ac-value"><?= number_format($totalServices) ?></div>
+    </div>
+  </div>
+  <div class="admin-card">
+    <div class="ac-icon ac-icon-dark">PR</div>
     <div class="ac-info">
       <div class="ac-label">Provider Balance</div>
       <div class="ac-value"><?= $providerBalance !== null ? '$' . number_format($providerBalance, 2) : 'N/A' ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon" style="background:#e8e0ff;">₿</div>
+    <div class="ac-icon ac-icon-orange">DP</div>
     <div class="ac-info">
       <div class="ac-label">Pending Deposits</div>
       <div class="ac-value"><?= number_format($pendingDeposits) ?></div>
@@ -95,21 +111,31 @@ require_once __DIR__ . '/../layouts/header.php';
   </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="quick-actions" style="margin-bottom:24px;">
-  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn" style="background:var(--primary);color:#fff;">👥 Manage Users</a>
-  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn" style="background:#00c853;color:#fff;">📦 Manage Orders</a>
-  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn" style="background:#ff9100;color:#fff;">⭐ Services</a>
-  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn" style="background:#0a0a1a;color:#fff;">🔄 Sync Services</a>
-  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn" style="background:#6b6b8a;color:#fff;">⚙️ Settings</a>
-  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn" style="background:#ff3d00;color:#fff;">🎫 Tickets</a>
-  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn" style="background:#9c27b0;color:#fff;">₿ Pending Deposits <?= $pendingDeposits > 0 ? '(' . $pendingDeposits . ')' : '' ?></a>
+<div class="quick-actions">
+  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn">Manage Users</a>
+  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn qa-btn-outline">Manage Orders</a>
+  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn qa-btn-outline">Services</a>
+  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn qa-btn-dark">Sync Services</a>
+  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline">Settings</a>
+  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline">Tickets</a>
+  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn">Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
+</div>
+
+<div class="admin-charts">
+  <div class="admin-chart-card">
+    <h3>Orders — last 7 days</h3>
+    <div class="admin-chart-wrap"><canvas id="ordersChart" aria-label="Orders last 7 days"></canvas></div>
+  </div>
+  <div class="admin-chart-card">
+    <h3>Revenue — last 7 days</h3>
+    <div class="admin-chart-wrap"><canvas id="revenueChart" aria-label="Revenue last 7 days"></canvas></div>
+  </div>
 </div>
 
 <div class="grid2">
-  <!-- Recent Orders -->
   <div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:18px 18px 0;"><div class="card-title">📦 Recent Orders</div></div>
+    <div style="padding:18px 18px 0;"><div class="card-title">Recent Orders</div></div>
+    <div class="table-wrap">
     <table class="table" style="font-size:12px;">
       <thead><tr><th>ID</th><th>User</th><th>Charge</th><th>Status</th><th>Date</th></tr></thead>
       <tbody>
@@ -124,11 +150,12 @@ require_once __DIR__ . '/../layouts/header.php';
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   </div>
 
-  <!-- Recent Users -->
   <div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:18px 18px 0;"><div class="card-title">👥 Recent Users</div></div>
+    <div style="padding:18px 18px 0;"><div class="card-title">Recent Users</div></div>
+    <div class="table-wrap">
     <table class="table" style="font-size:12px;">
       <thead><tr><th>User</th><th>Balance</th><th>Spent</th><th>Joined</th></tr></thead>
       <tbody>
@@ -142,7 +169,35 @@ require_once __DIR__ . '/../layouts/header.php';
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script>
+(function () {
+  if (typeof Chart === 'undefined') return;
+  var labels = <?= json_encode($chartLabels) ?>;
+  var orders = <?= json_encode($chartOrders) ?>;
+  var revenue = <?= json_encode($chartRevenue) ?>;
+  var gridColor = getComputedStyle(document.body).getPropertyValue('--border').trim() || '#f0e6e8';
+  var textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#6b4a50';
+  var primary = getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#E30A17';
+  var scales = {
+    x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+    y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+  };
+  new Chart(document.getElementById('ordersChart'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ label: 'Orders', data: orders, backgroundColor: primary, borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales }
+  });
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: { labels: labels, datasets: [{ label: 'Revenue ($)', data: revenue, borderColor: primary, backgroundColor: 'rgba(227,10,23,.12)', fill: true, tension: .35 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales }
+  });
+})();
+</script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

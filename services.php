@@ -25,7 +25,18 @@ if ($sort === 'min')  $orderBy = 'min ' . ($dir === 'desc' ? 'DESC' : 'ASC');
 if ($sort === 'max')  $orderBy = 'max ' . ($dir === 'desc' ? 'DESC' : 'ASC');
 if ($sort === 'id')   $orderBy = 'service_id ' . ($dir === 'desc' ? 'DESC' : 'ASC');
 
-$services   = $db->fetchAll("SELECT * FROM services $where ORDER BY $orderBy LIMIT 500", $params);
+$page = max(1, (int)($_GET['p'] ?? 1));
+$perPage = 48;
+$totalServices = (int)$db->fetch("SELECT COUNT(*) c FROM services $where", $params)['c'];
+$totalPages = max(1, (int)ceil($totalServices / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+$offset = ($page - 1) * $perPage;
+$services = $db->fetchAll("SELECT * FROM services $where ORDER BY $orderBy LIMIT $perPage OFFSET $offset", $params);
+$listFrom = $totalServices > 0 ? $offset + 1 : 0;
+$listTo = min($offset + count($services), $totalServices);
+
 $categoriesRaw = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
 $seen = [];
 $categories = [];
@@ -61,6 +72,28 @@ foreach (['id' => 'ID', 'rate' => 'Price', 'min' => 'Min', 'max' => 'Max'] as $c
     $q2['sort'] = $col;
     $q2['dir'] = ($sort === $col && $dir === 'asc') ? 'desc' : 'asc';
     $sortLinks[$col] = ['url' => path('services.php') . '?' . http_build_query($q2), 'label' => $label];
+}
+
+function servicesPageUrl(array $extra = []): string {
+    global $search, $cat, $platform, $sort, $dir;
+    $q = [];
+    if ($search !== '') {
+        $q['q'] = $search;
+    }
+    if ($cat !== '') {
+        $q['cat'] = $cat;
+    }
+    if ($platform !== '') {
+        $q['platform'] = $platform;
+    }
+    if ($sort !== 'id') {
+        $q['sort'] = $sort;
+    }
+    if ($dir !== 'asc') {
+        $q['dir'] = $dir;
+    }
+    $q = array_merge($q, $extra);
+    return path('services.php') . ($q ? '?' . http_build_query($q) : '');
 }
 
 // Platform logos filter: key => [label, title, svg fragment]. Order shown in UI.
@@ -346,6 +379,11 @@ require_once __DIR__ . '/layouts/header.php';
   font-weight: 600;
   color: var(--text-muted);
 }
+.svc-pagination { margin: 4px 0 28px; }
+.ticket-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.ticket-pagination a, .ticket-pagination span { padding: 8px 14px; border-radius: 10px; font-size: 13px; text-decoration: none; color: var(--text); border: 1.5px solid var(--border); transition: all .2s; }
+.ticket-pagination a:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.ticket-pagination .current { background: var(--primary); color: #fff; border-color: var(--primary); }
 .svc-results-count strong { color: var(--text); }
 
 /* Service cards grid */
@@ -722,7 +760,13 @@ require_once __DIR__ . '/layouts/header.php';
 
 <!-- Results count + view toggle -->
 <div class="svc-results-bar" data-reveal>
-  <p class="svc-results-count"><strong><?= count($services) ?></strong> service<?= count($services) !== 1 ? 's' : '' ?></p>
+  <p class="svc-results-count">
+    <?php if ($totalServices > 0): ?>
+    Showing <strong><?= $listFrom ?>–<?= $listTo ?></strong> of <strong><?= number_format($totalServices) ?></strong> services
+    <?php else: ?>
+    <strong>0</strong> services
+    <?php endif; ?>
+  </p>
   <?php if (!empty($services)): ?>
   <div class="svc-view-toggle" role="group" aria-label="View mode">
     <button type="button" class="svc-view-btn active" data-view="grid" aria-pressed="true">Grid</button>
@@ -768,6 +812,27 @@ require_once __DIR__ . '/layouts/header.php';
   <?php endforeach; ?>
 </div>
 </div>
+<?php if ($totalPages > 1): ?>
+<div class="ticket-pagination svc-pagination" data-reveal>
+  <?php if ($page > 1): ?>
+  <a href="<?= h(servicesPageUrl(['p' => $page - 1])) ?>">Previous</a>
+  <?php endif; ?>
+  <?php
+  $startPage = max(1, $page - 2);
+  $endPage = min($totalPages, $page + 2);
+  for ($p = $startPage; $p <= $endPage; $p++):
+  ?>
+  <?php if ($p === $page): ?>
+  <span class="current"><?= $p ?></span>
+  <?php else: ?>
+  <a href="<?= h(servicesPageUrl(['p' => $p])) ?>"><?= $p ?></a>
+  <?php endif; ?>
+  <?php endfor; ?>
+  <?php if ($page < $totalPages): ?>
+  <a href="<?= h(servicesPageUrl(['p' => $page + 1])) ?>">Next</a>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 <?php else: ?>
 <div class="svc-empty" data-reveal>
   <div class="svc-empty-icon">🔍</div>

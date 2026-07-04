@@ -4,12 +4,14 @@ $auth->requireLogin();
 $db = Database::getInstance();
 $user = $auth->getCurrentUser();
 $pageTitle = 'Account Settings';
+$forcePasswordChange = !empty($_SESSION['must_change_password']) || isset($_GET['change_password']);
 
 $errors = [];
 
 // Optional columns (after running migrate-account-settings.php)
 $hasTimezone = array_key_exists('timezone', $user);
 $hasTwoFactor = array_key_exists('two_factor_enabled', $user);
+$hasTwoFactorSecret = array_key_exists('two_factor_secret', $user);
 $hasApiKeyCreatedAt = array_key_exists('api_key_created_at', $user);
 $hasAvatar = array_key_exists('avatar', $user);
 $avatarPath = $hasAvatar && !empty(trim($user['avatar'] ?? '')) ? trim($user['avatar']) : null;
@@ -21,6 +23,7 @@ $apiKeyCreatedAt = $hasApiKeyCreatedAt && !empty($user['api_key_created_at']) ? 
 // Allowed image types and max size (2MB)
 $avatarAllowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
 $avatarMaxSize = 2 * 1024 * 1024;
+$twoFactorSetup = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
@@ -49,16 +52,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $auth->updatePassword($user['id'], $current, $newPass);
             if ($result['success']) {
                 flash('success', 'Password changed successfully.');
-                redirect(url('account-settings.php'));
+                redirect($auth->postLoginRedirectUrl(['role' => $user['role'] ?? 'user']));
             }
             $errors['password'] = $result['error'];
         }
     }
 
-    if (isset($_POST['action']) && $_POST['action'] === 'enable_2fa' && $hasTwoFactor) {
-        $db->execute("UPDATE users SET two_factor_enabled = 1 WHERE id = ?", [$user['id']]);
-        flash('success', 'Two-factor authentication enabled.');
-        redirect(url('account-settings.php'));
+    if (isset($_POST['action']) && $_POST['action'] === '2fa_setup_start' && $hasTwoFactor && $hasTwoFactorSecret && !$twoFactorEnabled) {
+        $setup = $auth->startTwoFactorSetup((int)$user['id']);
+        if ($setup['success']) {
+            $twoFactorSetup = $setup;
+        } else {
+            flash('error', $setup['error'] ?? 'Could not start 2FA setup.');
+            redirect(url('account-settings.php'));
+        }
+    }
+
+    if (isset($_POST['action']) && $_POST['action'] === '2fa_setup_confirm' && $hasTwoFactor && $hasTwoFactorSecret) {
+        $result = $auth->confirmTwoFactorSetup((int)$user['id'], trim($_POST['totp_code'] ?? ''));
+        if ($result['success']) {
+            flash('success', 'Two-factor authentication enabled.');
+            redirect(url('account-settings.php'));
+        }
+        $errors['2fa'] = $result['error'];
+        $twoFactorSetup = [
+            'secret' => $_SESSION['2fa_setup_secret'] ?? '',
+            'uri' => Totp::getProvisioningUri(
+                (string)($_SESSION['2fa_setup_secret'] ?? ''),
+                $user['email'] ?: $user['username'],
+                defined('SITE_NAME') ? SITE_NAME : 'SMM Turk'
+            ),
+        ];
+    }
+
+    if (isset($_POST['action']) && $_POST['action'] === '2fa_disable' && $hasTwoFactor && $hasTwoFactorSecret && $twoFactorEnabled) {
+        $result = $auth->disableTwoFactor(
+            (int)$user['id'],
+            $_POST['current_password_2fa'] ?? '',
+            trim($_POST['totp_code_disable'] ?? '')
+        );
+        if ($result['success']) {
+            flash('success', 'Two-factor authentication disabled.');
+            redirect(url('account-settings.php'));
+        }
+        $errors['2fa'] = $result['error'];
     }
 
     if (isset($_POST['action']) && $_POST['action'] === 'save_timezone' && $hasTimezone) {
@@ -128,6 +165,17 @@ $twoFactorEnabled = $hasTwoFactor ? (int)($user['two_factor_enabled'] ?? 0) : 0;
 $apiKeyCreatedAt = $hasApiKeyCreatedAt && !empty($user['api_key_created_at']) ? $user['api_key_created_at'] : null;
 $avatarPath = $hasAvatar && !empty(trim($user['avatar'] ?? '')) ? trim($user['avatar']) : null;
 
+if ($twoFactorSetup === null && !$twoFactorEnabled && !empty($_SESSION['2fa_setup_secret']) && (int)($_SESSION['2fa_setup_user_id'] ?? 0) === (int)$user['id']) {
+    $twoFactorSetup = [
+        'secret' => (string)$_SESSION['2fa_setup_secret'],
+        'uri' => Totp::getProvisioningUri(
+            (string)$_SESSION['2fa_setup_secret'],
+            $user['email'] ?: $user['username'],
+            defined('SITE_NAME') ? SITE_NAME : 'SMM Turk'
+        ),
+    ];
+}
+
 $timezones = [
     'UTC' => '(UTC) Greenwich Mean Time, Western European Time',
     'Europe/Istanbul' => '(UTC+3) Turkey',
@@ -195,6 +243,12 @@ require_once __DIR__ . '/layouts/header.php';
       <div class="as-email"><?= h($user['email'] ?? '') ?></div>
     </div>
   </div>
+
+  <?php if ($forcePasswordChange): ?>
+  <div class="alert alert-error" style="margin-bottom:20px;">
+    For security, you must change the default admin password before using the panel.
+  </div>
+  <?php endif; ?>
 
   <?php if (!($hasTimezone || $hasTwoFactor || $hasApiKeyCreatedAt || $hasAvatar)): ?>
   <div class="alert alert-info">
@@ -302,13 +356,45 @@ require_once __DIR__ . '/layouts/header.php';
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       Two-factor authentication
     </h2>
-    <p class="as-hint" style="margin-bottom:14px;">Extra protection: sign-in codes sent to your email.</p>
-    <?php if ($twoFactorEnabled): ?>
-    <p class="alert alert-success" style="margin-bottom:0;">Two-factor authentication is enabled.</p>
-    <?php else: ?>
+    <?php if (!$hasTwoFactorSecret): ?>
+    <p class="as-hint">Run <code>php migrate-two-factor.php</code> once to enable authenticator-based 2FA.</p>
+    <?php elseif ($twoFactorEnabled): ?>
+    <p class="as-hint" style="margin-bottom:14px;">2FA is <strong>enabled</strong>. Sign-in requires a code from your authenticator app.</p>
+    <?php if (!empty($errors['2fa'])): ?><div class="alert alert-error"><?= h($errors['2fa']) ?></div><?php endif; ?>
     <form method="post">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-      <input type="hidden" name="action" value="enable_2fa">
+      <input type="hidden" name="action" value="2fa_disable">
+      <div class="form-group">
+        <label class="form-label">Current password</label>
+        <input type="password" name="current_password_2fa" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Authenticator code</label>
+        <input type="text" name="totp_code_disable" class="form-control" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+      </div>
+      <button type="submit" class="btn btn-danger">Disable 2FA</button>
+    </form>
+    <?php elseif ($twoFactorSetup): ?>
+    <p class="as-hint">Scan this QR code with Google Authenticator, Authy, or a compatible app. Then enter the 6-digit code to confirm.</p>
+    <div style="text-align:center;margin:16px 0;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&amp;data=<?= h(rawurlencode($twoFactorSetup['uri'])) ?>" width="180" height="180" alt="2FA QR code">
+    </div>
+    <p class="as-hint" style="word-break:break-all;">Manual key: <code><?= h($twoFactorSetup['secret']) ?></code></p>
+    <?php if (!empty($errors['2fa'])): ?><div class="alert alert-error"><?= h($errors['2fa']) ?></div><?php endif; ?>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+      <input type="hidden" name="action" value="2fa_setup_confirm">
+      <div class="form-group">
+        <label class="form-label">6-digit code</label>
+        <input type="text" name="totp_code" class="form-control" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+      </div>
+      <button type="submit" class="btn btn-primary">Confirm &amp; enable</button>
+    </form>
+    <?php else: ?>
+    <p class="as-hint" style="margin-bottom:14px;">Add an extra layer of security with an authenticator app (Google Authenticator, Authy, etc.).</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+      <input type="hidden" name="action" value="2fa_setup_start">
       <button type="submit" class="btn btn-primary">Enable 2FA</button>
     </form>
     <?php endif; ?>

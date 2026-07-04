@@ -4,6 +4,7 @@
  * Run once: php migrate-child-panel.php
  */
 require_once __DIR__ . '/app/init.php';
+require_cli();
 $pdo = Database::getInstance()->getConnection();
 
 $pdo->exec("CREATE TABLE IF NOT EXISTS child_panels (

@@ -5,7 +5,7 @@ $pageTitle = 'Settings';
 $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
-    $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','maintenance_mode',
+    $fields = ['site_name','site_url','api_key','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
         'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
         'child_panel_price','child_panel_ns1','child_panel_ns2'];
     foreach ($fields as $f) {
@@ -56,6 +56,13 @@ require_once __DIR__ . '/../layouts/header.php';
         <select name="registration_enabled" class="form-control">
           <option value="1" <?= ($settings['registration_enabled']??'1')==='1'?'selected':'' ?>>Enabled</option>
           <option value="0" <?= ($settings['registration_enabled']??'1')==='0'?'selected':'' ?>>Disabled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Require email verification</label>
+        <select name="email_verification_required" class="form-control">
+          <option value="1" <?= ($settings['email_verification_required']??'1')==='1'?'selected':'' ?>>On — user must verify email before login (recommended)</option>
+          <option value="0" <?= ($settings['email_verification_required']??'1')==='0'?'selected':'' ?>>Off — instant access after register</option>
         </select>
       </div>
     </div>

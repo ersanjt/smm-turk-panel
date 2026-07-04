@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_child']) && cs
     if (empty($err)) {
         $balance = (float) $user['balance'];
         if ($balance < $price) {
-            flash('error', 'Insufficient balance. You need $' . number_format($price, 2) . '. Add funds first.');
+            flash('error', 'Insufficient balance. You need $' . number_format($price, 2) . '. Add crypto funds first.');
         } else {
             $db->execute("UPDATE users SET balance = balance - ?, spent = spent + ? WHERE id = ?", [$price, $price, $user['id']]);
             $hashed = password_hash($adminPass, PASSWORD_DEFAULT);
@@ -172,7 +172,7 @@ require_once __DIR__ . '/layouts/header.php';
       <div class="cp-faq-item"><div class="cp-faq-q">How can I change my child panel domain? <span>+</span></div><div class="cp-faq-a">Open a <a href="<?= h(path('tickets.php')) ?>">ticket</a> with your new domain. We will guide you through the change.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Is the affiliate feature available on child panel? <span>+</span></div><div class="cp-faq-a">Child panels can have their own referral/affiliate settings. Contact support to enable this for your panel.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How can I set up payment methods in my child account? <span>+</span></div><div class="cp-faq-a">After activation, you can add payment options in your child panel’s admin area or request integration via support.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How do I collect money from my customers? <span>+</span></div><div class="cp-faq-a">Your child panel can use payment gateways (e.g. Stripe, PayPal) that you configure. Funds go to your account; you use balance here to pay for orders.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How do I collect money from my customers? <span>+</span></div><div class="cp-faq-a">Your child panel can use payment gateways (e.g. Stripe, PayPal) that you configure for your own clients. On this main panel, <strong>your balance is topped up with cryptocurrency only</strong> (BTC, ETH, USDT, etc.) via Add Funds.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">After integrating with WordPress, can customers discover the main panel? <span>+</span></div><div class="cp-faq-a">If you only link or embed the panel with your domain, customers see your brand. They do not see the main panel unless you expose its name or link.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Will changing the currency give me access to all payment gateways? <span>+</span></div><div class="cp-faq-a">Available gateways depend on the currency and your country. Support can help you enable the right options for your panel.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Can I use another admin email for my child panel? <span>+</span></div><div class="cp-faq-a">Yes. After activation you can set a different admin email in your child panel’s settings, or request it via ticket when ordering.</div></div>

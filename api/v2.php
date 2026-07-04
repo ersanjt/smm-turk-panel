@@ -207,11 +207,46 @@ switch ($action) {
         $ids = array_map('intval', explode(',', $_POST['orders'] ?? ''));
         $out = [];
         foreach ($ids as $id) {
-            $order = $db->fetch("SELECT * FROM orders WHERE id=? AND user_id=? AND status='Pending'", [$id, $user['id']]);
-            if (!$order) { $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']]; continue; }
-            $db->execute("UPDATE orders SET status='Cancelled' WHERE id=?", [$id]);
-            $db->execute("UPDATE users SET balance = balance + ? WHERE id=?", [$order['charge'], $user['id']]);
-            $out[] = ['order' => $id, 'cancel' => 1];
+            if ($id <= 0) {
+                $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
+                continue;
+            }
+            try {
+                $db->beginTransaction();
+                $order = $db->fetch(
+                    "SELECT id, charge, provider_order_id FROM orders WHERE id = ? AND user_id = ? AND status = 'Pending' FOR UPDATE",
+                    [$id, $user['id']]
+                );
+                if (!$order) {
+                    $db->rollBack();
+                    $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
+                    continue;
+                }
+                if (!empty($order['provider_order_id'])) {
+                    $providerResp = $api->cancel([(int)$order['provider_order_id']]);
+                    $providerItem = is_array($providerResp) ? ($providerResp[0] ?? null) : null;
+                    if (is_array($providerItem) && isset($providerItem['cancel']['error'])) {
+                        $db->rollBack();
+                        $out[] = ['order' => $id, 'cancel' => $providerItem['cancel']];
+                        continue;
+                    }
+                }
+                $updated = $db->execute(
+                    "UPDATE orders SET status = 'Cancelled' WHERE id = ? AND user_id = ? AND status = 'Pending'",
+                    [$id, $user['id']]
+                );
+                if ($updated === 0) {
+                    $db->rollBack();
+                    $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
+                    continue;
+                }
+                $db->execute("UPDATE users SET balance = balance + ? WHERE id = ?", [$order['charge'], $user['id']]);
+                $db->commit();
+                $out[] = ['order' => $id, 'cancel' => 1];
+            } catch (Throwable $e) {
+                $db->rollBack();
+                $out[] = ['order' => $id, 'cancel' => ['error' => 'Cannot cancel']];
+            }
         }
         echo json_encode($out);
         break;

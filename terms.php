@@ -12,7 +12,7 @@ require_once __DIR__ . '/layouts/header.php';
     <h3 style="margin:20px 0 10px;font-size:15px;">1. Service</h3>
     <p>We provide social media marketing (SMM) services. Orders are processed by our provider. Start times and delivery speeds vary by service.</p>
     <h3 style="margin:20px 0 10px;font-size:15px;">2. Account & Payment</h3>
-    <p>You must provide accurate information. Balance is in USD. Refunds are only given when we are at fault. Chargebacks may result in account suspension.</p>
+    <p>You must provide accurate information. Balance is shown in USD. <strong>Deposits are cryptocurrency only</strong> (e.g. BTC, ETH, USDT, BNB, SOL) — we do not accept credit cards, PayPal, or bank transfers on this panel. Send crypto to the wallet address shown in Add Funds; balance is credited after confirmation. Refunds are only given when we are at fault. Chargebacks may result in account suspension.</p>
     <h3 style="margin:20px 0 10px;font-size:15px;">3. Orders</h3>
     <p>Ensure links and profiles are public before ordering. Do not change links or account settings after placing an order. We are not responsible for orders placed on private or invalid links.</p>
     <h3 style="margin:20px 0 10px;font-size:15px;">4. Prohibited Use</h3>

@@ -6,13 +6,18 @@
 define('ROOT_PATH', dirname(__DIR__));
 
 require_once ROOT_PATH . '/config.php';
+if (!defined('DEPOSITS_CRYPTO_ONLY')) {
+    define('DEPOSITS_CRYPTO_ONLY', true);
+}
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/Mail.php';
 require_once __DIR__ . '/Auth.php';
+require_once __DIR__ . '/Totp.php';
 require_once __DIR__ . '/SmmApi.php';
 require_once __DIR__ . '/ContentCorrections.php';
 require_once __DIR__ . '/OrderManager.php';
+require_once __DIR__ . '/DepositManager.php';
 
 // In production, log PHP errors to file (tmp/logs/php_errors.log)
 if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
@@ -39,9 +44,14 @@ if (php_sapi_name() !== 'cli') {
     header('X-Content-Type-Options: nosniff');
     header('X-XSS-Protection: 1; mode=block');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    // CSP report-only: reduce XSS risk; adjust or switch to enforce when ready
-    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://apis.google.com; frame-src https://accounts.google.com;";
-    header("Content-Security-Policy-Report-Only: $csp");
+    // CSP: enforce in production unless SMM_CSP_REPORT_ONLY is explicitly enabled
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://apis.google.com; frame-src https://accounts.google.com; manifest-src 'self'; worker-src 'self';";
+    $cspReportOnly = defined('SMM_CSP_REPORT_ONLY') && SMM_CSP_REPORT_ONLY;
+    if ($cspReportOnly) {
+        header("Content-Security-Policy-Report-Only: $csp");
+    } else {
+        header("Content-Security-Policy: $csp");
+    }
 }
 
 // Maintenance mode (web only; allow CLI and logged-in admins)
@@ -49,7 +59,7 @@ if (php_sapi_name() !== 'cli') {
     $maintenance = $db->getSetting('maintenance_mode');
     if ($maintenance === '1' && !$auth->isAdmin()) {
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn()) || preg_match('#/login(\.php)?(?:\?|$)#', $uri);
+        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn()) || preg_match('#/login(\.php)?(?:\?|$)#', $uri) || preg_match('#/login-2fa(?:\.php)?(?:\?|$)#', $uri);
         if (!$allow) {
             header('HTTP/1.1 503 Service Unavailable');
             header('Retry-After: 300');
@@ -137,6 +147,38 @@ function redirect(string $url): void {
     exit;
 }
 
+/** Normalize user-entered order links (add https:// if missing). */
+function normalize_order_link(string $link): string {
+    $link = trim($link);
+    if ($link === '') {
+        return '';
+    }
+    if (!preg_match('#^https?://#i', $link)) {
+        $link = 'https://' . ltrim($link, '/');
+    }
+    return filter_var($link, FILTER_VALIDATE_URL) ? $link : '';
+}
+
+/** Remember internal path to return after login. */
+function store_login_next(?string $next = null): void {
+    $next = trim($next ?? ($_GET['next'] ?? ''));
+    if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
+        return;
+    }
+    $_SESSION['login_next'] = $next;
+}
+
+/** Safe post-login destination (internal paths only). */
+function consume_login_next(): string {
+    $next = trim($_SESSION['login_next'] ?? '');
+    unset($_SESSION['login_next']);
+    if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
+        return url('index.php');
+    }
+    $base = site_base();
+    return $base !== '' ? $base . $next : $next;
+}
+
 function flash(string $type, string $message): void {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
@@ -145,4 +187,70 @@ function getFlash(): ?array {
     $flash = $_SESSION['flash'] ?? null;
     unset($_SESSION['flash']);
     return $flash;
+}
+
+/** Cache-busted static asset URL for CSS/JS. */
+function asset_url(string $path): string {
+    $clean = ltrim($path, '/');
+    $url = path($clean);
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=4';
+}
+
+/** Default Open Graph / Twitter image (1200x630 PNG recommended). */
+function og_image_url(?string $override = null): string {
+    if ($override !== null && trim($override) !== '') {
+        $override = trim($override);
+        if (preg_match('#^https?://#i', $override)) {
+            return $override;
+        }
+        $base = site_base();
+        $resolved = path($override);
+        return $base !== '' ? $base . $resolved : $resolved;
+    }
+    if (defined('OG_IMAGE_URL') && trim((string) OG_IMAGE_URL) !== '') {
+        return og_image_url(trim((string) OG_IMAGE_URL));
+    }
+    return og_image_url('assets/img/og-default.png');
+}
+
+/** HMAC token for cron/maintenance scripts (use in crontab: php cron-sync.php OR ?token=...) */
+function internal_token(string $purpose): string {
+    $secret = (defined('CRON_SECRET') && CRON_SECRET !== '') ? CRON_SECRET : (defined('SECRET_KEY') ? SECRET_KEY : '');
+    if ($secret === '') {
+        return '';
+    }
+    return hash_hmac('sha256', $purpose, $secret);
+}
+
+/** Allow CLI only; block direct web access to migration/setup scripts. */
+function require_cli(): void {
+    if (php_sapi_name() === 'cli') {
+        return;
+    }
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Forbidden. Run this script from the command line.';
+    exit;
+}
+
+/** Allow CLI or valid signed cron token via ?token= or X-Cron-Token header. */
+function require_cli_or_cron_token(string $purpose): void {
+    if (php_sapi_name() === 'cli') {
+        return;
+    }
+    $expected = internal_token($purpose);
+    if ($expected === '') {
+        http_response_code(503);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Cron token not configured. Set CRON_SECRET or SECRET_KEY in config.php.';
+        exit;
+    }
+    $provided = trim((string)($_GET['token'] ?? $_SERVER['HTTP_X_CRON_TOKEN'] ?? ''));
+    if ($provided !== '' && hash_equals($expected, $provided)) {
+        return;
+    }
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Forbidden';
+    exit;
 }

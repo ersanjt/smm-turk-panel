@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `google_id` varchar(64) DEFAULT NULL UNIQUE,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_login` timestamp NULL DEFAULT NULL,
+  `must_change_password` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -121,6 +122,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('referral_min_payout', '10'),
 ('maintenance_mode', '0'),
 ('registration_enabled', '1'),
+('email_verification_required', '1'),
 ('smtp_host', ''),
 ('smtp_port', '587'),
 ('smtp_user', ''),
@@ -135,7 +137,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('wallet_sol', '')
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
--- Insert default admin user (username: admin, password: password)
-INSERT INTO `users` (`username`, `email`, `password`, `role`, `status`, `balance`) VALUES
-('admin', 'admin@smm-turk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active', 0.0000)
+-- Insert default admin user (username: admin, password: password — CHANGE IMMEDIATELY after first login)
+INSERT INTO `users` (`username`, `email`, `password`, `role`, `status`, `balance`, `must_change_password`) VALUES
+('admin', 'admin@smm-turk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active', 0.0000, 1)
 ON DUPLICATE KEY UPDATE `role` = 'admin';

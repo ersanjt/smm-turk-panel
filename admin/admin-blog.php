@@ -10,40 +10,50 @@ $db = Database::getInstance();
 
 // POST: add category
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
+    if (!csrf_verify()) {
+        flash('error', 'Invalid request. Please try again.');
+        redirect(url('admin/admin-blog.php'));
+    }
     $name = trim((string)($_POST['cat_name'] ?? ''));
     $slug = trim(preg_replace('/[^a-z0-9\-]/', '-', strtolower((string)($_POST['cat_slug'] ?? ''))));
     if ($name !== '' && $slug !== '') {
         $db->insert("INSERT INTO blog_categories (slug, name, meta_description) VALUES (?, ?, ?)", [$slug, $name, trim((string)($_POST['cat_meta'] ?? ''))]);
-        setFlash('Category added.', 'success');
+        flash('success', 'Category added.');
     }
-    header('Location: ' . url('admin/admin-blog.php'));
-    exit;
+    redirect(url('admin/admin-blog.php'));
 }
 
 // POST: add tag
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tag'])) {
+    if (!csrf_verify()) {
+        flash('error', 'Invalid request. Please try again.');
+        redirect(url('admin/admin-blog.php'));
+    }
     $name = trim((string)($_POST['tag_name'] ?? ''));
     $slug = trim(preg_replace('/[^a-z0-9\-]/', '-', strtolower((string)($_POST['tag_slug'] ?? ''))));
     if ($name !== '' && $slug !== '') {
         $db->insert("INSERT INTO blog_tags (slug, name) VALUES (?, ?)", [$slug, $name]);
-        setFlash('Tag added.', 'success');
+        flash('success', 'Tag added.');
     }
-    header('Location: ' . url('admin/admin-blog.php'));
-    exit;
+    redirect(url('admin/admin-blog.php'));
 }
 
-// GET: delete category/tag (optional)
-if (isset($_GET['delete_cat']) && ctype_digit((string)$_GET['delete_cat'])) {
-    $db->execute("DELETE FROM blog_categories WHERE id = ?", [(int)$_GET['delete_cat']]);
-    setFlash('Category deleted.', 'success');
-    header('Location: ' . url('admin/admin-blog.php'));
-    exit;
+// POST: delete category/tag
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_cat']) && csrf_verify()) {
+    $catId = (int)$_POST['delete_cat'];
+    if ($catId > 0) {
+        $db->execute("DELETE FROM blog_categories WHERE id = ?", [$catId]);
+        flash('success', 'Category deleted.');
+    }
+    redirect(url('admin/admin-blog.php'));
 }
-if (isset($_GET['delete_tag']) && ctype_digit((string)$_GET['delete_tag'])) {
-    $db->execute("DELETE FROM blog_tags WHERE id = ?", [(int)$_GET['delete_tag']]);
-    setFlash('Tag deleted.', 'success');
-    header('Location: ' . url('admin/admin-blog.php'));
-    exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_tag']) && csrf_verify()) {
+    $tagId = (int)$_POST['delete_tag'];
+    if ($tagId > 0) {
+        $db->execute("DELETE FROM blog_tags WHERE id = ?", [$tagId]);
+        flash('success', 'Tag deleted.');
+    }
+    redirect(url('admin/admin-blog.php'));
 }
 
 $articles = $db->fetchAll("SELECT a.id, a.slug, a.title, a.status, a.published_at, c.name AS category_name FROM blog_articles a LEFT JOIN blog_categories c ON c.id = a.category_id ORDER BY a.updated_at DESC");
@@ -81,6 +91,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <div class="card">
     <h2 class="card-title">Categories</h2>
     <form method="post" style="margin-bottom:16px;">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <input type="hidden" name="add_category" value="1">
       <div class="form-group">
         <label class="form-label">Name</label>
@@ -98,9 +109,13 @@ require_once __DIR__ . '/../layouts/header.php';
     </form>
     <ul style="list-style:none;padding:0;">
       <?php foreach ($categories as $c): ?>
-      <li style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
+      <li style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <span><?= h($c['name']) ?> <code><?= h($c['slug']) ?></code></span>
-        <a href="?delete_cat=<?= (int)$c['id'] ?>" onclick="return confirm('Delete this category?');" style="color:var(--red);">Delete</a>
+        <form method="post" style="margin:0;" onsubmit="return confirm('Delete this category?');">
+          <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+          <input type="hidden" name="delete_cat" value="<?= (int)$c['id'] ?>">
+          <button type="submit" class="btn" style="padding:4px 8px;font-size:12px;color:var(--red);background:transparent;border:1px solid var(--red);">Delete</button>
+        </form>
       </li>
       <?php endforeach; ?>
       <?php if (empty($categories)): ?><li>No categories.</li><?php endif; ?>
@@ -109,6 +124,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <div class="card">
     <h2 class="card-title">Tags</h2>
     <form method="post" style="margin-bottom:16px;">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <input type="hidden" name="add_tag" value="1">
       <div class="form-group">
         <label class="form-label">Name</label>
@@ -122,9 +138,13 @@ require_once __DIR__ . '/../layouts/header.php';
     </form>
     <ul style="list-style:none;padding:0;">
       <?php foreach ($tags as $t): ?>
-      <li style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
+      <li style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <span><?= h($t['name']) ?> <code><?= h($t['slug']) ?></code></span>
-        <a href="?delete_tag=<?= (int)$t['id'] ?>" onclick="return confirm('Delete this tag?');" style="color:var(--red);">Delete</a>
+        <form method="post" style="margin:0;" onsubmit="return confirm('Delete this tag?');">
+          <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+          <input type="hidden" name="delete_tag" value="<?= (int)$t['id'] ?>">
+          <button type="submit" class="btn" style="padding:4px 8px;font-size:12px;color:var(--red);background:transparent;border:1px solid var(--red);">Delete</button>
+        </form>
       </li>
       <?php endforeach; ?>
       <?php if (empty($tags)): ?><li>No tags.</li><?php endif; ?>

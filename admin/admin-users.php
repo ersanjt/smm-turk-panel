@@ -12,11 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     if ($action === 'add_balance' && $uid) {
         $amount = (float)($_POST['amount'] ?? 0);
         if ($amount > 0) {
-            $u = $db->fetch("SELECT balance FROM users WHERE id=?", [$uid]);
-            $db->execute("UPDATE users SET balance = balance + ? WHERE id=?", [$amount, $uid]);
-            $db->insert("INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description) VALUES (?,?,?,?,?,?)",
-                [$uid, 'admin', $amount, $u['balance'], $u['balance']+$amount, 'Admin deposit']);
-            flash('success', "Balance added successfully.");
+            $dm = new DepositManager();
+            $result = $dm->creditUser($uid, $amount, 'admin', 'Admin deposit');
+            if ($result['success']) {
+                $msg = 'Balance added successfully.';
+                if (!empty($result['email_sent'])) {
+                    $msg .= ' User notified by email.';
+                }
+                flash('success', $msg);
+            } else {
+                flash('error', $result['error'] ?? 'Failed to add balance.');
+            }
         }
     } elseif ($action === 'ban' && $uid) {
         $db->execute("UPDATE users SET status='banned' WHERE id=? AND role='user'", [$uid]);
