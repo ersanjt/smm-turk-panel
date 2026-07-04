@@ -94,7 +94,8 @@ git push origin main
 | `Deploy queued` | OK — Cron برای `deploy-cron.sh` بگذار |
 | `Invalid signature` (403) | secret را دوباره sync کن |
 | `/root/repositories/... not found` | اسکریپت قدیمی است — از WHM به‌عنوان root با مسیر ثابت اجرا کن (پایین) |
-| `Permission denied (publickey)` | remote گیت SSH است — به HTTPS عوض کن یا در cPanel Git → Pull بزن |
+| `Permission denied (publickey)` | remote گیت SSH است — اسکریپت خودکار به HTTPS عوض می‌کند؛ یا `git remote set-url origin https://github.com/ersanjt/smm-turk-panel.git` |
+| `dubious ownership` | یک‌بار: `git config --global --add safe.directory /home/smmturk/repositories/smm-turk-panel` |
 | `Shell access is not enabled` | طبیعی است — cron همچنان کار می‌کند؛ دستی از WHM root اجرا کن |
 
 ### WHM Terminal (root) — دیپلوی دستی
@@ -123,7 +124,7 @@ bash /home/smmturk/deploy-smm.sh
 php /home/smmturk/public_html/migrate-performance-indexes.php
 ```
 
-اگر `git fetch` برای رپوی private باز هم خطا داد: cPanel → **Git™ Version Control** → **Pull or Deploy** (اعتبار cPanel ذخیره شده). سپس فقط rsync:
+اگر `git fetch` باز هم خطا داد: cPanel → **Git™ Version Control** → **Pull or Deploy**. رپو اکنون **public** است — با HTTPS و `safe.directory` معمولاً از WHM root هم fetch موفق می‌شود.
 
 ```bash
 cd /home/smmturk/repositories/smm-turk-panel && git log -1 --oneline

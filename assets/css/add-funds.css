@@ -1,0 +1,375 @@
+/* Add Funds — deposit wizard */
+.add-funds-balance-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(227, 10, 23, .08) 0%, rgba(227, 10, 23, .04) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.add-funds-balance-box .balance-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.add-funds-balance-box .balance-value { font-size: 20px; font-weight: 800; color: var(--text); font-family: 'Syne', sans-serif; }
+.add-funds-balance-box .balance-value span { color: var(--primary); }
+
+.add-funds-welcome {
+  background: linear-gradient(135deg, rgba(227, 10, 23, .12), rgba(227, 10, 23, .04));
+  border: 1px solid rgba(227, 10, 23, .2);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.add-funds-welcome h2 { margin: 0 0 6px; font-size: 18px; font-weight: 800; }
+.add-funds-welcome p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 520px; }
+.add-funds-welcome .welcome-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.add-funds-banner {
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%);
+  color: #0c5460;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  border: 1px solid #b8daff;
+  line-height: 1.55;
+}
+.add-funds-banner a { color: var(--primary); font-weight: 600; }
+
+.add-funds-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.add-funds-tabs a {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color .2s, border-color .2s;
+  white-space: nowrap;
+}
+.add-funds-tabs a:hover { color: var(--text); }
+.add-funds-tabs a.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+.add-funds-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.add-funds-step {
+  flex: 1;
+  min-width: 90px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+.add-funds-step span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.add-funds-step.active {
+  background: linear-gradient(135deg, rgba(227, 10, 23, .1), rgba(227, 10, 23, .04));
+  border-color: rgba(227, 10, 23, .25);
+  color: var(--text);
+}
+.add-funds-step.done { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+.add-funds-ready {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.add-funds-ready p { margin: 0; font-size: 14px; color: #166534; font-weight: 600; }
+
+.add-funds-instructions {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  border: 1px solid var(--border);
+}
+
+.add-funds-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.add-funds-presets button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s;
+}
+.add-funds-presets button:hover { border-color: var(--primary); color: var(--primary); }
+.add-funds-presets button.active {
+  border-color: var(--primary);
+  background: rgba(227, 10, 23, .08);
+  color: var(--primary);
+}
+
+/* Coin picker */
+.coin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.coin-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+  font-family: inherit;
+}
+.coin-card:hover {
+  border-color: var(--coin-color, var(--primary));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+  transform: translateY(-1px);
+}
+.coin-card.selected {
+  border-color: var(--coin-color, var(--primary));
+  background: linear-gradient(135deg, rgba(227, 10, 23, .06), transparent);
+  box-shadow: 0 0 0 3px rgba(227, 10, 23, .1);
+}
+.coin-card .coin-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--coin-color, var(--primary));
+  margin-bottom: 4px;
+}
+.coin-card .coin-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.coin-card .coin-network { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.coin-card .coin-hint { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+.coin-card .coin-rec {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Payment panel */
+.pay-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.pay-summary .pay-amount { font-size: 22px; font-weight: 800; font-family: 'Syne', sans-serif; }
+.pay-summary .pay-amount small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); font-family: inherit; }
+.pay-summary .pay-coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+.pay-summary .pay-coin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coin-color, var(--primary));
+}
+
+.pay-panel {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 640px) {
+  .pay-panel { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+}
+.pay-qr-wrap {
+  background: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.pay-qr-wrap canvas { display: block; border-radius: 6px; }
+.pay-qr-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+
+.pay-address-block { min-width: 0; }
+.pay-address-block .network-warn {
+  font-size: 12px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.pay-address-block .addr-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
+.pay-address-block code {
+  display: block;
+  font-size: 12px;
+  word-break: break-all;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.pay-copy-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pay-copy-row .btn { padding: 10px 16px; font-size: 13px; }
+
+/* Awaiting confirmation */
+.deposit-status-card {
+  text-align: center;
+  padding: 28px 24px;
+  border-radius: 16px;
+  border: 1px solid #bbf7d0;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  margin-bottom: 20px;
+}
+.deposit-status-card .status-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.deposit-status-card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 800; color: #166534; }
+.deposit-status-card p { margin: 0; font-size: 13px; color: #15803d; line-height: 1.6; }
+.deposit-status-meta {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #bbf7d0;
+  font-size: 12px;
+  color: #166534;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+}
+
+.add-funds-next-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.6;
+}
+
+.add-funds-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #166534;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+  z-index: 9999;
+  opacity: 0;
+  transition: transform .3s ease, opacity .3s ease;
+  pointer-events: none;
+}
+.add-funds-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.status-pending { color: #d97706; font-weight: 700; }
+.status-completed { color: #16a34a; font-weight: 700; }
+.status-failed { color: #dc2626; font-weight: 700; }
+
+[data-theme="dark"] .coin-card,
+[data-theme="dark"] .pay-qr-wrap,
+[data-theme="dark"] .pay-address-block code,
+[data-theme="dark"] .add-funds-presets button,
+[data-theme="dark"] .pay-summary .pay-coin-pill {
+  background: var(--card);
+}
+[data-theme="dark"] .add-funds-banner {
+  background: rgba(56, 189, 248, .08);
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, .2);
+}

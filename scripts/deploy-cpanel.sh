@@ -20,11 +20,14 @@ if git remote get-url origin 2>/dev/null | grep -q 'git@github.com'; then
   git remote set-url origin "https://github.com/ersanjt/smm-turk-panel.git"
 fi
 
-if ! git fetch origin main 2>/dev/null; then
-  echo "WARN: git fetch failed — syncing current repo copy."
-  echo "       Update repo first: cPanel → Git Version Control → Pull or Deploy"
-else
+# Public repo — HTTPS fetch works without credentials (no SSH key needed)
+if git fetch origin main; then
   git reset --hard origin/main
+  echo "Git updated: $(git log -1 --oneline)"
+else
+  echo "WARN: git fetch failed — syncing current repo copy."
+  echo "       Fix: git config --global --add safe.directory $REPO_DIR"
+  echo "       Or:  cPanel → Git Version Control → Pull or Deploy"
 fi
 
 rsync -av --delete \

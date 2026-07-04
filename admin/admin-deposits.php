@@ -47,7 +47,7 @@ require_once __DIR__ . '/../layouts/header.php';
     <?php else: ?>
     <table class="table">
       <thead>
-        <tr><th>ID</th><th>User</th><th>Amount</th><th>TxHash / Ref</th><th>Date</th><th>Action</th></tr>
+        <tr><th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>TxHash / Ref</th><th>Date</th><th>Action</th></tr>
       </thead>
       <tbody>
         <?php foreach ($pending as $t): ?>
@@ -55,6 +55,13 @@ require_once __DIR__ . '/../layouts/header.php';
           <td>#<?= $t['id'] ?></td>
           <td><?= h($t['username']) ?><br><span style="font-size:11px;color:var(--text-muted);"><?= h($t['email']) ?></span></td>
           <td><strong>$<?= number_format($t['amount'], 2) ?></strong></td>
+          <td style="font-size:12px;"><?php
+            $method = '—';
+            if (preg_match('/—\s*(.+)$/', $t['description'] ?? '', $m)) {
+                $method = trim($m[1]);
+            }
+            echo h($method);
+          ?></td>
           <td style="font-size:11px;word-break:break-all;max-width:180px;"><?= h($t['reference'] ?: '—') ?></td>
           <td style="color:var(--text-muted);font-size:12px;"><?= date('Y-m-d H:i', strtotime($t['created_at'])) ?></td>
           <td>
