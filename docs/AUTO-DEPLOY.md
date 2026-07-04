@@ -1,0 +1,124 @@
+# دیپلوی خودکار — smm-turk.com
+
+**جریان کار:**
+
+```
+[لوکال]  git push  →  [GitHub]  webhook  →  [سرور]  deploy-smm.sh  →  public_html  →  smm-turk.com
+```
+
+---
+
+## گام ۱: راه‌اندازی یک‌بار (لوکال)
+
+در PowerShell از روت پروژه:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup-auto-deploy.ps1
+```
+
+این اسکریپت:
+- فایل `deploy-secret.txt` را لوکال می‌سازد (commit نمی‌شود)
+- Webhook را در GitHub به `https://smm-turk.com/deploy-webhook.php` وصل می‌کند
+
+---
+
+## گام ۲: تنظیم سرور (cPanel — یک بار)
+
+### ۲.۱ آپلود `deploy-secret.txt`
+
+1. ورود به cPanel: https://92.205.182.143:2087
+2. **File Manager** → برو به `/home/smmturk/` (نه داخل public_html)
+3. فایل `deploy-secret.txt` را از روت پروژه لوکال آپلود کن
+4. Permission: **600** یا **640**
+
+### ۲.۲ اسکریپت دیپلوی
+
+**اگر Terminal/SSH داری:**
+
+```bash
+cp ~/repositories/smm-turk-panel/scripts/deploy-cpanel.sh ~/deploy-smm.sh
+chmod +x ~/deploy-smm.sh
+~/deploy-smm.sh
+```
+
+**اگر SSH نداری (File Manager):**
+
+1. فایل `scripts/deploy-cpanel.sh` را به `/home/smmturk/deploy-smm.sh` کپی کن
+2. Permission را **755** بگذار
+
+### ۲.۳ Git در cPanel (اگر هنوز نیست)
+
+1. cPanel → **Git™ Version Control** → **Create**
+2. Clone URL: `https://github.com/ersanjt/smm-turk-panel.git`
+3. Repository Path: `smm-turk-panel` (مسیر نهایی: `/home/smmturk/repositories/smm-turk-panel`)
+
+**مهم:** `config.php` فقط در `public_html` باشد و در Git نباشد — با هر دیپلوی دست نخورده می‌ماند.
+
+---
+
+## گام ۳: کار روزانه (بعد از هر تغییر)
+
+```powershell
+powershell -File scripts/push.ps1 "توضیح تغییرات"
+```
+
+یا دستی:
+
+```powershell
+git add .
+git commit -m "توضیح تغییرات"
+git push origin main
+```
+
+بعد از push، ظرف چند ثانیه سایت بروز می‌شود.
+
+---
+
+## تست و عیب‌یابی
+
+| بررسی | آدرس / کار |
+|--------|------------|
+| Webhook زنده | https://smm-turk.com/deploy-webhook.php → `{"ok":true,...}` |
+| تحویل webhook | GitHub → Settings → Webhooks → Recent Deliveries → **200** |
+| سایت | https://smm-turk.com/ |
+| Health | https://smm-turk.com/health → `{"status":"ok","db":"ok"}` |
+
+### خطاهای رایج
+
+| کد | علت | راه‌حل |
+|----|-----|--------|
+| **403** | Secret در GitHub و سرور یکی نیست | `setup-auto-deploy.ps1` را دوباره اجرا کن و `deploy-secret.txt` را دوباره آپلود کن |
+| **500** deploy-secret | فایل روی سرور نیست | آپلود به `/home/smmturk/deploy-secret.txt` |
+| **500** exec disabled | PHP نمی‌تواند bash اجرا کند | از **Cron** یا **FTP fallback** استفاده کن (پایین) |
+
+### اگر Webhook کار نکرد (exec غیرفعال)
+
+**روش A — Cron (هر ۵ دقیقه):**
+
+cPanel → Cron Jobs:
+
+```
+*/5 * * * * /home/smmturk/deploy-smm.sh >> /home/smmturk/deploy.log 2>&1
+```
+
+**روش B — FTP از GitHub Actions:**
+
+در GitHub → Settings → Secrets → Actions این‌ها را اضافه کن:
+
+- `FTP_SERVER` — مثلاً `ftp.smm-turk.com`
+- `FTP_USERNAME` — `smmturk`
+- `FTP_PASSWORD` — از cPanel → FTP Accounts
+- `FTP_SERVER_DIR` — `/public_html/`
+
+Workflow: `.github/workflows/deploy-ftp.yml`
+
+---
+
+## مسیرهای سرور
+
+| مورد | مسیر |
+|------|------|
+| رپو Git (cPanel) | `/home/smmturk/repositories/smm-turk-panel` |
+| سایت | `/home/smmturk/public_html` → https://smm-turk.com |
+| اسکریپت دیپلوی | `/home/smmturk/deploy-smm.sh` |
+| سکرت webhook | `/home/smmturk/deploy-secret.txt` |

@@ -1,5 +1,7 @@
 # چک‌لیست دیپلوی — همه در یک جا
 
+👉 **دیپلوی خودکار (توصیه‌شده):** [AUTO-DEPLOY.md](AUTO-DEPLOY.md)
+
 **سرور:** `92.205.182.143` (اشتراکی — WHM/cPanel)  
 **cPanel:** https://92.205.182.143:2087  
 **یوزر cPanel:** `smmturk` (اگر فرق کرد عوضش کن)
@@ -93,10 +95,10 @@
 
 | مورد | مقدار |
 |------|--------|
-| رپو روی سرور | `/home/smmturk/smm-turk-panel` |
+| رپو روی سرور | `/home/smmturk/repositories/smm-turk-panel` |
 | پوشهٔ وب | `/home/smmturk/public_html` |
 | اسکریپت دیپلوی | `/home/smmturk/deploy-smm.sh` |
 | سکرت وب‌هوک | `~/deploy-secret.txt` یا `~/public_html/deploy-secret.txt` |
-| آدرس وب‌هوک | `https://92.205.182.143/deploy-webhook.php` (یا با دامنه) |
+| آدرس وب‌هوک | `https://smm-turk.com/deploy-webhook.php` |
 
 راهنمای کامل‌تر: [SETUP-SERVER-92.205.182.143.md](SETUP-SERVER-92.205.182.143.md)

@@ -1,5 +1,7 @@
 # اتصال کامل Git + لوکال + cPanel (با دیپلوی خودکار)
 
+👉 **دیپلوی خودکار smm-turk.com:** [AUTO-DEPLOY.md](AUTO-DEPLOY.md) — لوکال → GitHub → سرور با یک `git push`
+
 👉 **سرور 92.205.182.143؟** مستقیم برو به **[CHECKLIST-DEPLOY.md](CHECKLIST-DEPLOY.md)** (همه در یک صفحه) یا **[SETUP-SERVER-92.205.182.143.md](SETUP-SERVER-92.205.182.143.md)** (با توضیح بیشتر).
 
 این راهنما به‌طور کلی توضیح می‌دهد:
@@ -172,7 +174,7 @@ crontab -e
 
 | مرحله | کار |
 |--------|-----|
-| **لوکال** | `git add` → `git commit` → `git push origin main` |
+| **لوکال** | `powershell -File scripts/push.ps1 "توضیح"` یا `git push origin main` |
 | **GitHub** | کد را نگه می‌دارد؛ با Webhook به سرور اطلاع می‌دهد (در صورت تنظیم) |
 | **سرور** | یا دستی `~/deploy-smm.sh` یا خودکار با Webhook یا با Cron هر چند دقیقه `deploy-smm.sh` |
 

@@ -1,16 +1,14 @@
 #!/bin/bash
 # ============================================================
-#  اسکریپت دیپلوی سرور — بعد از git pull، فایل‌ها را به public_html می‌ریزد
-#  کپی کن: cp ~/repositories/smm-turk-panel/scripts/deploy-cpanel.sh ~/deploy-smm.sh
+#  دیپلوی خودکار cPanel — بعد از git pull، فایل‌ها به public_html می‌روند
+#  روی سرور کپی کن: cp ~/repositories/smm-turk-panel/scripts/deploy-cpanel.sh ~/deploy-smm.sh
 #  سپس: chmod +x ~/deploy-smm.sh
 # ============================================================
 
 set -e
 
-# مسیر رپوی گیت (cPanel Git Version Control)
-REPO_DIR="$HOME/repositories/smm-turk-panel"
-# مسیر پوشهٔ وب سایت
-WEB_DIR="$HOME/public_html"
+REPO_DIR="${REPO_DIR:-$HOME/repositories/smm-turk-panel}"
+WEB_DIR="${WEB_DIR:-$HOME/public_html}"
 
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "Error: Git repo not found: $REPO_DIR"
