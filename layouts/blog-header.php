@@ -55,7 +55,7 @@ $blogNavActive = $blogNavActive ?? '';
     <meta name="twitter:title" content="<?= h($pageTitle) ?> — <?= h($siteName) ?>">
     <meta name="twitter:description" content="<?= h($pageDescription) ?>">
     <meta name="twitter:image" content="<?= h($pageImg) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -105,7 +105,7 @@ $blogNavActive = $blogNavActive ?? '';
 <body>
 <nav class="blog-nav" role="navigation">
     <div class="blog-nav-inner">
-        <a href="<?= h(path('home.php')) ?>" class="blog-nav-logo"><img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt=""> SMM <span>TURK</span></a>
+        <a href="<?= h(path('home.php')) ?>" class="blog-nav-logo"><img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt=""> SMM <span>TURK</span></a>
         <div class="blog-nav-links">
             <a href="<?= h(path('home.php')) ?>"<?= $blogNavActive === 'home' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
             <a href="<?= h(path('blog.php')) ?>"<?= $blogNavActive === 'blog' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_blog')) : 'Blog' ?></a>

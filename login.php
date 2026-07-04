@@ -126,8 +126,8 @@ if (empty($_SESSION['csrf_token'])) {
 <link rel="canonical" href="<?= h(url('login.php')) ?>">
 <meta name="geo.region" content="<?= h(defined('GEO_REGION') ? GEO_REGION : 'TR') ?>">
 <?php endif; ?>
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
+<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -188,7 +188,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 <div class="auth-box">
   <a href="<?= h(path('home.php')) ?>" class="auth-back">← Back to Home</a>
   <div class="auth-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=3')) ?>" alt="" width="52" height="52">
+    <img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt="" width="52" height="52">
     <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>
