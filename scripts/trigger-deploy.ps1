@@ -12,8 +12,9 @@ Get-Content $secretFile | ForEach-Object {
 if (-not $secret) { Write-Error "WEBHOOK_SECRET missing in deploy-secret.txt" }
 
 $body = '{"ref":"refs/heads/main","repository":{"full_name":"ersanjt/smm-turk-panel"}}'
-$hmac = New-Object System.Security.Cryptography.HMACSHA256 ([Text.Encoding]::UTF8.GetBytes($secret))
-$hash = $hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes($body))
+$encoding = [Text.Encoding]::UTF8
+$hmac = [System.Security.Cryptography.HMACSHA256]::new($encoding.GetBytes($secret))
+$hash = $hmac.ComputeHash($encoding.GetBytes($body))
 $sig = 'sha256=' + (-join ($hash | ForEach-Object { $_.ToString('x2') }))
 
 Write-Host "POST deploy-webhook.php ..."
