@@ -7,6 +7,7 @@ REPO_DIR="${REPO_DIR:-/home/${CPANEL_USER}/repositories/smm-turk-panel}"
 WEB_DIR="${WEB_DIR:-/home/${CPANEL_USER}/public_html}"
 GITHUB_REPO="https://github.com/ersanjt/smm-turk-panel"
 GITHUB_ARCHIVE="${GITHUB_REPO}/archive/refs/heads/main.tar.gz"
+GITHUB_ARCHIVE_ALT="https://codeload.github.com/ersanjt/smm-turk-panel/tar.gz/refs/heads/main"
 
 RSYNC_EXCLUDES=(
   --exclude='.git'
@@ -54,7 +55,8 @@ if [ "$git_updated" -eq 0 ]; then
   tmp_dir=$(mktemp -d)
   trap 'rm -rf "$tmp_dir"' EXIT
 
-  if curl -fsSL "$GITHUB_ARCHIVE" -o "$tmp_dir/main.tar.gz"; then
+  if curl -fsSL "$GITHUB_ARCHIVE" -o "$tmp_dir/main.tar.gz" 2>/dev/null \
+     || curl -fsSL "$GITHUB_ARCHIVE_ALT" -o "$tmp_dir/main.tar.gz"; then
     tar -xzf "$tmp_dir/main.tar.gz" -C "$tmp_dir"
     extract_dir="$tmp_dir/smm-turk-panel-main"
     if [ ! -d "$extract_dir" ]; then
