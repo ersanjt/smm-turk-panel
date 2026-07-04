@@ -118,6 +118,8 @@ cd /home/smmturk/repositories/smm-turk-panel
 git remote set-url origin https://github.com/ersanjt/smm-turk-panel.git
 
 # ۴) دیپلوی (به‌عنوان root هم کار می‌کند)
+#    اگر git fetch پسورد خواست: کل بلوک را یکجا paste نکن — هر خط جدا اجرا کن.
+#    اسکریپت جدید بدون login از GitHub archive هم deploy می‌کند (رپو public).
 bash /home/smmturk/deploy-smm.sh
 
 # ۵) بعد از دیپلوی موفق — migration ایندکس‌ها
