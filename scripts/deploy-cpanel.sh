@@ -1,14 +1,10 @@
 #!/bin/bash
-# ============================================================
-#  دیپلوی خودکار cPanel — بعد از git pull، فایل‌ها به public_html می‌روند
-#  روی سرور کپی کن: cp ~/repositories/smm-turk-panel/scripts/deploy-cpanel.sh ~/deploy-smm.sh
-#  سپس: chmod +x ~/deploy-smm.sh
-# ============================================================
-
+# Copy to /home/smmturk/deploy-smm.sh — see docs/AUTO-DEPLOY.md
 set -e
 
-REPO_DIR="${REPO_DIR:-$HOME/repositories/smm-turk-panel}"
-WEB_DIR="${WEB_DIR:-$HOME/public_html}"
+CPANEL_USER="${CPANEL_USER:-smmturk}"
+REPO_DIR="${REPO_DIR:-/home/${CPANEL_USER}/repositories/smm-turk-panel}"
+WEB_DIR="${WEB_DIR:-/home/${CPANEL_USER}/public_html}"
 
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "Error: Git repo not found: $REPO_DIR"
@@ -16,14 +12,28 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 
 cd "$REPO_DIR"
-git fetch origin main
-git reset --hard origin/main
+
+# WHM root runs as root; repo owned by smmturk triggers "dubious ownership"
+git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
+
+if git remote get-url origin 2>/dev/null | grep -q 'git@github.com'; then
+  git remote set-url origin "https://github.com/ersanjt/smm-turk-panel.git"
+fi
+
+if ! git fetch origin main 2>/dev/null; then
+  echo "WARN: git fetch failed — syncing current repo copy."
+  echo "       Update repo first: cPanel → Git Version Control → Pull or Deploy"
+else
+  git reset --hard origin/main
+fi
 
 rsync -av --delete \
   --exclude='.git' \
   --exclude='.cpanel.yml' \
   --exclude='config.php' \
   --exclude='deploy-secret.txt' \
+  --exclude='deploy-smm.sh' \
+  --exclude='deploy-cron.sh' \
   --exclude='tmp/' \
   --exclude='uploads/' \
   --exclude='node_modules' \

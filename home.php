@@ -74,8 +74,8 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <meta name="twitter:title" content="<?= h($seoOgTitle) ?>">
     <meta name="twitter:description" content="<?= h($seoOgDescription) ?>">
     <meta name="twitter:image" content="<?= h($logoUrl) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
-    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
+    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
     <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
     <script type="application/ld+json"><?= json_encode([
         '@context' => 'https://schema.org',
@@ -91,6 +91,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 </head>
 <body data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
 <script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
@@ -98,7 +99,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
 <header class="nav" role="banner">
     <div class="nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
             <span class="nav-logo-text">SMM <span>TURK</span></span>
             <span class="nav-logo-tag">SMM Panel</span>
         </a>
@@ -110,8 +111,8 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
             <?php endif; ?>
             <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
             <button type="button" class="nav-theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
-                <span class="theme-icon theme-icon-light" aria-hidden="true">☀</span>
-                <span class="theme-icon theme-icon-dark" aria-hidden="true">🌙</span>
+                <span class="theme-icon theme-icon-light" aria-hidden="true"><?= icon('sun', 18) ?></span>
+                <span class="theme-icon theme-icon-dark" aria-hidden="true"><?= icon('moon', 18) ?></span>
             </button>
             <div class="nav-lang nav-lang-compact">
                 <div class="nav-lang-dropdown" id="langDropdown">
@@ -183,27 +184,27 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <p class="section-desc"><?= h(__('benefit_intro')) ?></p>
     <div class="benefit-grid">
         <div class="benefit-card">
-            <div class="benefit-icon">💰</div>
+            <div class="benefit-icon"><?= iconBox('wallet', 'primary') ?></div>
             <div><h3><?= h(__('cheapest')) ?></h3><p><?= h(__('cheapest_desc')) ?></p></div>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">⚡</div>
+            <div class="benefit-icon"><?= iconBox('zap', 'orange') ?></div>
             <div><h3><?= h(__('fastest')) ?></h3><p><?= h(__('fastest_desc')) ?></p></div>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">🎯</div>
+            <div class="benefit-icon"><?= iconBox('target', 'green') ?></div>
             <div><h3><?= h(__('easy')) ?></h3><p><?= h(__('easy_desc')) ?></p></div>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">📊</div>
+            <div class="benefit-icon"><?= iconBox('chart', 'blue') ?></div>
             <div><h3><?= h(__('realtime')) ?></h3><p><?= h(__('realtime_desc')) ?></p></div>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">🔄</div>
+            <div class="benefit-icon"><?= iconBox('refresh', 'purple') ?></div>
             <div><h3><?= h(__('reseller')) ?></h3><p><?= h(__('reseller_desc')) ?></p></div>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">⭐</div>
+            <div class="benefit-icon"><?= iconBox('star', 'primary') ?></div>
             <div><h3><?= h(__('quality')) ?></h3><p><?= h(__('quality_desc')) ?></p></div>
         </div>
     </div>
@@ -214,17 +215,17 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <h2 class="section-title"><?= h(__('services_title')) ?></h2>
     <div class="three-cols">
         <div class="feature-block">
-            <div class="icon">💳</div>
+            <div class="icon"><?= iconBox('credit-card', 'green') ?></div>
             <h3><?= h(__('secure_payment')) ?></h3>
             <p><?= h(__('secure_payment_desc')) ?></p>
         </div>
         <div class="feature-block">
-            <div class="icon">🌍</div>
+            <div class="icon"><?= iconBox('globe', 'blue') ?></div>
             <h3><?= h(__('services_title')) ?></h3>
             <p><?= h(__('services_desc')) ?></p>
         </div>
         <div class="feature-block">
-            <div class="icon">💬</div>
+            <div class="icon"><?= iconBox('message', 'primary') ?></div>
             <h3><?= h(__('support_24_7')) ?></h3>
             <p><?= h(__('support_24_7_desc')) ?></p>
         </div>
@@ -240,17 +241,17 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     </div>
     <div class="stats-row">
         <div class="stat-item">
-            <div class="icon">⏱</div>
+            <div class="icon"><?= iconBox('clock', 'orange') ?></div>
             <div class="stat-value">0.3Sec</div>
             <div class="stat-label"><?= h(__('stat_order_every')) ?></div>
         </div>
         <div class="stat-item">
-            <div class="icon">✓</div>
+            <div class="icon"><?= iconBox('check-circle', 'green') ?></div>
             <div class="stat-value">59M+</div>
             <div class="stat-label"><?= h(__('stat_orders_completed')) ?></div>
         </div>
         <div class="stat-item">
-            <div class="icon">$</div>
+            <div class="icon"><?= iconBox('dollar', 'primary') ?></div>
             <div class="stat-value">$0.001/1K</div>
             <div class="stat-label"><?= h(__('stat_prices_from')) ?></div>
         </div>
@@ -275,10 +276,10 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <h2 class="section-title"><?= h(__('why_us_title')) ?></h2>
     <div class="why-us-grid">
         <div class="why-us-icons">
-            <div class="why-us-icon"><div class="ico">💬</div><span><?= h(__('live_chat')) ?></span></div>
-            <div class="why-us-icon"><div class="ico">📦</div><span><?= h(__('multi_services')) ?></span></div>
-            <div class="why-us-icon"><div class="ico">📋</div><span><?= h(__('mass_order')) ?></span></div>
-            <div class="why-us-icon"><div class="ico">🔌</div><span><?= h(__('api_integration')) ?></span></div>
+            <div class="why-us-icon"><div class="ico"><?= iconBox('message', 'primary') ?></div><span><?= h(__('live_chat')) ?></span></div>
+            <div class="why-us-icon"><div class="ico"><?= iconBox('package', 'green') ?></div><span><?= h(__('multi_services')) ?></span></div>
+            <div class="why-us-icon"><div class="ico"><?= iconBox('clipboard', 'orange') ?></div><span><?= h(__('mass_order')) ?></span></div>
+            <div class="why-us-icon"><div class="ico"><?= iconBox('plug', 'blue') ?></div><span><?= h(__('api_integration')) ?></span></div>
         </div>
         <div>
             <p class="section-desc" style="margin-bottom:24px;"><?= h(__('why_us_desc')) ?></p>

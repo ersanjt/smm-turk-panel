@@ -49,6 +49,23 @@ class ContentCorrections {
         return $out;
     }
 
+    /** Fit provider strings into DB column limits (UTF-8 safe). */
+    public static function fitCategory(string $category, int $maxLen = 255): string {
+        $out = self::correctCategory($category);
+        if (mb_strlen($out) > $maxLen) {
+            $out = mb_substr($out, 0, $maxLen);
+        }
+        return $out;
+    }
+
+    public static function fitServiceType(string $type, int $maxLen = 100): string {
+        $out = trim($type !== '' ? $type : 'Default');
+        if (mb_strlen($out) > $maxLen) {
+            $out = mb_substr($out, 0, $maxLen);
+        }
+        return $out;
+    }
+
     /** Avoid double-encoding: store & not &amp; so h() outputs &amp; once */
     private static function decodeAmp(string $s): string {
         while (str_contains($s, '&amp;')) {

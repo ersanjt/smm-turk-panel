@@ -54,56 +54,56 @@ require_once __DIR__ . '/../layouts/header.php';
 
 <div class="admin-grid">
   <div class="admin-card">
-    <div class="ac-icon">US</div>
+    <div class="ac-icon"><?= iconBox('users', 'primary', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Total Users</div>
       <div class="ac-value"><?= number_format($totalUsers) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon ac-icon-green">OR</div>
+    <div class="ac-icon"><?= iconBox('orders', 'green', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Total Orders</div>
       <div class="ac-value"><?= number_format($totalOrders) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon ac-icon-orange">$</div>
+    <div class="ac-icon"><?= iconBox('dollar', 'orange', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Total Revenue</div>
       <div class="ac-value">$<?= number_format($totalRevenue, 2) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon">PD</div>
+    <div class="ac-icon"><?= iconBox('pending', 'orange', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Pending Orders</div>
       <div class="ac-value"><?= number_format($pendingOrders) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon ac-icon-green">TK</div>
+    <div class="ac-icon"><?= iconBox('tickets', 'green', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Open Tickets</div>
       <div class="ac-value"><?= number_format($openTickets) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon">SV</div>
+    <div class="ac-icon"><?= iconBox('services', 'primary', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Active Services</div>
       <div class="ac-value"><?= number_format($totalServices) ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon ac-icon-dark">PR</div>
+    <div class="ac-icon"><?= iconBox('server', 'dark', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Provider Balance</div>
       <div class="ac-value"><?= $providerBalance !== null ? '$' . number_format($providerBalance, 2) : 'N/A' ?></div>
     </div>
   </div>
   <div class="admin-card">
-    <div class="ac-icon ac-icon-orange">DP</div>
+    <div class="ac-icon"><?= iconBox('deposit', 'orange', 24) ?></div>
     <div class="ac-info">
       <div class="ac-label">Pending Deposits</div>
       <div class="ac-value"><?= number_format($pendingDeposits) ?></div>
@@ -112,13 +112,13 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <div class="quick-actions">
-  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn">Manage Users</a>
-  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn qa-btn-outline">Manage Orders</a>
-  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn qa-btn-outline">Services</a>
-  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn qa-btn-dark">Sync Services</a>
-  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline">Settings</a>
-  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline">Tickets</a>
-  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn">Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
+  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn"><?= icon('users', 16) ?> Manage Users</a>
+  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('orders', 16) ?> Manage Orders</a>
+  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('services', 16) ?> Services</a>
+  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn qa-btn-dark"><?= icon('sync', 16) ?> Sync Services</a>
+  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('settings', 16) ?> Settings</a>
+  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('tickets', 16) ?> Tickets</a>
+  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn"><?= icon('deposit', 16) ?> Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
 </div>
 
 <div class="admin-charts">

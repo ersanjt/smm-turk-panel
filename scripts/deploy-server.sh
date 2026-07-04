@@ -1,35 +1,3 @@
 #!/bin/bash
-# ============================================================
-#  اسکریپت دیپلوی سرور — بعد از git pull، فایل‌ها را به public_html می‌ریزد
-#  کپی کن: cp ~/repositories/smm-turk-panel/scripts/deploy-cpanel.sh ~/deploy-smm.sh
-#  سپس: chmod +x ~/deploy-smm.sh
-# ============================================================
-
-set -e
-
-# مسیر رپوی گیت (cPanel Git Version Control)
-REPO_DIR="$HOME/repositories/smm-turk-panel"
-# مسیر پوشهٔ وب سایت
-WEB_DIR="$HOME/public_html"
-
-if [ ! -d "$REPO_DIR/.git" ]; then
-  echo "Error: Git repo not found: $REPO_DIR"
-  exit 1
-fi
-
-cd "$REPO_DIR"
-git fetch origin main
-git reset --hard origin/main
-
-rsync -av --delete \
-  --exclude='.git' \
-  --exclude='.cpanel.yml' \
-  --exclude='config.php' \
-  --exclude='deploy-secret.txt' \
-  --exclude='tmp/' \
-  --exclude='uploads/' \
-  --exclude='node_modules' \
-  --chmod=D755,F644 \
-  "$REPO_DIR/" "$WEB_DIR/"
-
-echo "Deploy done: $(date -Iseconds)"
+# Legacy alias — use deploy-smm.sh or scripts/deploy-cpanel.sh
+exec "$(dirname "$0")/deploy-cpanel.sh"

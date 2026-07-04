@@ -1,11 +1,42 @@
 #!/bin/bash
-# نسخهٔ کوتاه — همان scripts/deploy-cpanel.sh
-# روی سرور: cp این فایل به ~/deploy-smm.sh && chmod +x ~/deploy-smm.sh
+# Server deploy — copy to /home/smmturk/deploy-smm.sh (not served from public_html)
 set -e
-REPO_DIR="${REPO_DIR:-$HOME/repositories/smm-turk-panel}"
-WEB_DIR="${WEB_DIR:-$HOME/public_html}"
-[ -d "$REPO_DIR/.git" ] || { echo "Error: $REPO_DIR not found"; exit 1; }
+
+CPANEL_USER="${CPANEL_USER:-smmturk}"
+REPO_DIR="${REPO_DIR:-/home/${CPANEL_USER}/repositories/smm-turk-panel}"
+WEB_DIR="${WEB_DIR:-/home/${CPANEL_USER}/public_html}"
+
+if [ ! -d "$REPO_DIR/.git" ]; then
+  echo "Error: Git repo not found: $REPO_DIR"
+  exit 1
+fi
+
 cd "$REPO_DIR"
-git fetch origin main && git reset --hard origin/main
-rsync -av --delete --exclude='.git' --exclude='.cpanel.yml' --exclude='config.php' --exclude='deploy-secret.txt' --exclude='tmp/' --exclude='uploads/' --chmod=D755,F644 "$REPO_DIR/" "$WEB_DIR/"
+
+git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
+
+if git remote get-url origin 2>/dev/null | grep -q 'git@github.com'; then
+  git remote set-url origin "https://github.com/ersanjt/smm-turk-panel.git"
+fi
+
+if ! git fetch origin main 2>/dev/null; then
+  echo "WARN: git fetch failed — syncing current repo copy."
+  echo "       Update repo first: cPanel → Git Version Control → Pull or Deploy"
+else
+  git reset --hard origin/main
+fi
+
+rsync -av --delete \
+  --exclude='.git' \
+  --exclude='.cpanel.yml' \
+  --exclude='config.php' \
+  --exclude='deploy-secret.txt' \
+  --exclude='deploy-smm.sh' \
+  --exclude='deploy-cron.sh' \
+  --exclude='tmp/' \
+  --exclude='uploads/' \
+  --exclude='node_modules' \
+  --chmod=D755,F644 \
+  "$REPO_DIR/" "$WEB_DIR/"
+
 echo "Deploy done: $(date -Iseconds)"

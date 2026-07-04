@@ -13,7 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $result = $om->syncServices();
     if ($result['success']) {
-        flash('success', "✅ Synced {$result['synced']} services from provider.");
+        $msg = "Synced {$result['synced']} services from provider.";
+        if (!empty($result['failed'])) {
+            $msg .= " ({$result['failed']} skipped — see sync log)";
+        }
+        flash('success', $msg);
     } else {
         flash('error', "❌ {$result['error']}");
     }

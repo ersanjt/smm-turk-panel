@@ -2,13 +2,15 @@
 require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $db = Database::getInstance();
-$user = $auth->getCurrentUser();
+ensure_account_settings_schema($db);
 $pageTitle = 'Account Settings';
 $forcePasswordChange = !empty($_SESSION['must_change_password']) || isset($_GET['change_password']);
 
 $errors = [];
 
-// Optional columns (after running migrate-account-settings.php)
+$user = $auth->getCurrentUser();
+
+// Optional columns (auto-created by ensure_account_settings_schema)
 $hasTimezone = array_key_exists('timezone', $user);
 $hasTwoFactor = array_key_exists('two_factor_enabled', $user);
 $hasTwoFactorSecret = array_key_exists('two_factor_secret', $user);
@@ -118,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(url('account-settings.php'));
     }
 
-    if (isset($_POST['action']) && $_POST['action'] === 'upload_avatar' && $hasAvatar && isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_POST['action']) && $_POST['action'] === 'upload_avatar' && isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['avatar'];
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file['tmp_name']);
@@ -148,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (isset($_POST['action']) && $_POST['action'] === 'remove_avatar' && $hasAvatar) {
+    if (isset($_POST['action']) && $_POST['action'] === 'remove_avatar') {
         if ($avatarPath && file_exists(ROOT_PATH . '/uploads/' . $avatarPath)) {
             @unlink(ROOT_PATH . '/uploads/' . $avatarPath);
         }
@@ -200,6 +202,10 @@ require_once __DIR__ . '/layouts/header.php';
 .account-settings-page .as-card h2 { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
 .account-settings-page .as-card h2 svg { width: 20px; height: 20px; color: var(--primary); opacity: .9; }
 .account-settings-page .as-profile-summary { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: linear-gradient(135deg, rgba(227,10,23,.06) 0%, rgba(227,10,23,.02) 100%); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }
+a.as-profile-summary-link { text-decoration: none; color: inherit; transition: border-color .2s, box-shadow .2s; }
+a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow: 0 4px 16px rgba(227,10,23,.08); }
+.account-settings-page .as-change-photo { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--primary); }
+.account-settings-page .as-file-input { cursor: pointer; }
 .account-settings-page .as-profile-summary .as-avatar { width: 56px; height: 56px; min-width: 56px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 22px; font-weight: 700; }
 .account-settings-page .as-profile-summary .as-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .account-settings-page .as-profile-summary .as-info { min-width: 0; }
@@ -219,6 +225,7 @@ require_once __DIR__ . '/layouts/header.php';
 .account-settings-page .as-avatar-actions .btn { margin-right: 8px; margin-bottom: 8px; }
 .account-settings-page .as-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 12px; }
 .account-settings-page .alert { margin-bottom: 14px; }
+#profile-photo { scroll-margin-top: 72px; }
 </style>
 
 <div class="account-settings-page">
@@ -230,7 +237,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
   <!-- Profile summary -->
-  <div class="as-profile-summary">
+  <a href="#profile-photo" class="as-profile-summary as-profile-summary-link">
     <div class="as-avatar">
       <?php if ($avatarPath): ?>
       <img src="<?= h(path('uploads/' . $avatarPath)) ?>?v=<?= time() ?>" alt="">
@@ -241,8 +248,9 @@ require_once __DIR__ . '/layouts/header.php';
     <div class="as-info">
       <div class="as-name"><?= h($user['username'] ?? '') ?></div>
       <div class="as-email"><?= h($user['email'] ?? '') ?></div>
+      <span class="as-change-photo">Change profile photo ↓</span>
     </div>
-  </div>
+  </a>
 
   <?php if ($forcePasswordChange): ?>
   <div class="alert alert-error" style="margin-bottom:20px;">
@@ -251,39 +259,38 @@ require_once __DIR__ . '/layouts/header.php';
   <?php endif; ?>
 
   <?php if (!($hasTimezone || $hasTwoFactor || $hasApiKeyCreatedAt || $hasAvatar)): ?>
-  <div class="alert alert-info">
-    Run <code>php migrate-account-settings.php</code> once to enable timezone, two-factor, API key date and profile photo.
+  <div class="alert alert-error">
+    Could not enable profile settings automatically. Run <code>php migrate-db.php</code> on the server.
   </div>
   <?php endif; ?>
 
   <!-- Profile photo -->
-  <?php if ($hasAvatar): ?>
-  <div class="as-card">
+  <div class="as-card" id="profile-photo">
     <h2>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <?= icon('users', 20) ?>
       Profile photo
     </h2>
     <div class="as-avatar-block">
-      <div class="as-avatar-preview">
+      <div class="as-avatar-preview" id="avatarPreviewWrap">
         <?php if ($avatarPath): ?>
-        <img src="<?= h(path('uploads/' . $avatarPath)) ?>?v=<?= time() ?>" alt="Profile" width="88" height="88">
+        <img id="avatarPreviewImg" src="<?= h(path('uploads/' . $avatarPath)) ?>?v=<?= time() ?>" alt="Profile" width="88" height="88">
         <?php else: ?>
-        <div class="as-avatar-placeholder"><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?></div>
+        <div class="as-avatar-placeholder" id="avatarPreviewPlaceholder"><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?></div>
         <?php endif; ?>
       </div>
       <div class="as-avatar-actions">
-        <form method="post" enctype="multipart/form-data" style="margin-bottom:12px;">
+        <form method="post" enctype="multipart/form-data" id="avatarUploadForm">
           <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
           <input type="hidden" name="action" value="upload_avatar">
           <div class="form-group" style="margin-bottom:10px;">
-            <label class="form-label">Upload photo</label>
-            <input type="file" name="avatar" accept="image/jpeg,image/png,image/gif,image/webp" class="form-control" style="padding:8px;">
+            <label class="form-label" for="avatarFile">Choose image</label>
+            <input type="file" name="avatar" id="avatarFile" accept="image/jpeg,image/png,image/gif,image/webp" class="form-control as-file-input" required>
           </div>
-          <p class="as-hint">JPEG, PNG, GIF or WebP. Max 2 MB.</p>
-          <button type="submit" class="btn btn-primary">Upload</button>
+          <p class="as-hint">JPEG, PNG, GIF or WebP — max 2 MB. Shown in sidebar after upload.</p>
+          <button type="submit" class="btn btn-primary"><?= icon('plus', 16) ?> Upload photo</button>
         </form>
         <?php if ($avatarPath): ?>
-        <form method="post" style="display:inline;">
+        <form method="post" style="display:inline;margin-top:8px;">
           <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
           <input type="hidden" name="action" value="remove_avatar">
           <button type="submit" class="btn btn-danger">Remove photo</button>
@@ -292,7 +299,6 @@ require_once __DIR__ . '/layouts/header.php';
       </div>
     </div>
   </div>
-  <?php endif; ?>
 
   <!-- Email -->
   <div class="as-card">
@@ -452,20 +458,32 @@ require_once __DIR__ . '/layouts/header.php';
 (function(){
   var inp = document.getElementById('apiKeyInput');
   var btn = document.getElementById('apiKeyCopyBtn');
-  if (!inp || !btn) return;
-  var full = inp.getAttribute('data-full') || '';
-  var masked = inp.getAttribute('data-masked') || '';
-  btn.addEventListener('click', function(){
-    var text = full && full.length > 8 ? full : (inp.value || '');
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(function(){
-      btn.textContent = 'Copied!';
-      btn.style.background = 'var(--green)';
-      setTimeout(function(){ btn.textContent = 'Copy'; btn.style.background = ''; }, 2000);
+  if (inp && btn) {
+    var full = inp.getAttribute('data-full') || '';
+    var masked = inp.getAttribute('data-masked') || '';
+    btn.addEventListener('click', function(){
+      var text = full && full.length > 8 ? full : (inp.value || '');
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(function(){
+        btn.textContent = 'Copied!';
+        btn.style.background = 'var(--green)';
+        setTimeout(function(){ btn.textContent = 'Copy'; btn.style.background = ''; }, 2000);
+      });
     });
-  });
-  inp.addEventListener('focus', function(){ this.value = full || masked; this.select(); });
-  inp.addEventListener('blur', function(){ if (full && full.length > 8) this.value = masked; });
+    inp.addEventListener('focus', function(){ this.value = full || masked; this.select(); });
+    inp.addEventListener('blur', function(){ if (full && full.length > 8) this.value = masked; });
+  }
+
+  var fileInput = document.getElementById('avatarFile');
+  var previewWrap = document.getElementById('avatarPreviewWrap');
+  if (fileInput && previewWrap) {
+    fileInput.addEventListener('change', function(){
+      var file = this.files && this.files[0];
+      if (!file || !file.type.match(/^image\//)) return;
+      var url = URL.createObjectURL(file);
+      previewWrap.innerHTML = '<img id="avatarPreviewImg" src="' + url + '" alt="Preview" width="88" height="88" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">';
+    });
+  }
 })();
 </script>
 

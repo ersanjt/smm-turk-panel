@@ -55,10 +55,11 @@ $blogNavActive = $blogNavActive ?? '';
     <meta name="twitter:title" content="<?= h($pageTitle) ?> — <?= h($siteName) ?>">
     <meta name="twitter:description" content="<?= h($pageDescription) ?>">
     <meta name="twitter:image" content="<?= h($pageImg) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
     <?php if (!empty($jsonLd)): ?><script type="application/ld+json"><?= is_array($jsonLd) ? json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : $jsonLd ?></script><?php endif; ?>
     <style>
         :root{--primary:#E30A17;--primary-dark:#B90812;--primary-soft:rgba(227,10,23,.08);--dark:#1a0a0e;--muted:#6b4a50;--light:#fdf9fa;--white:#fff;--border:#f0e6e8;--ease:cubic-bezier(0.16,1,0.3,1);}
@@ -105,7 +106,7 @@ $blogNavActive = $blogNavActive ?? '';
 <body>
 <nav class="blog-nav" role="navigation">
     <div class="blog-nav-inner">
-        <a href="<?= h(path('home.php')) ?>" class="blog-nav-logo"><img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt=""> SMM <span>TURK</span></a>
+        <a href="<?= h(path('home.php')) ?>" class="blog-nav-logo"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt=""> SMM <span>TURK</span></a>
         <div class="blog-nav-links">
             <a href="<?= h(path('home.php')) ?>"<?= $blogNavActive === 'home' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
             <a href="<?= h(path('blog.php')) ?>"<?= $blogNavActive === 'blog' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_blog')) : 'Blog' ?></a>

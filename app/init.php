@@ -16,6 +16,8 @@ require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Totp.php';
 require_once __DIR__ . '/SmmApi.php';
 require_once __DIR__ . '/ContentCorrections.php';
+require_once __DIR__ . '/Icons.php';
+require_once __DIR__ . '/ProfileHelper.php';
 require_once __DIR__ . '/OrderManager.php';
 require_once __DIR__ . '/DepositManager.php';
 

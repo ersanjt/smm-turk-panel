@@ -61,13 +61,14 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
 <meta name="twitter:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta name="twitter:description" content="<?= h($pageDesc) ?>">
 <meta name="twitter:image" content="<?= h($pageImg) ?>">
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
+<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
 <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/app.css')) ?>">
+<link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"<?= h($pageDesc) ?>"}</script>
 </head>
 <body data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
@@ -79,18 +80,18 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
   <div class="sidebar-mob-balance" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt="" width="36" height="36"></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="36" height="36"></span>
       <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
-  <div class="sidebar-user">
+  <a href="<?= h(path('account-settings.php') . '#profile-photo') ?>" class="sidebar-user sidebar-user-link" title="Account settings" aria-label="Open account settings">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="sidebar-user-info">
       <div class="user-name"><?= h($user['username'] ?? '') ?></div>
       <div class="user-bal">Balance <strong>$<?= $balance ?></strong></div>
       <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
     </div>
-  </div>
+  </a>
   <nav class="sidebar-nav">
     <div class="nav-label">Orders</div>
     <a class="nav-item nav-item-cta <?= $currentPage === 'index' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>">
@@ -171,7 +172,7 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
   <div class="topbar">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=4')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
       <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
       <div class="topbar-stats">
         <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
@@ -180,8 +181,8 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
     </div>
     <div class="topbar-right">
       <button type="button" class="theme-toggle-btn" id="dashThemeToggle" aria-label="Toggle dark mode" title="Toggle theme">
-        <span class="theme-icon theme-icon-light" aria-hidden="true">☀</span>
-        <span class="theme-icon theme-icon-dark" aria-hidden="true">🌙</span>
+        <span class="theme-icon theme-icon-light" aria-hidden="true"><?= icon('sun', 18) ?></span>
+        <span class="theme-icon theme-icon-dark" aria-hidden="true"><?= icon('moon', 18) ?></span>
       </button>
       <a href="<?= h(path('services.php')) ?>" class="icon-btn" title="Search services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></a>
       <a href="<?= h(path('add-funds.php')) ?>" class="icon-btn" title="Add Funds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></a>

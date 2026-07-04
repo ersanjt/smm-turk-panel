@@ -93,6 +93,45 @@ git push origin main
 | `DEPLOY_SCRIPT not found` | کپی `deploy-cpanel.sh` به `/home/smmturk/deploy-smm.sh` (755) |
 | `Deploy queued` | OK — Cron برای `deploy-cron.sh` بگذار |
 | `Invalid signature` (403) | secret را دوباره sync کن |
+| `/root/repositories/... not found` | اسکریپت قدیمی است — از WHM به‌عنوان root با مسیر ثابت اجرا کن (پایین) |
+| `Permission denied (publickey)` | remote گیت SSH است — به HTTPS عوض کن یا در cPanel Git → Pull بزن |
+| `Shell access is not enabled` | طبیعی است — cron همچنان کار می‌کند؛ دستی از WHM root اجرا کن |
+
+### WHM Terminal (root) — دیپلوی دستی
+
+`su - smmturk` روی اکثر هاست‌ها غیرفعال است. از **root** با مسیرهای ثابت استفاده کن:
+
+```bash
+# ۱) رپو وجود دارد؟
+ls -la /home/smmturk/repositories/smm-turk-panel/.git
+
+# ۲) اسکریپت جدید (مسیر ثابت — دیگر به $HOME وابسته نیست)
+cp /home/smmturk/repositories/smm-turk-panel/scripts/deploy-cpanel.sh /home/smmturk/deploy-smm.sh
+cp /home/smmturk/repositories/smm-turk-panel/scripts/deploy-cron.sh /home/smmturk/deploy-cron.sh
+chmod 755 /home/smmturk/deploy-smm.sh /home/smmturk/deploy-cron.sh
+chown smmturk:smmturk /home/smmturk/deploy-smm.sh /home/smmturk/deploy-cron.sh
+
+# ۳) اگر git fetch خطای SSH می‌دهد — cPanel → Git Version Control → Pull/Deploy
+#    یا remote را HTTPS کن:
+cd /home/smmturk/repositories/smm-turk-panel
+git remote set-url origin https://github.com/ersanjt/smm-turk-panel.git
+
+# ۴) دیپلوی (به‌عنوان root هم کار می‌کند)
+bash /home/smmturk/deploy-smm.sh
+
+# ۵) بعد از دیپلوی موفق — migration ایندکس‌ها
+php /home/smmturk/public_html/migrate-performance-indexes.php
+```
+
+اگر `git fetch` برای رپوی private باز هم خطا داد: cPanel → **Git™ Version Control** → **Pull or Deploy** (اعتبار cPanel ذخیره شده). سپس فقط rsync:
+
+```bash
+cd /home/smmturk/repositories/smm-turk-panel && git log -1 --oneline
+rsync -av --delete \
+  --exclude='.git' --exclude='config.php' --exclude='deploy-secret.txt' \
+  --exclude='tmp/' --exclude='uploads/' \
+  /home/smmturk/repositories/smm-turk-panel/ /home/smmturk/public_html/
+```
 
 ### Cron (هاست اشتراکی — توصیه می‌شود)
 

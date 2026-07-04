@@ -153,28 +153,76 @@ class OrderManager {
     }
 
     public function syncServices(): array {
+        $this->ensureServicesColumnWidths();
+
         $services = $this->api->services();
         if (!$services) return ['success' => false, 'error' => 'Could not fetch services from provider'];
 
         $markup = (float)($this->db->getSetting('markup_percent') ?? MARKUP_PERCENT);
         $count  = 0;
+        $failed = 0;
 
         foreach ($services as $s) {
             $name = ContentCorrections::correctServiceName($s['name'] ?? '');
-            $category = ContentCorrections::correctCategory($s['category'] ?? '');
-            $this->db->execute(
-                "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
-                 rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
-                [
-                    $s['service'], $name, $s['type'] ?? 'Default', $category,
-                    $s['rate'], $s['min'], $s['max'],
-                    ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
-                ]
-            );
-            $count++;
+            $category = ContentCorrections::fitCategory($s['category'] ?? '');
+            $type = ContentCorrections::fitServiceType($s['type'] ?? 'Default');
+            try {
+                $this->db->execute(
+                    "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
+                     rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
+                    [
+                        $s['service'], $name, $type, $category,
+                        $s['rate'], $s['min'], $s['max'],
+                        ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
+                    ]
+                );
+                $count++;
+            } catch (Throwable $e) {
+                if (str_contains($e->getMessage(), 'Data too long') || str_contains($e->getMessage(), '1406')) {
+                    try {
+                        $categoryShort = ContentCorrections::fitCategory($s['category'] ?? '', 100);
+                        $typeShort = ContentCorrections::fitServiceType($s['type'] ?? 'Default', 50);
+                        $this->db->execute(
+                            "INSERT INTO services (service_id, name, type, category, rate, min, max, refill, cancel, markup)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), category=VALUES(category),
+                             rate=VALUES(rate), min=VALUES(min), max=VALUES(max), refill=VALUES(refill), cancel=VALUES(cancel)",
+                            [
+                                $s['service'], $name, $typeShort, $categoryShort,
+                                $s['rate'], $s['min'], $s['max'],
+                                ($s['refill'] ?? false) ? 1 : 0, ($s['cancel'] ?? false) ? 1 : 0, $markup
+                            ]
+                        );
+                        $count++;
+                        continue;
+                    } catch (Throwable $e2) {
+                        $e = $e2;
+                    }
+                }
+                $failed++;
+                if (class_exists('Logger')) {
+                    Logger::log('syncServices skip service ' . ($s['service'] ?? '?') . ': ' . $e->getMessage(), 'sync');
+                }
+            }
         }
-        return ['success' => true, 'synced' => $count];
+        return ['success' => true, 'synced' => $count, 'failed' => $failed];
+    }
+
+    /** Widen category/type columns for long provider labels (idempotent). */
+    private function ensureServicesColumnWidths(): void {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+        try {
+            $pdo = $this->db->getConnection();
+            $pdo->exec('ALTER TABLE services MODIFY COLUMN category VARCHAR(255) DEFAULT NULL');
+            $pdo->exec("ALTER TABLE services MODIFY COLUMN type VARCHAR(100) DEFAULT 'Default'");
+        } catch (Throwable $e) {
+            /* column already wide enough or no ALTER privilege */
+        }
     }
 }

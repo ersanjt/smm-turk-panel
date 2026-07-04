@@ -103,7 +103,20 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/order.css')) ?>">
 
-<!-- Order type tabs -->
+<div class="page-header">
+  <div>
+    <div class="page-title-row">
+      <?= iconBox('plus', 'primary', 22) ?>
+      <div>
+        <h1 class="page-title">New Order</h1>
+        <p class="page-subtitle"><?= number_format($totalServicesCount) ?> active services — pick category, paste link, submit</p>
+      </div>
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary btn-sm"><?= icon('wallet', 16) ?> Add Funds</a>
+  </div>
+</div>
 <nav class="order-tabs" aria-label="Order type">
   <a class="order-tab active" href="<?= h(path('index.php')) ?>">New Order</a>
   <a class="order-tab" href="<?= h(path('mass-order.php')) ?>">Mass Order</a>
@@ -116,7 +129,7 @@ require_once __DIR__ . '/layouts/header.php';
     <?php if ($selectedCat): ?><input type="hidden" name="cat" value="<?= h($selectedCat) ?>"><?php endif; ?>
     <label for="search-service" class="sr-only">Search services</label>
     <input type="search" id="search-service" name="q" value="<?= h($searchQ) ?>" class="form-control" placeholder="Search services…" autocomplete="off">
-    <button type="submit" class="btn btn-primary">Search</button>
+    <button type="submit" class="btn btn-primary"><?= icon('search', 16) ?> Search</button>
   </form>
   <label class="checkbox-label" title="Show only services added in the last 7 days">
     <input type="checkbox" id="newOnlyCheck" onchange="filterNew()"> New added <span class="checkbox-hint">(7 days)</span>
@@ -176,7 +189,7 @@ require_once __DIR__ . '/layouts/header.php';
 
 <div class="order-grid">
   <div class="card">
-    <div class="card-title">New Order</div>
+    <div class="card-title"><?= icon('plus', 18) ?> New Order</div>
     <form method="POST" action="<?= h(path('index.php')) ?>" id="order-form" data-preselect-service="<?= (int)$preselectServiceId ?>">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
@@ -232,7 +245,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
   <div class="card" id="desc-panel">
-    <div class="card-title">Description</div>
+    <div class="card-title"><?= icon('chart', 18) ?> Description</div>
     <div id="desc-content">Select a service to see details.</div>
   </div>
 </div>
