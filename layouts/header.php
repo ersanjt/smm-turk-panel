@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $user    = $auth->getCurrentUser();
 $flash   = getFlash();
 // Always fetch latest balance/spent from DB so sidebar and topbar show current values
