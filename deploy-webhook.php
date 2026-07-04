@@ -92,13 +92,49 @@ if ($ref !== 'refs/heads/main') {
 
 $deployScript = $config['DEPLOY_SCRIPT'] ?? '';
 $repoPath = $config['REPO_PATH'] ?? '';
+$queueFlag = $config['DEPLOY_QUEUE_FLAG'] ?? (dirname(__DIR__) . '/deploy.pending');
+
+$execDisabled = !function_exists('exec');
+if (!$execDisabled) {
+    $disabled = strtolower((string) ini_get('disable_functions'));
+    if ($disabled !== '') {
+        $execDisabled = in_array('exec', array_map('trim', explode(',', $disabled)), true);
+    }
+}
 
 $output = [];
 $returnVar = 0;
 
-if ($deployScript !== '' && is_readable($deployScript)) {
+if ($deployScript !== '') {
+    if (!is_readable($deployScript)) {
+        http_response_code(500);
+        echo json_encode([
+            'ok' => false,
+            'error' => 'DEPLOY_SCRIPT not found on server. Copy scripts/deploy-cpanel.sh to /home/smmturk/deploy-smm.sh',
+            'path' => $deployScript,
+        ]);
+        exit;
+    }
+    if ($execDisabled) {
+        if (@file_put_contents($queueFlag, gmdate('c') . " queued\n") === false) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'exec disabled and cannot write deploy.pending. Add Cron for deploy-cron.sh']);
+            exit;
+        }
+        echo json_encode(['ok' => true, 'message' => 'Deploy queued (exec disabled). Cron runs deploy-cron.sh within 1 minute.', 'queued' => true]);
+        exit;
+    }
     @exec('bash ' . escapeshellarg($deployScript) . ' 2>&1', $output, $returnVar);
 } elseif ($repoPath !== '' && is_dir($repoPath)) {
+    if ($execDisabled) {
+        if (@file_put_contents($queueFlag, gmdate('c') . " queued\n") === false) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'exec disabled. Use DEPLOY_SCRIPT + Cron instead']);
+            exit;
+        }
+        echo json_encode(['ok' => true, 'message' => 'Deploy queued', 'queued' => true]);
+        exit;
+    }
     $cmd = 'cd ' . escapeshellarg($repoPath) . ' && git pull 2>&1';
     @exec($cmd, $output, $returnVar);
 } else {

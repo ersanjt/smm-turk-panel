@@ -85,17 +85,28 @@ git push origin main
 
 ### خطاهای رایج
 
-| کد | علت | راه‌حل |
-|----|-----|--------|
-| **403** | Secret در GitHub و سرور یکی نیست | `setup-auto-deploy.ps1` را دوباره اجرا کن و `deploy-secret.txt` را دوباره آپلود کن |
-| **500** deploy-secret | فایل روی سرور نیست | آپلود به `/home/smmturk/deploy-secret.txt` |
-| **500** exec disabled | PHP نمی‌تواند bash اجرا کند | از **Cron** یا **FTP fallback** استفاده کن (پایین) |
+در GitHub: webhook → **Recent Deliveries** → delivery قرمز → تب **Response**
 
-### اگر Webhook کار نکرد (exec غیرفعال)
+| پیام Response | راه‌حل |
+|---------------|--------|
+| `deploy-secret.txt not found` | آپلود `F:\smm-turk\deploy-secret.txt` به `/home/smmturk/` |
+| `DEPLOY_SCRIPT not found` | کپی `deploy-cpanel.sh` به `/home/smmturk/deploy-smm.sh` (755) |
+| `Deploy queued` | OK — Cron برای `deploy-cron.sh` بگذار |
+| `Invalid signature` (403) | secret را دوباره sync کن |
 
-**روش A — Cron (هر ۵ دقیقه):**
+### Cron (هاست اشتراکی — توصیه می‌شود)
+
+در `/home/smmturk/` این فایل‌ها باشند:
+- `deploy-smm.sh` (از `scripts/deploy-cpanel.sh`)
+- `deploy-cron.sh` (از `scripts/deploy-cron.sh`)
 
 cPanel → Cron Jobs:
+
+```
+* * * * * /home/smmturk/deploy-cron.sh >> /home/smmturk/deploy.log 2>&1
+```
+
+یا هر ۵ دقیقه مستقیم:
 
 ```
 */5 * * * * /home/smmturk/deploy-smm.sh >> /home/smmturk/deploy.log 2>&1
