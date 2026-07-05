@@ -1,6 +1,12 @@
 <?php
 /**
- * Legacy entry — / is the public home; panel lives at /dashboard.
+ * DirectoryIndex entry — Apache serves this for /. Do not redirect guests to / (loop).
+ * Logged-in users go to panel; guests load the public landing page.
  */
 require_once __DIR__ . '/app/init.php';
-redirect($auth->isLoggedIn() ? url('dashboard.php') : url('home.php'));
+
+if ($auth->isLoggedIn()) {
+    redirect(url('dashboard.php'));
+}
+
+require __DIR__ . '/home.php';
