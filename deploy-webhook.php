@@ -55,6 +55,7 @@ function deploy_repair_files(): array
     $files = [
         'app/ChildPanelRemoteSettings.php',
         'app/init.php',
+        'admin/_init.php',
         'child-panel.php',
         'DEPLOY_VERSION',
         'repair-deploy.php',

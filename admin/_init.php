@@ -5,5 +5,11 @@
  *   require_once __DIR__ . '/_init.php';
  *   $pageTitle = 'Page Title';
  */
-require_once __DIR__ . '/../app/init.php';
+$appDir = __DIR__ . '/../app';
+if (function_exists('opcache_invalidate')) {
+    foreach (['init.php', 'ChildPanelRemoteSettings.php'] as $f) {
+        @opcache_invalidate($appDir . '/' . $f, true);
+    }
+}
+require_once $appDir . '/init.php';
 $auth->requireAdmin();
