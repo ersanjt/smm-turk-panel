@@ -258,10 +258,9 @@ class WhmProvisioner
             'password' => $password,
         ]);
         if (!$userRes['success'] && $this->isAlreadyExistsError($userRes['error'] ?? '')) {
-            $userRes = $this->mysqlUapi('set_password', [
-                'name' => $fullUserName,
-                'password' => $password,
-            ]);
+            $userRes = $this->syncMysqlPassword($fullUserName, $password);
+        } elseif ($userRes['success']) {
+            $this->syncMysqlPassword($fullUserName, $password);
         }
         if (!$userRes['success']) {
             return ['success' => false, 'error' => 'MySQL create_user: ' . ($userRes['error'] ?? 'failed')];
@@ -285,8 +284,13 @@ class WhmProvisioner
                 'database' => $fullDbName,
             ]);
         }
-        if (!$privRes['success']) {
+        if (!$privRes['success'] && !$this->isAlreadyExistsError($privRes['error'] ?? '')) {
             return ['success' => false, 'error' => 'MySQL privileges: ' . ($privRes['error'] ?? 'set_privileges failed')];
+        }
+
+        $access = $this->ensureMysqlAccess($fullDbName, $fullUserName, $password);
+        if (!$access['success']) {
+            return ['success' => false, 'error' => $access['error'] ?? 'MySQL access verification failed'];
         }
 
         return [
@@ -295,6 +299,74 @@ class WhmProvisioner
             'db_user' => $fullUserName,
             'db_pass' => $password,
         ];
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function syncMysqlPassword(string $fullUserName, string $password): array
+    {
+        $names = array_values(array_unique([
+            $fullUserName,
+            $this->cpanelUnprefixedName($fullUserName),
+        ]));
+        $lastError = '';
+        foreach ($names as $name) {
+            foreach ([['name' => $name], ['user' => $name]] as $params) {
+                $params['password'] = $password;
+                $uapi = $this->whmCpanelCall('Mysql', 'set_password', $params, 3);
+                if ($uapi['success']) {
+                    return ['success' => true];
+                }
+                $lastError = (string) ($uapi['error'] ?? $lastError);
+            }
+            $legacy = $this->mysqlFeLegacy('set_password', ['name' => $fullUserName, 'password' => $password]);
+            if ($legacy['success']) {
+                return ['success' => true];
+            }
+            $lastError = (string) ($legacy['error'] ?? $lastError);
+        }
+        return ['success' => false, 'error' => $lastError !== '' ? $lastError : 'set_password failed'];
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function ensureMysqlAccess(string $dbName, string $dbUser, string $password): array
+    {
+        $test = $this->testMysqlConnection($dbName, $dbUser, $password);
+        if ($test['success']) {
+            return $test;
+        }
+
+        $sync = $this->syncMysqlPassword($dbUser, $password);
+        if (!$sync['success']) {
+            return ['success' => false, 'error' => 'MySQL set_password: ' . ($sync['error'] ?? 'failed')];
+        }
+
+        usleep(300000);
+        $test = $this->testMysqlConnection($dbName, $dbUser, $password);
+        if ($test['success']) {
+            return $test;
+        }
+
+        return [
+            'success' => false,
+            'error' => 'Child DB connection failed: ' . ($test['error'] ?? 'access denied after password sync'),
+        ];
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function testMysqlConnection(string $dbName, string $dbUser, string $password): array
+    {
+        try {
+            $pdo = new PDO(
+                'mysql:host=localhost;dbname=' . $dbName . ';charset=utf8mb4',
+                $dbUser,
+                $password,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+            $pdo->query('SELECT 1');
+            return ['success' => true];
+        } catch (PDOException $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
 
     private function cpanelPrefixedName(string $name): string
@@ -320,17 +392,20 @@ class WhmProvisioner
     private function mysqlUapi(string $func, array $params): array
     {
         $res = $this->whmCpanelCall('Mysql', $func, $params, 3);
-        if ($res['success'] || !$this->shouldTryMysqlFeFallback($res['error'] ?? '')) {
+        if ($res['success'] || !$this->shouldTryMysqlFeFallback($res['error'] ?? '', $func)) {
             return $res;
         }
         return $this->mysqlFeLegacy($func, $params);
     }
 
-    private function shouldTryMysqlFeFallback(string $error): bool
+    private function shouldTryMysqlFeFallback(string $error, string $func = ''): bool
     {
         $error = strtolower($error);
-        return str_contains($error, 'could not find function')
-            || str_contains($error, 'unknown module');
+        if (str_contains($error, 'could not find function')
+            || str_contains($error, 'unknown module')) {
+            return true;
+        }
+        return $func === 'set_password' && $error !== '';
     }
 
     /** @return array{success: bool, data?: mixed, error?: string, http_code?: int} */
