@@ -7,9 +7,12 @@
  */
 $appDir = __DIR__ . '/../app';
 if (function_exists('opcache_invalidate')) {
-    foreach (['init.php', 'ChildPanelRemoteSettings.php'] as $f) {
+    foreach (['init.php', 'init-v2.php', 'ChildPanelRemoteSettings.php'] as $f) {
         @opcache_invalidate($appDir . '/' . $f, true);
     }
 }
-require_once $appDir . '/init.php';
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+}
+require_once $appDir . '/init-v2.php';
 $auth->requireAdmin();

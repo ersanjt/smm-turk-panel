@@ -40,6 +40,7 @@ $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
     'app/ChildPanelRemoteSettings.php',
     'app/init.php',
+    'app/init-v2.php',
     'admin/_init.php',
     'child-panel.php',
     'DEPLOY_VERSION',
