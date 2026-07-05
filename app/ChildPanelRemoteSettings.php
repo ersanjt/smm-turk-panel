@@ -48,14 +48,17 @@ class ChildPanelRemoteSettings
         'payment_binance_pay_enabled', 'payment_zarinpal_enabled', 'payment_cryptocloud_enabled',
     ];
 
-    /** @var array<string, string> */
-    private const SECTION_KEYS = [
-        'branding' => self::BRANDING_KEYS,
-        'general'  => self::GENERAL_KEYS,
-        'wallets'  => array_merge(self::WALLET_KEYS, self::DEPOSIT_KEYS),
-        'payments' => self::PAYMENT_KEYS,
-        'email'    => self::EMAIL_KEYS,
-    ];
+    /** @return array<string, list<string>> */
+    private static function sectionKeys(): array
+    {
+        return [
+            'branding' => self::BRANDING_KEYS,
+            'general'  => self::GENERAL_KEYS,
+            'wallets'  => array_merge(self::WALLET_KEYS, self::DEPOSIT_KEYS),
+            'payments' => self::PAYMENT_KEYS,
+            'email'    => self::EMAIL_KEYS,
+        ];
+    }
 
     private ChildPanelManager $cpm;
     private ChildPanelDeployer $deployer;
@@ -131,7 +134,7 @@ class ChildPanelRemoteSettings
      */
     public function saveSection(int $panelId, int $userId, string $section, array $post): array
     {
-        $keys = self::SECTION_KEYS[$section] ?? null;
+        $keys = self::sectionKeys()[$section] ?? null;
         if ($keys === null) {
             return ['success' => false, 'error' => 'Invalid settings section.'];
         }
