@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/app/init.php';
-require_once __DIR__ . '/app/ChildPanelRemoteSettings.php';
+require_once __DIR__ . '/app/ChildPanelRemoteSettingsImpl.php';
 $auth->requireLogin();
 $pageTitle = 'Child Panel';
 $db   = Database::getInstance();

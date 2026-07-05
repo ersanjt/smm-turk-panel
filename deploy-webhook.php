@@ -53,9 +53,11 @@ function deploy_repair_files(): array
 {
     $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
     $files = [
-        'app/ChildPanelRemoteSettings.php',
+        'app/bootstrap.php',
         'app/init.php',
         'app/init-v2.php',
+        'app/ChildPanelRemoteSettings.php',
+        'app/ChildPanelRemoteSettingsImpl.php',
         'admin/_init.php',
         'child-panel.php',
         'DEPLOY_VERSION',

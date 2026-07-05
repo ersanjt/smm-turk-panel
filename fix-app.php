@@ -1,6 +1,6 @@
 <?php
 /**
- * One-shot app file sync from GitHub (new filename — avoids OPcache on old repair endpoints).
+ * One-shot app file sync from GitHub (bypasses stale OPcache on old filenames).
  * GET ?key=WEBHOOK_SECRET
  */
 header('Content-Type: application/json; charset=utf-8');
@@ -38,9 +38,11 @@ if (function_exists('opcache_reset')) {
 
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
-    'app/ChildPanelRemoteSettings.php',
+    'app/bootstrap.php',
     'app/init.php',
     'app/init-v2.php',
+    'app/ChildPanelRemoteSettings.php',
+    'app/ChildPanelRemoteSettingsImpl.php',
     'admin/_init.php',
     'child-panel.php',
     'DEPLOY_VERSION',
@@ -63,6 +65,9 @@ foreach ($files as $rel) {
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
+    if (is_file($dest)) {
+        @unlink($dest);
+    }
     $tmp = $dest . '.tmp.' . getmypid();
     if (@file_put_contents($tmp, $content) === false) {
         $errors[] = "write: $rel";
@@ -84,16 +89,13 @@ if (function_exists('opcache_reset')) {
     @opcache_reset();
 }
 
-$line52 = is_readable(__DIR__ . '/app/ChildPanelRemoteSettings.php')
-    ? trim((string) (file(__DIR__ . '/app/ChildPanelRemoteSettings.php')[51] ?? ''))
-    : null;
-
 echo json_encode([
     'ok' => $errors === [] && $repaired !== [],
     'repaired' => $repaired,
     'errors' => $errors,
-    'line52' => $line52,
-    'init_has_remote' => is_readable(__DIR__ . '/app/init.php')
-        ? (strpos((string) file_get_contents(__DIR__ . '/app/init.php'), 'ChildPanelRemoteSettings') !== false)
+    'stub_line52' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettings.php')
+        ? trim((string) (file(__DIR__ . '/app/ChildPanelRemoteSettings.php')[51] ?? 'n/a'))
         : null,
+    'bootstrap_loaded' => is_readable(__DIR__ . '/app/bootstrap.php'),
+    'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
 ], JSON_PRETTY_PRINT);
