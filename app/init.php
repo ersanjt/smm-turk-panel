@@ -44,6 +44,7 @@ if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
 }
 
 $db   = Database::getInstance();
+OrderManager::ensureProviderSchema();
 $auth = new Auth();
 
 // Security headers (web only)

@@ -227,7 +227,7 @@ class OrderManager {
 
     public function syncServices(?string $onlyProvider = null): array {
         $this->ensureServicesColumnWidths();
-        $this->ensureProviderColumns();
+        self::ensureProviderSchema();
 
         $markup = (float)($this->db->getSetting('markup_percent') ?? MARKUP_PERCENT);
         $totalSynced = 0;
@@ -339,26 +339,25 @@ class OrderManager {
         }
     }
 
-    private function ensureProviderColumns(): void {
+    public static function ensureProviderSchema(): void {
         static $done = false;
         if ($done) {
             return;
         }
         $done = true;
+        $db = Database::getInstance();
+        $pdo = $db->getConnection();
         try {
-            $pdo = $this->db->getConnection();
             $pdo->exec("ALTER TABLE services ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
         } catch (Throwable $e) { /* exists */ }
         try {
-            $pdo = $this->db->getConnection();
             $pdo->exec('ALTER TABLE services ADD COLUMN provider_service_id INT UNSIGNED NOT NULL DEFAULT 0');
         } catch (Throwable $e) { /* exists */ }
         try {
-            $pdo = $this->db->getConnection();
             $pdo->exec("ALTER TABLE orders ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
         } catch (Throwable $e) { /* exists */ }
         try {
-            $this->db->execute(
+            $db->execute(
                 "UPDATE services SET provider = 'smmfollows', provider_service_id = service_id
                  WHERE provider_service_id = 0 OR provider = ''"
             );
