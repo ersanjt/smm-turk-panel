@@ -114,8 +114,11 @@ class ProviderRegistry
             'pro' => ['label' => self::BRAND_PRO, 'desc' => 'Premium catalog', 'count' => $proCount, 'class' => 'tier-pro'],
         ];
         foreach ($tiers as $tierKey => $info) {
-            if ($tierKey === 'pro' && !self::isEnabled(self::SMMFA)) {
-                continue;
+            $proReady = self::isEnabled(self::SMMFA) && self::api(self::SMMFA) !== null;
+            if ($tierKey === 'pro' && !$proReady) {
+                $info['desc'] = $info['count'] > 0
+                    ? 'Premium catalog'
+                    : 'Premium catalog · sync in Admin';
             }
             $params = $extraParams;
             if ($search !== '') {
@@ -128,7 +131,8 @@ class ProviderRegistry
             }
             $url = path($basePath) . ($params ? '?' . http_build_query($params) : '');
             $active = $activeTier === $tierKey;
-            $html .= '<a class="service-tier-card ' . $info['class'] . ($active ? ' active' : '') . '" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($info['desc'], ENT_QUOTES, 'UTF-8') . '">';
+            $extraClass = ($tierKey === 'pro' && !$proReady && $info['count'] === 0) ? ' tier-setup' : '';
+            $html .= '<a class="service-tier-card ' . $info['class'] . $extraClass . ($active ? ' active' : '') . '" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($info['desc'], ENT_QUOTES, 'UTF-8') . '">';
             $html .= '<span class="service-tier-label">' . htmlspecialchars($info['label'], ENT_QUOTES, 'UTF-8') . '</span>';
             $html .= '<span class="service-tier-desc">' . htmlspecialchars($info['desc'], ENT_QUOTES, 'UTF-8') . '</span>';
             $html .= '<span class="service-tier-count">' . (int) $info['count'] . ' services</span>';

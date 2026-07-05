@@ -52,6 +52,7 @@ if (!in_array($tier, ['', 'one', 'pro'], true)) {
 }
 $providerFilter = ProviderRegistry::providerFromTier($tier);
 [$providerSql, $providerParams] = ProviderRegistry::providerFilter($providerFilter);
+$proCatalogReady = ProviderRegistry::isEnabled(ProviderRegistry::SMMFA) && ProviderRegistry::api(ProviderRegistry::SMMFA) !== null;
 $catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
 $platform = trim($_GET['platform'] ?? '');
 $preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
@@ -222,6 +223,15 @@ echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
 </div>
 <?php endif; ?>
 
+<?php if ($tier === 'pro' && !$proCatalogReady && $totalServicesCount === 0): ?>
+<div class="alert alert-info">
+  <?php if ($auth->isAdmin()): ?>
+  <strong>SMM Turk Pro</strong> is not live yet. Enable <em>SMMFA provider</em>, add the API key in Settings, then run <a href="<?= h(path('admin/admin-sync.php')) ?>">Sync</a>.
+  <?php else: ?>
+  <strong>SMM Turk Pro</strong> catalog is coming soon. Use <strong>SMM Turk One</strong> for now or <a href="<?= h(path('tickets.php')) ?>">contact support</a>.
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 <?php if ($requireCategory && !$searchQ): ?>
 <div class="alert alert-info">Choose <strong>SMM Turk One</strong> or <strong>SMM Turk Pro</strong> above, then pick a category to load services (<?= (int)$totalServicesCount ?> in this view).</div>
 <?php endif; ?>

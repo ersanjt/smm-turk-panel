@@ -497,6 +497,15 @@ body.panel-follows .card {
 .service-tier-card.tier-one .service-tier-count { color: #3b82f6; }
 .service-tier-card.tier-pro .service-tier-count { color: #7c3aed; }
 
+.service-tier-card.tier-pro.tier-setup {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.service-tier-card.tier-pro.tier-setup .service-tier-desc {
+  color: #8b5cf6;
+}
+
 .svc-card-tier {
   position: absolute;
   top: 12px;
