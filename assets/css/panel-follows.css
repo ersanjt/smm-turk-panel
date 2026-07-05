@@ -110,7 +110,7 @@ body.panel-follows .nav-item:hover {
   border-color: transparent;
 }
 
-body.panel-follows .nav-item.active,
+body.panel-follows .nav-item.active:not(.nav-item-funds),
 body.panel-follows .nav-item.nav-item-cta.active {
   background: var(--primary);
   color: #fff;
@@ -146,6 +146,11 @@ body.panel-follows .nav-item.nav-item-funds.active:hover {
   background: var(--primary);
   color: #fff;
   box-shadow: 0 4px 14px rgba(227, 10, 23, 0.28);
+}
+
+body.panel-follows .nav-item.nav-item-funds.active svg {
+  color: #fff;
+  opacity: 1;
 }
 
 body.panel-follows.theme-dark .nav-item.nav-item-funds {

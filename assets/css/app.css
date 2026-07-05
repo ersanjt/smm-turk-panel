@@ -38,7 +38,7 @@ a.sidebar-user-link:focus-visible{outline:2px solid var(--primary-light);outline
 .nav-label::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--primary);opacity:.7}
 .nav-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;color:var(--sidebar-text);font-size:13px;font-weight:500;transition:background .2s,color .2s,transform .2s ease;margin-bottom:4px;border:1px solid transparent}
 .nav-item:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateX(4px);border-color:rgba(255,255,255,.04)}
-.nav-item.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:rgba(255,255,255,.1);box-shadow:0 4px 12px rgba(227,10,23,.25)}
+.nav-item.active:not(.nav-item-funds){background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:rgba(255,255,255,.1);box-shadow:0 4px 12px rgba(227,10,23,.25)}
 .nav-item.nav-item-cta{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-weight:700;border:none;box-shadow:0 4px 14px rgba(227,10,23,.35);margin-bottom:8px}
 .nav-item.nav-item-cta:hover{background:linear-gradient(135deg,var(--primary-dark),#9a0610);transform:translateY(-2px);box-shadow:0 6px 20px rgba(227,10,23,.4)}
 .nav-item.nav-item-funds{background:linear-gradient(135deg,rgba(227,10,23,.12),rgba(227,10,23,.06));font-weight:700}
