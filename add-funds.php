@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_
                 "SELECT id, user_id, amount, description, reference, status, created_at FROM transactions WHERE id = ?",
                 [$tx['id']]
             );
-            $walletCatalog = ['wallet_usdt_trc20' => ['key' => 'wallet_usdt_trc20', 'label' => 'USDT', 'network' => 'TRC20']];
+            $walletCatalog = DepositAutoConfirm::buildWalletCatalog($db);
             $auto = new DepositAutoConfirm();
             $check = $auto->processTransaction($fullTx, $walletCatalog);
             if ($check['approved']) {
@@ -128,7 +128,7 @@ $amount = null;
 $depositId = 0;
 $txSubmitted = false;
 $activeMethod = null;
-$usdtWallet = trim((string) $db->getSetting('wallet_usdt_trc20'));
+$manualPay = null;
 $heleketPay = null;
 
 if ($activeTab === 'add' && $pendingDeposit) {
@@ -162,11 +162,12 @@ if ($activeTab === 'add' && $pendingDeposit) {
                 $step = 'heleket_pay';
             }
         }
-    } elseif ($methodSlug === PaymentRegistry::USDT_TRC20) {
-        $activeMethod = PaymentRegistry::USDT_TRC20;
+    } elseif ($methodSlug !== null && ($methodSlug === PaymentRegistry::USDT_TRC20 || PaymentRegistry::isManualWalletSlug($methodSlug))) {
+        $activeMethod = $methodSlug;
+        $manualPay = PaymentRegistry::manualPayMeta($methodSlug);
         if ($txSubmitted) {
             $step = 'awaiting';
-        } elseif ($usdtWallet !== '') {
+        } elseif ($manualPay) {
             $step = 'manual_pay';
         }
     }
@@ -300,11 +301,11 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
   </div>
 
-<?php elseif ($step === 'manual_pay' && $usdtWallet): ?>
+<?php elseif ($step === 'manual_pay' && $manualPay): ?>
   <div class="card add-funds-card">
     <div class="pay-summary">
-      <div class="pay-amount">$<?= number_format($amount, 2) ?><small>Send USDT (TRC20)</small></div>
-      <div class="pay-coin-pill" style="--coin-color:#26a17b"><span class="pay-coin-dot"></span>USDT TRC20</div>
+      <div class="pay-amount">$<?= number_format($amount, 2) ?><small>Send <?= h($manualPay['label']) ?> (<?= h($manualPay['network']) ?>)</small></div>
+      <div class="pay-coin-pill" style="--coin-color:#26a17b"><span class="pay-coin-dot"></span><?= h($manualPay['label'] . ' ' . $manualPay['network']) ?></div>
     </div>
     <div class="pay-panel">
       <div class="pay-qr-wrap">
@@ -312,9 +313,9 @@ require_once __DIR__ . '/layouts/header.php';
         <span class="pay-qr-label">Scan with wallet app</span>
       </div>
       <div class="pay-address-block">
-        <div class="network-warn"><strong>Important:</strong> Send only <strong>USDT on TRC20 (Tron)</strong> to this address.</div>
+        <div class="network-warn"><strong>Important:</strong> Send only <strong><?= h($manualPay['label']) ?> on <?= h($manualPay['network']) ?></strong> to this address.</div>
         <div class="addr-label">Wallet address</div>
-        <code id="walletAddress"><?= h($usdtWallet) ?></code>
+        <code id="walletAddress"><?= h($manualPay['address']) ?></code>
         <div class="pay-copy-row">
           <button type="button" class="btn btn-primary" id="copyAddressBtn">Copy address</button>
           <a href="<?= h(path('add-funds.php')) ?>?new=1" class="btn">Cancel</a>
@@ -327,7 +328,7 @@ require_once __DIR__ . '/layouts/header.php';
       <input type="hidden" name="submit_tx" value="1">
       <div class="form-group">
         <label class="form-label">Transaction ID (TxHash)</label>
-        <input type="text" name="tx_hash" class="form-control" placeholder="Tron transaction hash" required autocomplete="off">
+        <input type="text" name="tx_hash" class="form-control" placeholder="Paste blockchain transaction hash" required autocomplete="off">
       </div>
       <button type="submit" class="btn btn-primary btn-block">I've sent the payment</button>
     </form>
@@ -337,7 +338,7 @@ require_once __DIR__ . '/layouts/header.php';
   <div class="card add-funds-card">
     <div class="deposit-status-card" id="depositStatusCard">
       <h3 id="depositStatusTitle">Verifying payment…</h3>
-      <p id="depositStatusMsg">Checking your USDT TRC20 transaction.</p>
+      <p id="depositStatusMsg">Checking your <?= h($manualPay['label'] ?? 'crypto') ?> <?= h($manualPay['network'] ?? '') ?> transaction.</p>
       <div class="deposit-status-meta">
         <div><strong>Deposit ID:</strong> #<?= $depositId ?></div>
         <div><strong>Amount:</strong> $<?= number_format($amount, 2) ?></div>
@@ -355,8 +356,16 @@ require_once __DIR__ . '/layouts/header.php';
   <div class="card add-funds-card">
     <div class="card-title">Add Funds</div>
     <?php if (!$methodsAvailable): ?>
-    <p class="text-muted">Payment methods are not configured yet. Admin must enable gateways in <strong>Settings → Payment Gateways</strong>.</p>
+    <p class="text-muted">No payment methods are active yet.</p>
+    <ul class="text-muted" style="font-size:13px;line-height:1.7;margin:12px 0 16px;padding-left:20px;">
+      <li><strong>Crypto wallets</strong> — set BTC, ETH, USDT, BNB, SOL addresses in Admin → Settings → Crypto Wallets</li>
+      <li><strong>Gateways</strong> — enable SmmPayGate, Heleket, Binance Pay, ZarinPal, CryptoCloud and add API keys</li>
+    </ul>
+    <?php if ($auth->isAdmin()): ?>
+    <p><a href="<?= h(path('admin/admin-settings.php')) ?>" class="btn btn-primary">Open Admin Settings</a></p>
+    <?php else: ?>
     <p><a href="<?= h(path('tickets.php')) ?>" class="btn">Contact support</a></p>
+    <?php endif; ?>
     <?php else: ?>
     <form method="POST" class="add-funds-form">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
@@ -384,7 +393,7 @@ require_once __DIR__ . '/layouts/header.php';
         <input type="number" name="amount" id="amountInput" class="form-control" min="<?= $minDeposit ?>" step="0.01" required value="<?= number_format($defaultAmount, 2, '.', '') ?>" placeholder="Min $<?= (int) $minDeposit ?>">
       </div>
       <button type="submit" class="btn btn-primary btn-block add-funds-submit">Continue to payment</button>
-      <p class="add-funds-hint">Minimum deposit: <strong>$<?= (int) $minDeposit ?></strong>. Redirect gateways open the provider checkout; USDT TRC20 shows our wallet address.</p>
+      <p class="add-funds-hint">Minimum deposit: <strong>$<?= (int) $minDeposit ?></strong>. Crypto wallets and redirect gateways (Heleket, Binance Pay, ZarinPal, etc.) appear when configured in Admin → Settings.</p>
     </form>
     <?php endif; ?>
   </div>

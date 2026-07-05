@@ -96,15 +96,56 @@ class PaymentRegistry
 
     public static function isEnabled(string $slug): bool
     {
+        if (self::isManualWalletSlug($slug)) {
+            $db = Database::getInstance();
+            return trim((string) $db->getSetting($slug)) !== '';
+        }
+
         $def = self::definitions()[$slug] ?? null;
         if (!$def) {
             return false;
         }
         $db = Database::getInstance();
+        if ($slug === self::USDT_TRC20) {
+            return trim((string) $db->getSetting('wallet_usdt_trc20')) !== '';
+        }
         if (($db->getSetting($def['enabled_setting']) ?? '0') !== '1') {
             return false;
         }
         return self::hasRequiredCredentials($slug);
+    }
+
+    public static function isManualWalletSlug(string $slug): bool
+    {
+        return str_starts_with($slug, 'wallet_') && $slug !== 'wallet_usdt_trc20';
+    }
+
+    /** @return array<string, array{label: string, desc: string, type: string, icon: string}> */
+    public static function manualWalletMethods(): array
+    {
+        $db = Database::getInstance();
+        $icons = [
+            'wallet_btc' => '₿',
+            'wallet_eth' => 'Ξ',
+            'wallet_usdt_trc20' => '₮',
+            'wallet_usdt_erc20' => '₮',
+            'wallet_bnb' => '◆',
+            'wallet_sol' => '◎',
+        ];
+        $out = [];
+        foreach (DepositAutoConfirm::buildWalletCatalog($db) as $walletKey => $meta) {
+            if ($walletKey === 'wallet_usdt_trc20') {
+                continue;
+            }
+            $label = trim(($meta['label'] ?? '') . ' (' . ($meta['network'] ?? '') . ')');
+            $out[$walletKey] = [
+                'label' => $label,
+                'desc' => 'Direct wallet transfer',
+                'type' => 'manual',
+                'icon' => $icons[$walletKey] ?? '🪙',
+            ];
+        }
+        return $out;
     }
 
     public static function hasRequiredCredentials(string $slug): bool
@@ -134,6 +175,11 @@ class PaymentRegistry
                 $out[$slug] = $def;
             }
         }
+        foreach (self::manualWalletMethods() as $slug => $def) {
+            if (!isset($out[$slug]) && self::isEnabled($slug)) {
+                $out[$slug] = $def;
+            }
+        }
         return $out;
     }
 
@@ -144,7 +190,16 @@ class PaymentRegistry
 
     public static function depositDescription(float $amount, string $methodSlug): string
     {
-        return 'Deposit $' . number_format($amount, 2, '.', '') . ' — ' . self::label($methodSlug);
+        $amountStr = '$' . number_format($amount, 2, '.', '');
+        if (self::isManualWalletSlug($methodSlug)) {
+            $db = Database::getInstance();
+            $catalog = DepositAutoConfirm::buildWalletCatalog($db);
+            $meta = $catalog[$methodSlug] ?? null;
+            if ($meta) {
+                return 'Deposit ' . $amountStr . ' — ' . trim(($meta['label'] ?? '') . ' ' . ($meta['network'] ?? ''));
+            }
+        }
+        return 'Deposit ' . $amountStr . ' — ' . self::label($methodSlug);
     }
 
     public static function parseMethodFromDescription(?string $description): ?string
@@ -157,6 +212,11 @@ class PaymentRegistry
                 return $slug;
             }
         }
+        $db = Database::getInstance();
+        $coinKey = DepositAutoConfirm::parseCoinKey($description, DepositAutoConfirm::buildWalletCatalog($db));
+        if ($coinKey !== null) {
+            return $coinKey === 'wallet_usdt_trc20' ? self::USDT_TRC20 : $coinKey;
+        }
         if (stripos($description, 'USDT TRC20') !== false || stripos($description, 'USDT Tron') !== false) {
             return self::USDT_TRC20;
         }
@@ -164,6 +224,46 @@ class PaymentRegistry
             return self::USDT_TRC20;
         }
         return null;
+    }
+
+    public static function walletAddressForMethod(string $slug): string
+    {
+        if ($slug === self::USDT_TRC20) {
+            $slug = 'wallet_usdt_trc20';
+        }
+        if (!self::isManualWalletSlug($slug) && $slug !== 'wallet_usdt_trc20') {
+            return '';
+        }
+        $db = Database::getInstance();
+        return trim((string) $db->getSetting($slug));
+    }
+
+    public static function manualPayMeta(string $slug): ?array
+    {
+        $db = Database::getInstance();
+        $walletKey = $slug === self::USDT_TRC20 ? 'wallet_usdt_trc20' : $slug;
+        $catalog = DepositAutoConfirm::buildWalletCatalog($db);
+        if (!isset($catalog[$walletKey]) && $slug === self::USDT_TRC20) {
+            $addr = trim((string) $db->getSetting('wallet_usdt_trc20'));
+            if ($addr !== '') {
+                return ['label' => 'USDT', 'network' => 'TRC20', 'address' => $addr, 'wallet_key' => 'wallet_usdt_trc20'];
+            }
+            return null;
+        }
+        if (!isset($catalog[$walletKey])) {
+            return null;
+        }
+        $meta = $catalog[$walletKey];
+        $addr = trim((string) $db->getSetting($walletKey));
+        if ($addr === '') {
+            return null;
+        }
+        return [
+            'label' => $meta['label'] ?? '',
+            'network' => $meta['network'] ?? '',
+            'address' => $addr,
+            'wallet_key' => $walletKey,
+        ];
     }
 
     public static function callbackUrl(string $gateway): string

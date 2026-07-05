@@ -29,7 +29,9 @@ class PaymentProcessor
             PaymentRegistry::BINANCE_PAY => $this->binancePayCreate($transactionId, $orderId, $amount),
             PaymentRegistry::ZARINPAL => $this->zarinpalCreate($transactionId, $orderId, $amount, $userEmail),
             PaymentRegistry::SMMPAYGATE => $this->smmPayGateCreate($transactionId, $orderId, $amount, $userEmail),
-            default => ['success' => false, 'error' => 'Unknown payment method.'],
+            default => PaymentRegistry::isManualWalletSlug($method)
+                ? ['success' => true, 'manual' => true]
+                : ['success' => false, 'error' => 'Unknown payment method.'],
         };
     }
 
