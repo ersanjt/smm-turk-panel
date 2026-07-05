@@ -239,6 +239,13 @@ function af_render_steps(string $current): void
     echo '</div>';
 }
 
+function af_render_back_link(string $label = 'Back — change payment method'): void
+{
+    echo '<div class="af-back-bar"><a href="' . h(path('add-funds.php')) . '?new=1" class="af-back-link" title="Return to method and amount selection">'
+        . '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>'
+        . h($label) . '</a></div>';
+}
+
 function af_render_method_cards(array $methods, string $defaultMethod): void
 {
     foreach ($methods as $slug => $meta) {
@@ -357,6 +364,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
 <?php elseif ($step === 'heleket_pay' && $heleketPay): ?>
+  <?php af_render_back_link(); ?>
   <?php af_render_steps('pay'); ?>
   <div class="card add-funds-card">
     <div class="pay-summary">
@@ -392,7 +400,7 @@ require_once __DIR__ . '/layouts/header.php';
           <?php if (!empty($heleketPay['pay_url'])): ?>
           <a href="<?= h($heleketPay['pay_url']) ?>" class="btn" target="_blank" rel="noopener">Open Heleket page</a>
           <?php endif; ?>
-          <a href="<?= h(path('add-funds.php')) ?>?new=1" class="btn">Cancel</a>
+          <a href="<?= h(path('add-funds.php')) ?>?new=1" class="btn af-btn-change-method">Change method</a>
         </div>
       </div>
     </div>
@@ -417,6 +425,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
 <?php elseif ($step === 'manual_pay' && $manualPay): ?>
+  <?php af_render_back_link(); ?>
   <?php af_render_steps('pay'); ?>
   <div class="card add-funds-card">
     <div class="pay-summary">
@@ -434,7 +443,7 @@ require_once __DIR__ . '/layouts/header.php';
         <code id="walletAddress"><?= h($manualPay['address']) ?></code>
         <div class="pay-copy-row">
           <button type="button" class="btn btn-primary" id="copyAddressBtn">Copy address</button>
-          <a href="<?= h(path('add-funds.php')) ?>?new=1" class="btn">Cancel</a>
+          <a href="<?= h(path('add-funds.php')) ?>?new=1" class="btn af-btn-change-method">Change method</a>
         </div>
       </div>
     </div>
@@ -454,6 +463,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
 <?php elseif ($step === 'awaiting'): ?>
+  <?php af_render_back_link(); ?>
   <?php af_render_steps('confirm'); ?>
   <div class="card add-funds-card">
     <div class="deposit-status-card" id="depositStatusCard">
@@ -472,7 +482,7 @@ require_once __DIR__ . '/layouts/header.php';
     <div id="depositConfirmedActions" class="af-confirmed-actions" style="display:none;">
       <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place an order →</a>
     </div>
-    <p class="text-muted-sm"><a href="<?= h(path('add-funds.php')) ?>?new=1">Start a new deposit</a></p>
+    <p class="text-muted-sm"><a href="<?= h(path('add-funds.php')) ?>?new=1" class="af-back-link af-back-link-inline">← Change payment method</a></p>
   </div>
 
 <?php else: ?>
