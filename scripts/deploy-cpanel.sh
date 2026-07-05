@@ -28,8 +28,28 @@ rsync_to_web() {
 }
 
 git_updated=0
+archive_ok=0
 
-if [ -d "$REPO_DIR/.git" ]; then
+# Primary: GitHub archive (always matches public main — no git credentials)
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+
+if curl -fsSL "$GITHUB_ARCHIVE" -o "$tmp_dir/main.tar.gz" 2>/dev/null \
+   || curl -fsSL "$GITHUB_ARCHIVE_ALT" -o "$tmp_dir/main.tar.gz"; then
+  tar -xzf "$tmp_dir/main.tar.gz" -C "$tmp_dir"
+  extract_dir="$tmp_dir/smm-turk-panel-main"
+  if [ ! -d "$extract_dir" ]; then
+    extract_dir=$(find "$tmp_dir" -mindepth 1 -maxdepth 1 -type d | head -1)
+  fi
+  if [ -d "$extract_dir" ]; then
+    rsync_to_web "$extract_dir/"
+    echo "Deployed from GitHub archive (main branch)."
+    archive_ok=1
+    git_updated=1
+  fi
+fi
+
+if [ "$archive_ok" -eq 0 ] && [ -d "$REPO_DIR/.git" ]; then
   cd "$REPO_DIR"
   git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
 
@@ -46,13 +66,13 @@ if [ -d "$REPO_DIR/.git" ]; then
   else
     echo "WARN: git fetch failed (repo private or cached bad credentials)."
   fi
-else
+elif [ "$archive_ok" -eq 0 ]; then
   echo "WARN: Git repo not found at $REPO_DIR"
 fi
 
-# Fallback: download public archive without git auth
+# Fallback: download public archive without git auth (if git also failed)
 if [ "$git_updated" -eq 0 ]; then
-  echo "Trying GitHub archive download (no login)..."
+  echo "WARN: GitHub archive and git fetch both failed."
   tmp_dir=$(mktemp -d)
   trap 'rm -rf "$tmp_dir"' EXIT
 

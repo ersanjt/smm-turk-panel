@@ -18,29 +18,121 @@
  */
 header('Content-Type: application/json; charset=utf-8');
 
+/**
+ * @return array{ok: bool, error?: string, config?: array<string, string>, secret_path?: string}
+ */
+function deploy_load_secret(string $key): array
+{
+    $homeSecret = dirname(__DIR__) . '/deploy-secret.txt';
+    $localSecret = __DIR__ . '/deploy-secret.txt';
+    $secretPath = is_readable($localSecret) ? $localSecret : (is_readable($homeSecret) ? $homeSecret : '');
+    if ($secretPath === '' || $key === '') {
+        return ['ok' => false, 'error' => 'requires ?key=WEBHOOK_SECRET'];
+    }
+    $config = [];
+    foreach (file($secretPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        if (preg_match('/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/', $line, $m)) {
+            $config[$m[1]] = trim($m[2], " \t\"'");
+        }
+    }
+    $webhookSecret = $config['WEBHOOK_SECRET'] ?? '';
+    if ($webhookSecret === '' || !hash_equals($webhookSecret, $key)) {
+        return ['ok' => false, 'error' => 'Unauthorized'];
+    }
+    return ['ok' => true, 'config' => $config, 'secret_path' => $secretPath];
+}
+
+/**
+ * @return array{ok: bool, repaired?: list<string>, errors?: list<string>}
+ */
+function deploy_repair_files(): array
+{
+    $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
+    $files = [
+        'app/ChildPanelRemoteSettings.php',
+        'app/init.php',
+        'child-panel.php',
+        'DEPLOY_VERSION',
+        'repair-deploy.php',
+        'deploy-webhook.php',
+    ];
+    $repaired = [];
+    $errors = [];
+    $ctx = stream_context_create([
+        'http' => ['timeout' => 45, 'header' => "User-Agent: smm-turk-repair\r\n"],
+    ]);
+    foreach ($files as $rel) {
+        $content = @file_get_contents($repoBase . $rel, false, $ctx);
+        if ($content === false || $content === '') {
+            $errors[] = "download failed: $rel";
+            continue;
+        }
+        $dest = __DIR__ . '/' . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (@file_put_contents($dest, $content) === false) {
+            $errors[] = "write failed: $rel";
+            continue;
+        }
+        $repaired[] = $rel;
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($dest, true);
+        }
+    }
+    if (function_exists('opcache_reset')) {
+        @opcache_reset();
+    }
+    return [
+        'ok' => $errors === [] && $repaired !== [],
+        'repaired' => $repaired,
+        'errors' => $errors,
+    ];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (isset($_GET['diag'])) {
-        $homeSecret = dirname(__DIR__) . '/deploy-secret.txt';
-        $localSecret = __DIR__ . '/deploy-secret.txt';
-        $secretPath = is_readable($localSecret) ? $localSecret : (is_readable($homeSecret) ? $homeSecret : '');
-        $diagKey = trim((string)($_GET['key'] ?? ''));
-        if ($secretPath === '' || $diagKey === '') {
+    $diagKey = trim((string)($_GET['key'] ?? ''));
+
+    if (isset($_GET['repair'])) {
+        $auth = deploy_load_secret($diagKey);
+        if (!$auth['ok']) {
             http_response_code(403);
-            echo json_encode(['ok' => false, 'error' => 'diag requires ?key=WEBHOOK_SECRET']);
+            echo json_encode(['ok' => false, 'error' => $auth['error'] ?? 'Forbidden']);
             exit;
         }
-        $config = [];
-        foreach (file($secretPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-            $line = trim($line);
-            if ($line === '' || $line[0] === '#') continue;
-            if (preg_match('/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/', $line, $m)) {
-                $config[$m[1]] = trim($m[2], " \t\"'");
+        $repair = deploy_repair_files();
+        $deployScript = $auth['config']['DEPLOY_SCRIPT'] ?? '/home/smmturk/deploy-smm.sh';
+        $deployOut = null;
+        $deployRan = false;
+        if (is_readable($deployScript) && function_exists('exec')) {
+            $disabled = strtolower((string) ini_get('disable_functions'));
+            $execOff = $disabled !== '' && in_array('exec', array_map('trim', explode(',', $disabled)), true);
+            if (!$execOff) {
+                $out = [];
+                @exec('bash ' . escapeshellarg($deployScript) . ' 2>&1', $out, $code);
+                $deployRan = true;
+                $deployOut = ['code' => $code, 'log' => implode("\n", $out)];
             }
         }
-        $webhookSecret = $config['WEBHOOK_SECRET'] ?? '';
-        if ($webhookSecret === '' || !hash_equals($webhookSecret, $diagKey)) {
+        echo json_encode([
+            'ok' => $repair['ok'],
+            'repair' => $repair,
+            'deploy_ran' => $deployRan,
+            'deploy' => $deployOut,
+            'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
+            'remote_settings_line52' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettings.php')
+                ? trim((string) (file(__DIR__ . '/app/ChildPanelRemoteSettings.php')[51] ?? ''))
+                : null,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if (isset($_GET['diag'])) {
+        $auth = deploy_load_secret($diagKey);
+        if (!$auth['ok']) {
             http_response_code(403);
-            echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+            echo json_encode(['ok' => false, 'error' => $auth['error'] ?? 'Forbidden']);
             exit;
         }
         $deployScript = '/home/smmturk/deploy-smm.sh';
@@ -48,21 +140,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $repoDir = '/home/smmturk/repositories/smm-turk-panel';
         $disabled = strtolower((string) ini_get('disable_functions'));
         $execOff = !function_exists('exec') || ($disabled !== '' && in_array('exec', array_map('trim', explode(',', $disabled)), true));
-        header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'ok' => true,
             'diag' => [
-                'deploy_secret' => $secretPath !== '' ? 'found' : 'missing — upload deploy-secret.txt to /home/smmturk/',
+                'deploy_secret' => ($auth['secret_path'] ?? '') !== '' ? 'found' : 'missing',
                 'deploy_script' => is_readable($deployScript) ? 'found' : 'missing — upload deploy-cpanel.sh as /home/smmturk/deploy-smm.sh (755)',
                 'deploy_cron' => is_readable($cronScript) ? 'found' : 'missing — upload deploy-cron.sh to /home/smmturk/ (755)',
                 'git_repo' => is_dir($repoDir . '/.git') ? 'found' : 'missing — clone repo in cPanel Git Version Control',
                 'exec_disabled' => $execOff,
+                'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
+                'init_requires_remote_settings' => is_readable(__DIR__ . '/app/init.php')
+                    ? (strpos((string) file_get_contents(__DIR__ . '/app/init.php'), 'ChildPanelRemoteSettings') !== false)
+                    : null,
                 'hint' => $execOff ? 'Set Cron: * * * * * /home/smmturk/deploy-cron.sh' : 'exec OK — webhook can run deploy directly',
             ],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }
-    echo json_encode(['ok' => true, 'message' => 'Deploy webhook endpoint. Use POST from GitHub. Add ?diag=1 to check server setup.']);
+    echo json_encode(['ok' => true, 'message' => 'Deploy webhook endpoint. Use POST from GitHub. Add ?diag=1 or ?repair=1 with ?key=WEBHOOK_SECRET']);
     exit;
 }
 
