@@ -48,13 +48,20 @@ class ChildPanelRemoteSettings
         'payment_binance_pay_enabled', 'payment_zarinpal_enabled', 'payment_cryptocloud_enabled',
     ];
 
+    /** @var list<string> */
+    public const WALLET_SECTION_KEYS = [
+        'wallet_btc', 'wallet_eth', 'wallet_usdt_trc20', 'wallet_usdt_erc20', 'wallet_bnb', 'wallet_sol',
+        'deposit_auto_confirm', 'deposit_min_confirmations', 'deposit_amount_tolerance',
+        'api_etherscan', 'api_trongrid', 'api_bscscan',
+    ];
+
     /** @return array<string, list<string>> */
     private static function sectionKeys(): array
     {
         return [
             'branding' => self::BRANDING_KEYS,
             'general'  => self::GENERAL_KEYS,
-            'wallets'  => array_merge(self::WALLET_KEYS, self::DEPOSIT_KEYS),
+            'wallets'  => self::WALLET_SECTION_KEYS,
             'payments' => self::PAYMENT_KEYS,
             'email'    => self::EMAIL_KEYS,
         ];

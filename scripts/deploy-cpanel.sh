@@ -82,6 +82,10 @@ fi
 
 echo "Deploy done: $(date -Iseconds)"
 
+if command -v php >/dev/null 2>&1; then
+  php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'OPcache cleared\n'; }" 2>/dev/null || true
+fi
+
 if [ -f "$WEB_DIR/migrate-db.php" ]; then
   echo "Running DB migration..."
   php "$WEB_DIR/migrate-db.php" || echo "WARN: migrate-db.php failed (run manually: php $WEB_DIR/migrate-db.php)"

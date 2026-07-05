@@ -31,7 +31,6 @@ require_once __DIR__ . '/ServiceDeduper.php';
 require_once __DIR__ . '/MassOrderHelper.php';
 require_once __DIR__ . '/ChildPanelManager.php';
 require_once __DIR__ . '/ChildPanelDeployer.php';
-require_once __DIR__ . '/ChildPanelRemoteSettings.php';
 require_once __DIR__ . '/ChildPanelUserSync.php';
 require_once __DIR__ . '/ChildPanelEndUsers.php';
 require_once __DIR__ . '/ChildPanelAutomation.php';
