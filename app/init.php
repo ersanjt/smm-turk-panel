@@ -301,7 +301,30 @@ function asset_url(string $path): string {
 
 /** Logo / favicon URL with cache busting. */
 function logo_url(): string {
+    if (class_exists('Database')) {
+        $custom = trim((string) (Database::getInstance()->getSetting('site_logo') ?? ''));
+        if ($custom !== '') {
+            if (preg_match('#^https?://#i', $custom)) {
+                return $custom;
+            }
+            return asset_url(ltrim($custom, '/'));
+        }
+    }
     return asset_url('assets/img/logo-icon.svg');
+}
+
+/** Favicon URL — custom path in settings or default logo. */
+function favicon_url(): string {
+    if (class_exists('Database')) {
+        $custom = trim((string) (Database::getInstance()->getSetting('site_favicon') ?? ''));
+        if ($custom !== '') {
+            if (preg_match('#^https?://#i', $custom)) {
+                return $custom;
+            }
+            return asset_url(ltrim($custom, '/'));
+        }
+    }
+    return logo_url();
 }
 
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */

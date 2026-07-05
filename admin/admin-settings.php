@@ -4,7 +4,7 @@ $pageTitle = 'Settings';
 $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
-    $fields = ['site_name','site_url','api_key','api_url','api_key_smmfa','api_url_smmfa','provider_smmfa_enabled','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
+    $fields = ['site_name','site_url','site_logo','site_favicon','api_key','api_url','api_key_smmfa','api_url_smmfa','provider_smmfa_enabled','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
         'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','admin_notify_email','admin_notify_signup','admin_notify_orders','admin_notify_deposits','mail_mode','smtp_encryption','mail_lang','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
         'deposit_auto_confirm','deposit_min_confirmations','deposit_amount_tolerance','api_etherscan','api_trongrid','api_bscscan',
         'payment_smmpaygate_enabled','payment_smmpaygate_api_url','payment_smmpaygate_api_key','payment_smmpaygate_merchant_id','payment_smmpaygate_secret',
@@ -62,6 +62,17 @@ require_once __DIR__ . '/../layouts/header.php';
         <div class="form-group">
           <label class="form-label">Site URL</label>
           <input type="url" name="site_url" class="form-control" value="<?= s($settings,'site_url') ?>">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Logo path</label>
+          <input type="text" name="site_logo" class="form-control" value="<?= s($settings,'site_logo') ?>" placeholder="assets/img/logo-icon.svg">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Relative path or full URL. Upload via File Manager, then paste path here.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Favicon path</label>
+          <input type="text" name="site_favicon" class="form-control" value="<?= s($settings,'site_favicon') ?>" placeholder="assets/img/logo-icon.svg">
         </div>
       </div>
       <div class="form-group">

@@ -318,17 +318,37 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
         </div>
         <?php endif; ?>
 
-        <?php if ($isActive): ?>
+        <?php if ($isActive):
+            $panelUrl = rtrim((string) ($p['panel_url'] ?: 'https://' . $p['domain']), '/');
+            $adminPass = $cpm->getStoredAdminPassword($p);
+        ?>
         <dl class="cp-connect">
           <dt>Panel URL</dt>
-          <dd><a href="<?= h($p['panel_url'] ?: 'https://' . $p['domain']) ?>" target="_blank" rel="noopener"><?= h($p['panel_url'] ?: 'https://' . $p['domain']) ?></a></dd>
+          <dd><a href="<?= h($panelUrl) ?>" target="_blank" rel="noopener"><?= h($panelUrl) ?></a></dd>
+          <dt>Login (admin)</dt>
+          <dd><a href="<?= h($panelUrl . '/login.php') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/login.php') ?></a></dd>
+          <dt>Admin dashboard</dt>
+          <dd><a href="<?= h($panelUrl . '/admin/') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/admin/') ?></a></dd>
           <dt>Admin username</dt>
-          <dd><?= h($p['admin_username']) ?></dd>
+          <dd><code><?= h($p['admin_username']) ?></code></dd>
+          <dt>Admin password</dt>
+          <dd><code id="cp-pass-<?= (int) $p['id'] ?>"><?= $adminPass !== '' ? h($adminPass) : '— (contact support)' ?></code>
+            <?php if ($adminPass !== ''): ?>
+            <button type="button" class="btn" style="font-size:10px;padding:4px 8px;margin-left:6px;" onclick="navigator.clipboard.writeText(document.getElementById('cp-pass-<?= (int) $p['id'] ?>').textContent)">Copy</button>
+            <?php endif; ?>
+          </dd>
           <dt>Parent API URL</dt>
-          <dd><?= h($parentApi) ?></dd>
+          <dd><code><?= h($parentApi) ?></code></dd>
           <dt>API key</dt>
-          <dd><?= h($p['panel_api_key'] ?? '') ?></dd>
+          <dd><code style="word-break:break-all;"><?= h($p['panel_api_key'] ?? '') ?></code></dd>
         </dl>
+        <div class="cp-dns-status ok" style="margin-top:10px;">
+          <strong>Customize your panel</strong><br>
+          1. Open <strong>Login</strong> above with admin username &amp; password.<br>
+          2. After login, open <strong>Admin Panel</strong> in the sidebar (or Admin dashboard link).<br>
+          3. Go to <strong>Admin → Settings</strong>: change <em>Site Name</em>, <em>Logo path</em>, <em>Favicon path</em>.<br>
+          4. Upload your logo via cPanel File Manager to e.g. <code>assets/img/my-logo.png</code> and set that path in Settings.
+        </div>
         <?php endif; ?>
 
         <?php if ($st === 'cancelled'): ?>

@@ -162,6 +162,11 @@ class ChildPanelManager
         return ['password' => $plain, 'regenerated' => true];
     }
 
+    public function getStoredAdminPassword(array $panel): string
+    {
+        return self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
+    }
+
     /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string} */
     public function checkDomainReady(string $domain): array
     {
@@ -709,7 +714,8 @@ class ChildPanelManager
                     $panelUrl,
                     $parentApi,
                     $apiKey,
-                    (string) $panel['admin_username']
+                    (string) $panel['admin_username'],
+                    $adminPlainPassword
                 );
             } catch (Throwable $e) {
                 Logger::log('Child panel email failed #' . $panelId . ': ' . $e->getMessage(), 'mail');

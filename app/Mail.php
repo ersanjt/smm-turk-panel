@@ -638,19 +638,27 @@ class Mail
         string $parentApi,
         string $apiKey,
         string $adminUsername,
+        string $adminPassword,
         ?string $lang = null
     ): bool {
         $lang = MailLocale::resolveLang($lang);
+        $loginUrl = rtrim($panelUrl, '/') . '/login.php';
+        $adminUrl = rtrim($panelUrl, '/') . '/admin/';
         $subject = $this->subjectPrefix(MailLocale::t('child_ready_subject', $lang, ['domain' => $domain]), $lang);
         $inner = '<p>' . MailLocale::t('child_ready_hi', $lang, ['name' => $username]) . '</p>'
             . '<p>' . MailLocale::t('child_ready_body', $lang, ['domain' => $domain]) . '</p>'
             . '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">'
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_panel_url', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;"><a href="' . htmlspecialchars($panelUrl) . '">' . htmlspecialchars($panelUrl) . '</a></td></tr>'
-            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_user', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;">' . htmlspecialchars($adminUsername) . '</td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_login', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;"><a href="' . htmlspecialchars($loginUrl) . '">' . htmlspecialchars($loginUrl) . '</a></td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_dashboard', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;"><a href="' . htmlspecialchars($adminUrl) . '">' . htmlspecialchars($adminUrl) . '</a></td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_user', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;">' . htmlspecialchars($adminUsername) . '</td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_pass', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;">' . htmlspecialchars($adminPassword) . '</td></tr>'
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_parent_api', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;font-size:12px;">' . htmlspecialchars($parentApi) . '</td></tr>'
             . '<tr><td style="padding:8px;color:#666;">' . MailLocale::t('child_api_key', $lang) . '</td><td style="padding:8px;font-family:monospace;font-size:12px;word-break:break-all;">' . htmlspecialchars($apiKey) . '</td></tr>'
             . '</table>'
             . '<p style="font-size:13px;color:#666;">' . MailLocale::t('child_connect_hint', $lang) . '</p>'
+            . '<p style="font-size:13px;color:#666;">' . MailLocale::t('child_brand_hint', $lang) . '</p>'
+            . $this->btn($loginUrl, MailLocale::t('btn_login', $lang))
             . $this->btn(page_url('child-panel.php'), MailLocale::t('btn_child_panel', $lang));
         return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml($domain, $inner, $lang), $lang);
     }
