@@ -18,6 +18,7 @@ RSYNC_EXCLUDES=(
   --exclude='deploy-cron.sh'
   --exclude='tmp/'
   --exclude='uploads/'
+  --exclude='storage/'
   --exclude='node_modules'
 )
 
