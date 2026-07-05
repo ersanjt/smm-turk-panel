@@ -133,13 +133,14 @@ require_once __DIR__ . '/../layouts/header.php';
             <td style="white-space:nowrap;">
               <?php
               $needsDeploy = $ps !== 'ready' || (empty($p['document_root']) && $st === 'active');
-              if ($st === 'pending' || $needsDeploy):
+              $canRepair = $st === 'active' && $ps === 'ready';
+              if ($st === 'pending' || $needsDeploy || $canRepair):
               ?>
               <form method="POST" style="display:inline;">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
                 <input type="hidden" name="action" value="provision">
-                <button type="submit" class="btn btn-primary" style="padding:6px 10px;font-size:11px;"><?= $st === 'pending' ? 'Deploy' : 'Retry deploy' ?></button>
+                <button type="submit" class="btn btn-primary" style="padding:6px 10px;font-size:11px;"><?= $canRepair ? 'Repair deploy' : ($st === 'pending' ? 'Deploy' : 'Retry deploy') ?></button>
               </form>
               <?php endif; ?>
               <?php if ($cpm->canCancel($p, true)): ?>

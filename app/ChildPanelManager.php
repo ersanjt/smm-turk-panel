@@ -195,13 +195,13 @@ class ChildPanelManager
 
     private function domainHostedOnServer(string $domain): bool
     {
-        $deployer = new ChildPanelDeployer();
-        $docroot = $deployer->docrootForDomain($domain);
-        if ($docroot !== '' && is_dir($docroot)) {
+        $whm = new WhmProvisioner();
+        if ($whm->isConfigured() && $whm->domainExistsOnAccount($domain)) {
             return true;
         }
-        $whm = new WhmProvisioner();
-        return $whm->isConfigured() && $whm->domainExistsOnAccount($domain);
+        $deployer = new ChildPanelDeployer();
+        $docroot = $deployer->docrootForDomain($domain);
+        return $docroot !== '' && is_dir($docroot) && is_file($docroot . '/index.php');
     }
 
     /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string, expected_ns: list<string>, expected_ip: string, hint: string} */

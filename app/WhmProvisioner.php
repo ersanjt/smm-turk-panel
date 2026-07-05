@@ -141,12 +141,17 @@ class WhmProvisioner
             return ['success' => false, 'error' => 'Invalid domain.'];
         }
 
-        if ($this->domainExistsOnAccount($domain)) {
-            $deployer = new ChildPanelDeployer();
-            $docroot = $deployer->docrootForDomain($domain);
+        $deployer = new ChildPanelDeployer();
+        $expectedDocroot = $deployer->docrootForDomain($domain);
+        $relativeDir = 'public_html/' . $domain;
+
+        $existing = $this->findAddonDomain($domain);
+        if ($existing !== null) {
+            $docroot = $existing['document_root'] !== '' ? $existing['document_root'] : $expectedDocroot;
+            $this->restartHttpd();
             return [
                 'success' => true,
-                'message' => 'Domain already exists on cPanel account.',
+                'message' => 'Addon domain registered (docroot: ' . $docroot . ').',
                 'document_root' => $docroot,
                 'panel_url' => 'https://' . $domain,
             ];
@@ -157,22 +162,21 @@ class WhmProvisioner
             $sub = 'cp' . substr(md5($domain), 0, 6);
         }
 
-        $dir = 'public_html/' . $domain;
         $result = $this->whmCpanelCall('AddonDomain', 'add_addon_domain', [
             'domain' => $domain,
             'subdomain' => $sub,
-            'document_root' => $dir,
+            'document_root' => $relativeDir,
         ], 3);
 
         if (!$result['success']) {
             $result = $this->whmCpanelCall('AddonDomain', 'addaddondomain', [
                 'newdomain' => $domain,
                 'subdomain' => $sub,
-                'dir' => $dir,
+                'dir' => $relativeDir,
             ], 2);
         }
 
-        if (!$result['success']) {
+        if (!$result['success'] && !$this->isAlreadyExistsError($result['error'] ?? '')) {
             $tryPark = $this->whmCpanelCall('Park', 'park', [
                 'domain' => $domain,
                 'topdomain' => $this->primaryDomain(),
@@ -181,7 +185,7 @@ class WhmProvisioner
             if (!$tryPark['success']) {
                 return ['success' => false, 'error' => $result['error'] ?? 'Addon domain failed.'];
             }
-            $deployer = new ChildPanelDeployer();
+            $this->restartHttpd();
             return [
                 'success' => true,
                 'message' => 'Parked domain on account.',
@@ -190,36 +194,101 @@ class WhmProvisioner
             ];
         }
 
-        $deployer = new ChildPanelDeployer();
+        $existing = $this->findAddonDomain($domain);
+        $docroot = $existing['document_root'] ?? $expectedDocroot;
+        $this->restartHttpd();
+
         return [
             'success' => true,
-            'message' => 'Addon domain created.',
-            'document_root' => $deployer->docrootForDomain($domain),
+            'message' => $existing !== null ? 'Addon domain verified in cPanel.' : 'Addon domain created.',
+            'document_root' => $docroot !== '' ? $docroot : $expectedDocroot,
             'panel_url' => 'https://' . $domain,
         ];
     }
 
-    public function domainExistsOnAccount(string $domain): bool
+    /** @return array{domain: string, document_root: string, subdomain: string}|null */
+    public function findAddonDomain(string $domain): ?array
     {
         $domain = ChildPanelManager::normalizeDomain($domain);
-        $result = $this->whmCpanelCall('AddonDomain', 'list_addon_domains', [], 3);
-        if (!$result['success']) {
-            $result = $this->whmCpanelCall('AddonDomain', 'listaddondomains', [], 2);
-        }
-        if (!$result['success']) {
-            return is_dir((new ChildPanelDeployer())->docrootForDomain($domain));
-        }
-        $data = $result['data'] ?? [];
-        if (!is_array($data)) {
-            return false;
-        }
-        foreach ($data as $row) {
-            $d = is_array($row) ? ($row['domain'] ?? $row['domainname'] ?? $row[0] ?? '') : (string) $row;
-            if (ChildPanelManager::normalizeDomain($d) === $domain) {
-                return true;
+        foreach ($this->listAddonDomains() as $row) {
+            if ($row['domain'] === $domain) {
+                return $row;
             }
         }
-        return is_dir((new ChildPanelDeployer())->docrootForDomain($domain));
+        return null;
+    }
+
+    /** @return list<array{domain: string, document_root: string, subdomain: string}> */
+    private function listAddonDomains(): array
+    {
+        $out = [];
+        foreach ([['list_addon_domains', 3], ['listaddondomains', 2]] as [$func, $ver]) {
+            $res = $this->whmCpanelCall('AddonDomain', $func, [], $ver);
+            if (!$res['success']) {
+                continue;
+            }
+            $data = $res['data'] ?? [];
+            if (!is_array($data)) {
+                continue;
+            }
+            foreach ($data as $key => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $domain = (string) ($row['domain'] ?? $row['domainname'] ?? (is_string($key) && !is_numeric($key) ? $key : ''));
+                $domain = ChildPanelManager::normalizeDomain($domain);
+                if ($domain === '') {
+                    continue;
+                }
+                $docroot = (string) ($row['documentroot'] ?? $row['dir'] ?? $row['document_root'] ?? $row['reldir'] ?? '');
+                $out[] = [
+                    'domain' => $domain,
+                    'document_root' => $this->normalizeDocrootPath($docroot),
+                    'subdomain' => (string) ($row['subdomain'] ?? $row['sub'] ?? ''),
+                ];
+            }
+            if ($out !== []) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    private function normalizeDocrootPath(string $path): string
+    {
+        $path = trim(str_replace('\\', '/', $path));
+        if ($path === '') {
+            return '';
+        }
+        if (!str_starts_with($path, '/')) {
+            $home = (new ChildPanelDeployer())->homePath();
+            if ($home !== '') {
+                return rtrim($home, '/') . '/' . ltrim($path, '/');
+            }
+        }
+        return rtrim($path, '/');
+    }
+
+    private function restartHttpd(): void
+    {
+        $url = 'https://' . $this->apiHost() . ':' . $this->apiPort() . '/json-api/restartsrv?service=httpd';
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: whm ' . $this->whmUser() . ':' . $this->apiToken(),
+            ],
+        ]);
+        curl_exec($ch);
+        curl_close($ch);
+    }
+
+    public function domainExistsOnAccount(string $domain): bool
+    {
+        return $this->findAddonDomain(ChildPanelManager::normalizeDomain($domain)) !== null;
     }
 
     private function primaryDomain(): string
