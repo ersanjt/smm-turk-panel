@@ -738,7 +738,7 @@ class ChildPanelManager
                 continue;
             }
             $this->db->execute('UPDATE child_panels SET ns_verified = 1 WHERE id = ?', [$row['id']]);
-            $result = $this->provision((int) $row['id']);
+            $result = $this->provision((int) $row['id'], null, true);
             if ($result['success']) {
                 $done++;
             }
@@ -752,13 +752,13 @@ class ChildPanelManager
         $rows = $this->db->fetchAll(
             "SELECT id FROM child_panels
              WHERE status NOT IN ('cancelled', 'active')
-             AND provision_status IN (?, ?, ?)
+             AND provision_status IN (?, ?, ?, ?)
              AND created_at < DATE_SUB(NOW(), INTERVAL 1 MINUTE)",
-            [self::PROVISION_QUEUED, self::PROVISION_PROVISIONING, self::PROVISION_FAILED]
+            [self::PROVISION_QUEUED, self::PROVISION_PROVISIONING, self::PROVISION_FAILED, self::PROVISION_DNS_WAIT]
         );
         $done = 0;
         foreach ($rows as $row) {
-            $result = $this->provision((int) $row['id']);
+            $result = $this->provision((int) $row['id'], null, true);
             if ($result['success']) {
                 $done++;
             }
