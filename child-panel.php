@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 
         if (!empty($err)) {
             flash('error', implode(' ', $err));
-            redirect(url('child-panel.php'));
+            redirect(page_url('child-panel.php', ['domain' => ChildPanelManager::normalizeDomain($domain)]));
         }
 
         $result = $cpm->placeOrder(
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 
         if (!$result['success']) {
             flash('error', $result['error'] ?? 'Order failed.');
-            redirect(url('child-panel.php'));
+            redirect(page_url('child-panel.php', ['domain' => ChildPanelManager::normalizeDomain($domain)]));
         }
 
         if (!empty($result['instant'])) {
@@ -129,6 +129,7 @@ try {
 
 $balance = (float) ($user['balance'] ?? 0);
 $canOrder = $balance >= $price;
+$prefillDomain = ChildPanelManager::normalizeDomain((string) ($_POST['domain'] ?? $_GET['domain'] ?? ''));
 
 require_once __DIR__ . '/layouts/header.php';
 ?>
@@ -297,6 +298,11 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
         </dl>
         <?php endif; ?>
 
+        <?php if ($st === 'cancelled'): ?>
+        <div class="cp-panel-actions">
+          <a href="<?= h(page_url('child-panel.php', ['domain' => $p['domain']])) ?>#order-form" class="btn btn-primary" style="font-size:12px;padding:8px 14px;">Order again</a>
+        </div>
+        <?php endif; ?>
         <?php
         $showPanelActions = ($ps === ChildPanelManager::PROVISION_DNS_WAIT || $cpm->canCancel($p)) && $st !== 'cancelled';
         if ($showPanelActions):
@@ -328,7 +334,7 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
     </div>
     <?php endif; ?>
 
-    <div class="card">
+    <div class="card" id="order-form">
       <div class="card-title">Order child panel</div>
       <form method="POST" <?= $canOrder ? '' : 'onsubmit="return false;"' ?>>
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
@@ -336,7 +342,7 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
 
         <div class="form-group">
           <label class="form-label">Domain name</label>
-          <input type="text" name="domain" class="form-control" placeholder="yourpanel.com" value="<?= h($_POST['domain'] ?? '') ?>" required <?= $canOrder ? '' : 'disabled' ?>>
+          <input type="text" name="domain" class="form-control" placeholder="yourpanel.com" value="<?= h($prefillDomain !== '' ? $prefillDomain : ($_POST['domain'] ?? '')) ?>" required <?= $canOrder ? '' : 'disabled' ?>>
         </div>
         <div class="grid2">
           <div class="form-group">

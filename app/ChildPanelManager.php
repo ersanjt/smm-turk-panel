@@ -294,15 +294,53 @@ class ChildPanelManager
 
     public static function normalizeDomain(string $domain): string
     {
+        $domain = preg_replace('/\p{Cf}/u', '', $domain) ?? $domain;
+        $domain = str_replace(
+            ["\u{2010}", "\u{2011}", "\u{2012}", "\u{2013}", "\u{2014}", "\u{2212}", "\u{00A0}"],
+            ['-', '-', '-', '-', '-', '-', ' '],
+            $domain
+        );
         $domain = strtolower(trim($domain));
         $domain = preg_replace('#^https?://#', '', $domain) ?? $domain;
         $domain = preg_replace('#/.*$#', '', $domain) ?? $domain;
+        $domain = preg_replace('/\s+/', '', $domain) ?? $domain;
         return rtrim($domain, '.');
     }
 
     public static function isValidDomain(string $domain): bool
     {
-        return (bool) preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $domain);
+        return self::validateChildPanelDomain($domain) === null;
+    }
+
+    public static function validateChildPanelDomain(string $domain): ?string
+    {
+        $domain = self::normalizeDomain($domain);
+        if ($domain === '') {
+            return 'Enter your domain name (e.g. yourpanel.com).';
+        }
+        if (strlen($domain) > 253 || strlen($domain) < 4) {
+            return 'Domain name is too short or too long.';
+        }
+        if (filter_var($domain, FILTER_VALIDATE_IP)) {
+            return 'Enter a domain name, not an IP address.';
+        }
+        if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $domain)) {
+            return 'Enter a valid domain (e.g. yourpanel.com). Use only letters, numbers, and hyphens.';
+        }
+        if (preg_match('/^www\./i', $domain)) {
+            return 'Enter the domain without www (e.g. yourpanel.com).';
+        }
+        $primary = 'smm-turk.com';
+        if (defined('SITE_URL')) {
+            $host = parse_url((string) SITE_URL, PHP_URL_HOST);
+            if (is_string($host) && $host !== '') {
+                $primary = self::normalizeDomain($host);
+            }
+        }
+        if ($domain === $primary) {
+            return 'Use your own domain — the main site domain cannot be a child panel.';
+        }
+        return null;
     }
 
     /** @return array{success: bool, panel_id?: int, error?: string, instant?: bool} */
@@ -315,8 +353,9 @@ class ChildPanelManager
         ?string $adminEmail = null
     ): array {
         $domain = self::normalizeDomain($domain);
-        if (!self::isValidDomain($domain)) {
-            return ['success' => false, 'error' => 'Enter a valid domain (e.g. yourpanel.com).'];
+        $domainError = self::validateChildPanelDomain($domain);
+        if ($domainError !== null) {
+            return ['success' => false, 'error' => $domainError];
         }
 
         $existing = $this->db->fetch(
@@ -355,6 +394,15 @@ class ChildPanelManager
             [$domain, $userId, self::STATUS_CANCELLED]
         );
         $reuseId = $cancelledRow ? (int) $cancelledRow['id'] : 0;
+        if ($reuseId === 0) {
+            $cancelledAny = $this->db->fetch(
+                'SELECT id, user_id FROM child_panels WHERE domain = ? AND status = ? ORDER BY id DESC LIMIT 1',
+                [$domain, self::STATUS_CANCELLED]
+            );
+            if ($cancelledAny && (int) $cancelledAny['user_id'] !== $userId) {
+                return ['success' => false, 'error' => 'This domain was used on another account. Choose a different domain or contact support.'];
+            }
+        }
 
         try {
             $this->db->beginTransaction();
