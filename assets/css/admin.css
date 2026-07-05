@@ -1,0 +1,50 @@
+/**
+ * Shared admin area styles (loaded automatically when $isAdminArea in layouts/header.php).
+ */
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-toolbar .card-title {
+  margin: 0;
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-filters .form-control {
+  min-width: 200px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-back {
+  margin-top: 16px;
+}
+
+.admin-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}

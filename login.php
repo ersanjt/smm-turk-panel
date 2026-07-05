@@ -3,7 +3,7 @@ require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/RateLimit.php';
 
 if ($auth->isLoggedIn()) {
-    redirect(url('index.php'));
+    redirect(url('dashboard.php'));
 }
 store_login_next($_GET['next'] ?? null);
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
@@ -122,12 +122,13 @@ if (empty($_SESSION['csrf_token'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($siteName) ?> — <?= $mode === 'login' ? 'Login' : 'Register' ?></title>
 <meta name="description" content="Login or register to SMM Turk — cheapest SMM panel. Crypto deposits, API, 24/7 support.">
+<meta name="robots" content="<?= h(Seo::robotsContent(false)) ?>">
 <?php if (defined('SITE_URL') && SITE_URL !== ''): ?>
 <link rel="canonical" href="<?= h(url('login.php')) ?>">
-<meta name="geo.region" content="<?= h(defined('GEO_REGION') ? GEO_REGION : 'TR') ?>">
+<?= Seo::geoMetaTags('en') ?>
 <?php endif; ?>
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
+<link rel="apple-touch-icon" href="<?= h(logo_url()) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -186,9 +187,9 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 
 <div class="auth-wrap">
 <div class="auth-box">
-  <a href="<?= h(path('home.php')) ?>" class="auth-back">← Back to Home</a>
+  <a href="<?= h(home_path()) ?>" class="auth-back">← Back to Home</a>
   <div class="auth-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="52" height="52">
+    <img src="<?= h(logo_url()) ?>" alt="" width="52" height="52">
     <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>

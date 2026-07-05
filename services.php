@@ -854,7 +854,7 @@ echo ProviderRegistry::serviceTierStrip('services.php', $tier, $search, $tierExt
   foreach ($services as $s):
     $displayRate = $s['rate'] * (1 + $s['markup']/100);
     $isNew = isset($s['updated_at']) && $s['updated_at'] >= $newCutoff;
-    $orderUrl = path('index.php') . '?' . http_build_query(array_filter([
+    $orderUrl = path('dashboard.php') . '?' . http_build_query(array_filter([
         'cat' => $s['category'],
         'service' => $s['service_id'],
         'tier' => $tier ?: null,

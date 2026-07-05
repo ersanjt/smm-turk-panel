@@ -1,25 +1,54 @@
 <?php
+/**
+ * Public Terms of Service — indexable, no login required.
+ */
 require_once __DIR__ . '/app/init.php';
-$auth->requireLogin();
-$pageTitle = 'Terms of Service';
-require_once __DIR__ . '/layouts/header.php';
+require_once __DIR__ . '/app/Lang.php';
+
+$lang = Lang::initPublic();
+$siteName = Seo::siteName();
+$siteUrl  = Seo::siteUrl();
+$termsPath = path('terms.php');
+$canonicalUrl = $siteUrl !== '' ? Seo::absoluteUrl($termsPath) : $termsPath;
+
+$pageTitle = __('nav_terms');
+$pageDescription = __('terms_meta_desc');
+$blogNavActive = '';
+$seoHreflang = true;
+$seoHreflangBase = $canonicalUrl;
+$jsonLd = Seo::breadcrumbSchema([
+    ['name' => __('blog_nav_home'), 'url' => $siteUrl !== '' ? Seo::absoluteUrl(home_path()) : home_path()],
+    ['name' => $pageTitle, 'url' => $canonicalUrl],
+], $lang);
+
+require_once __DIR__ . '/layouts/blog-header.php';
 ?>
 
-<div class="card" style="max-width:800px;">
-  <div class="card-title">Terms of Service</div>
-  <div style="font-size:14px;line-height:1.8;color:var(--text);">
-    <p>By using <?= h(defined('SITE_NAME') ? SITE_NAME : 'SMM Turk') ?> you agree to the following terms.</p>
-    <h3 style="margin:20px 0 10px;font-size:15px;">1. Service</h3>
+<main class="blog-article-wrap" role="main" style="max-width:800px;margin:0 auto;padding:24px 20px 48px;">
+<article class="card" style="padding:28px 32px;">
+  <h1 style="margin:0 0 20px;font-size:1.75rem;">Terms of Service</h1>
+  <div style="font-size:15px;line-height:1.8;color:var(--text, #334155);">
+    <p>By using <?= h($siteName) ?> you agree to the following terms.</p>
+    <h2 style="margin:24px 0 10px;font-size:1.1rem;">1. Service</h2>
     <p>We provide social media marketing (SMM) services. Orders are processed by our provider. Start times and delivery speeds vary by service.</p>
-    <h3 style="margin:20px 0 10px;font-size:15px;">2. Account & Payment</h3>
-    <p>You must provide accurate information. Balance is shown in USD. <strong>Deposits are cryptocurrency only</strong> (e.g. BTC, ETH, USDT, BNB, SOL) — we do not accept credit cards, PayPal, or bank transfers on this panel. Send crypto to the wallet address shown in Add Funds; balance is credited after confirmation. Refunds are only given when we are at fault. Chargebacks may result in account suspension.</p>
-    <h3 style="margin:20px 0 10px;font-size:15px;">3. Orders</h3>
-    <p>Ensure links and profiles are public before ordering. Do not change links or account settings after placing an order. We are not responsible for orders placed on private or invalid links.</p>
-    <h3 style="margin:20px 0 10px;font-size:15px;">4. Prohibited Use</h3>
+    <h2 style="margin:24px 0 10px;font-size:1.1rem;">2. Account &amp; Payment</h2>
+    <p>You must provide accurate information. Balance is shown in USD. <strong>Deposits are cryptocurrency only</strong> (e.g. BTC, ETH, USDT, BNB, SOL). Refunds are only given when we are at fault. Chargebacks may result in account suspension.</p>
+    <h2 style="margin:24px 0 10px;font-size:1.1rem;">3. Orders</h2>
+    <p>Ensure links and profiles are public before ordering. Do not change links or account settings after placing an order.</p>
+    <h2 style="margin:24px 0 10px;font-size:1.1rem;">4. Prohibited Use</h2>
     <p>You may not use our services for illegal content, spam, or to violate platform rules. We may suspend or ban accounts that abuse the service.</p>
-    <h3 style="margin:20px 0 10px;font-size:15px;">5. Contact</h3>
-    <p>For support, open a ticket from the dashboard or contact us via the email shown in the footer.</p>
+    <h2 style="margin:24px 0 10px;font-size:1.1rem;">5. Contact</h2>
+    <p>For support, <?= $auth->isLoggedIn() ? 'open a ticket from your dashboard or' : 'sign in and open a ticket, or' ?> contact us via the email shown in the footer.</p>
   </div>
-</div>
+  <p style="margin-top:28px;">
+    <a href="<?= h(home_path()) ?>">← Back to Home</a>
+    <?php if (!$auth->isLoggedIn()): ?>
+    · <a href="<?= h(register_path()) ?>">Create account</a>
+    <?php else: ?>
+    · <a href="<?= h(dashboard_path()) ?>">Go to Dashboard</a>
+    <?php endif; ?>
+  </p>
+</article>
+</main>
 
-<?php require_once __DIR__ . '/layouts/footer.php'; ?>
+<?php require_once __DIR__ . '/layouts/blog-footer.php'; ?>

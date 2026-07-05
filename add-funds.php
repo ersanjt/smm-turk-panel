@@ -419,7 +419,7 @@ require_once __DIR__ . '/layouts/header.php';
       </div>
     </div>
     <div id="depositConfirmedActions" class="af-confirmed-actions" style="display:none;">
-      <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place an order →</a>
+      <a href="<?= h(path('dashboard.php')) ?>" class="btn btn-primary">Place an order →</a>
       <a href="<?= h(path('child-panel.php')) ?>" class="btn">Child Panel</a>
     </div>
   </div>
@@ -480,7 +480,7 @@ require_once __DIR__ . '/layouts/header.php';
       </div>
     </div>
     <div id="depositConfirmedActions" class="af-confirmed-actions" style="display:none;">
-      <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place an order →</a>
+      <a href="<?= h(path('dashboard.php')) ?>" class="btn btn-primary">Place an order →</a>
     </div>
     <p class="text-muted-sm"><a href="<?= h(path('add-funds.php')) ?>?new=1" class="af-back-link af-back-link-inline">← Change payment method</a></p>
   </div>

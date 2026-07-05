@@ -31,6 +31,7 @@ require_once __DIR__ . '/MassOrderHelper.php';
 require_once __DIR__ . '/ChildPanelManager.php';
 require_once __DIR__ . '/ChildPanelDeployer.php';
 require_once __DIR__ . '/WhmProvisioner.php';
+require_once __DIR__ . '/Seo.php';
 
 // In production, log PHP errors to file (tmp/logs/php_errors.log)
 if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
@@ -102,6 +103,21 @@ function site_base(): string {
 }
 
 /**
+ * Public URL segments for PHP scripts (script name without .php).
+ *
+ * @return array<string, string>
+ */
+function route_aliases(): array {
+    return [
+        'home' => '',
+        'index' => 'dashboard',
+        'api-page' => 'api-docs',
+        'account-settings' => 'settings',
+        'add-funds' => 'funds',
+    ];
+}
+
+/**
  * Convert .php page paths to clean URLs (no .php extension).
  * Supports query string (?a=1) and fragment (#section).
  */
@@ -119,14 +135,62 @@ function clean_page_path(string $p): string {
     $p = ltrim($p, '/');
     if (str_ends_with($p, '.php')) {
         $p = substr($p, 0, -4);
-        if ($p === 'index') {
-            $p = '';
-        } elseif ($p === 'admin/index') {
-            $p = 'admin';
-        }
+    }
+    if ($p === 'admin/index') {
+        $p = 'admin';
+    } elseif (array_key_exists($p, route_aliases())) {
+        $p = route_aliases()[$p];
     }
     $path = ($p === '') ? '/' : '/' . $p;
     return $path . $query . $fragment;
+}
+
+/** Internal href with optional query and hash (same-origin). */
+function route_path(string $script, array $query = [], string $hash = ''): string {
+    $p = path($script);
+    if ($query !== []) {
+        $p .= (str_contains($p, '?') ? '&' : '?') . http_build_query($query);
+    }
+    if ($hash !== '') {
+        $p .= '#' . ltrim($hash, '#');
+    }
+    return $p;
+}
+
+/** Public home page path (/). */
+function home_path(): string {
+    return path('home.php');
+}
+
+/** Panel dashboard path (/dashboard). */
+function dashboard_path(array $query = [], string $hash = ''): string {
+    return route_path('dashboard.php', $query, $hash);
+}
+
+/** Admin page path (/admin/…). */
+function admin_path(string $script, array $query = [], string $hash = ''): string {
+    $script = ltrim($script, '/');
+    if (!str_starts_with($script, 'admin/')) {
+        $script = 'admin/' . $script;
+    }
+    if (!str_ends_with($script, '.php')) {
+        $script .= '.php';
+    }
+    return route_path($script, $query, $hash);
+}
+
+/** Register page with optional extra query params. */
+function register_path(array $query = []): string {
+    return route_path('login.php', array_merge(['mode' => 'register'], $query));
+}
+
+/** Login page that returns to a panel page after sign-in. */
+function login_next_path(string $destinationScript, array $query = [], string $hash = '', string $mode = ''): string {
+    $params = ['next' => route_path($destinationScript, $query, $hash)];
+    if ($mode === 'register') {
+        $params['mode'] = 'register';
+    }
+    return route_path('login.php', $params);
 }
 
 /** Full page URL with optional query and hash (for emails and redirects). */
@@ -148,7 +212,7 @@ function url(string $path): string {
     return $base !== '' ? $base . $path : $path;
 }
 
-/** Path for internal href (same-origin). Use in HTML: href="<?= h(path('login.php')) ?>". Outputs clean URLs without .php. */
+/** Path for internal href (same-origin). Prefer route_path() when adding query/hash. */
 function path(string $p): string {
     $path = clean_page_path('/' . ltrim($p, '/'));
     return base_path() . $path;
@@ -208,7 +272,7 @@ function consume_login_next(): string {
     $next = trim($_SESSION['login_next'] ?? '');
     unset($_SESSION['login_next']);
     if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
-        return url('index.php');
+        return url('dashboard.php');
     }
     $base = site_base();
     return $base !== '' ? $base . $next : $next;
@@ -224,11 +288,19 @@ function getFlash(): ?array {
     return $flash;
 }
 
-/** Cache-busted static asset URL for CSS/JS. */
+/** Cache-busted static asset URL for CSS/JS (uses file mtime when available). */
 function asset_url(string $path): string {
-    $clean = ltrim($path, '/');
+    $clean = ltrim(str_replace('\\', '/', $path), '/');
     $url = path($clean);
-    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=9';
+    $root = defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__);
+    $file = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $clean);
+    $ver = is_file($file) ? (string) filemtime($file) : '1';
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . $ver;
+}
+
+/** Logo / favicon URL with cache busting. */
+function logo_url(): string {
+    return asset_url('assets/img/logo-icon.svg');
 }
 
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */

@@ -1,20 +1,24 @@
 (function () {
   var themeKey = 'smmturk_theme';
-  var themeBtn = document.getElementById('dashThemeToggle');
-  if (themeBtn && !document.body.classList.contains('theme-dark')) {
+
+  function applyThemeToggle() {
+    document.body.classList.toggle('theme-dark');
+    localStorage.setItem(themeKey, document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+  }
+
+  if (!document.body.classList.contains('theme-dark')) {
     var prefersDark = localStorage.getItem(themeKey) === 'dark'
       || (!localStorage.getItem(themeKey) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     if (prefersDark) document.body.classList.add('theme-dark');
   }
-  if (themeBtn) {
-    themeBtn.addEventListener('click', function () {
-      document.body.classList.toggle('theme-dark');
-      localStorage.setItem(themeKey, document.body.classList.contains('theme-dark') ? 'dark' : 'light');
-    });
-  }
+
+  document.querySelectorAll('.dash-theme-toggle, #dashThemeToggle').forEach(function (themeBtn) {
+    themeBtn.addEventListener('click', applyThemeToggle);
+  });
 
   var btn = document.getElementById('menuToggle');
   var mobMenuBtn = document.getElementById('mobNavMenuBtn');
+  var mobHeaderMenuBtn = document.getElementById('mobHeaderMenuBtn');
   var overlay = document.getElementById('sidebarOverlay');
   var sidebar = document.getElementById('sidebar');
 
@@ -35,6 +39,7 @@
   var sidebarClose = document.getElementById('sidebarClose');
   if (btn) btn.addEventListener('click', toggleSidebar);
   if (mobMenuBtn) mobMenuBtn.addEventListener('click', openSidebar);
+  if (mobHeaderMenuBtn) mobHeaderMenuBtn.addEventListener('click', openSidebar);
   if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
   if (overlay) overlay.addEventListener('click', closeSidebar);
   if (sidebar) {

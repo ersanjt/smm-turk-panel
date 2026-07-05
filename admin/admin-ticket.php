@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $db = Database::getInstance();
 
 $id = (int)($_GET['id'] ?? 0);

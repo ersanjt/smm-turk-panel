@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $pageTitle = 'Tickets';
 $db = Database::getInstance();
 

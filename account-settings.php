@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/app/init.php';
+require_once __DIR__ . '/app/Lang.php';
 $auth->requireLogin();
 $db = Database::getInstance();
 ensure_account_settings_schema($db);
@@ -110,8 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['action']) && $_POST['action'] === 'save_language') {
-        $lang = strtolower(trim($_POST['lang'] ?? 'en'));
-        if (in_array($lang, ['en', 'tr', 'de', 'fr'], true)) {
+        $lang = strtolower(trim($_POST['lang'] ?? Lang::PRIMARY));
+        if (in_array($lang, Lang::allowed(), true)) {
             $_SESSION['lang'] = $lang;
             $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
                 || (defined('SITE_URL') && str_starts_with((string) SITE_URL, 'https://'));
@@ -202,9 +203,9 @@ $timezones = [
 $apiKeyMasked = substr($user['api_key'] ?? '', 0, 8) . '•••••••••••••';
 $apiKeyFull = $user['api_key'] ?? '';
 $isAdmin = $auth->isAdmin();
-$dashLang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? 'en');
-if (!in_array($dashLang, ['en', 'tr', 'de', 'fr'], true)) {
-    $dashLang = 'en';
+$dashLang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? Lang::PRIMARY);
+if (!in_array($dashLang, Lang::allowed(), true)) {
+    $dashLang = Lang::PRIMARY;
 }
 $userBalance = number_format((float) ($user['balance'] ?? 0), 3);
 $userSpent = number_format((float) ($user['spent'] ?? 0), 3);
@@ -324,7 +325,7 @@ body.theme-dark .settings-hub .card .form-label { color: #c9b4b9; }
     <p>Configure the website, payment gateways, service catalogs, users, and support from here.</p>
     <div class="as-admin-grid">
       <?php foreach ($adminLinks as $link): ?>
-      <a class="as-admin-link" href="<?= h(path($link['url'])) ?>">
+      <a class="as-admin-link" href="<?= h(admin_path($link['url'])) ?>">
         <strong><?= icon($link['icon'], 16) ?> <?= h($link['title']) ?></strong>
         <span><?= h($link['desc']) ?></span>
       </a>
@@ -340,6 +341,7 @@ body.theme-dark .settings-hub .card .form-label { color: #c9b4b9; }
 
   <div class="as-quick-grid">
     <a class="as-quick-link" href="<?= h(path('api-page.php')) ?>"><?= icon('api', 16) ?> API docs</a>
+    <a class="as-quick-link" href="<?= h(dashboard_path()) ?>"><?= icon('plus', 16) ?> New order</a>
     <a class="as-quick-link" href="<?= h(path('orders.php')) ?>"><?= icon('orders', 16) ?> My orders</a>
     <a class="as-quick-link" href="<?= h(path('affiliates.php')) ?>"><?= icon('users', 16) ?> Affiliates</a>
     <a class="as-quick-link" href="<?= h(path('tickets.php')) ?>"><?= icon('tickets', 16) ?> Support</a>
@@ -540,10 +542,9 @@ body.theme-dark .settings-hub .card .form-label { color: #c9b4b9; }
       <div class="form-group">
         <label class="form-label">Dashboard language</label>
         <select name="lang" class="form-control">
-          <option value="en" <?= $dashLang === 'en' ? 'selected' : '' ?>>English</option>
           <option value="tr" <?= $dashLang === 'tr' ? 'selected' : '' ?>>Türkçe</option>
+          <option value="en" <?= $dashLang === 'en' ? 'selected' : '' ?>>English</option>
           <option value="de" <?= $dashLang === 'de' ? 'selected' : '' ?>>Deutsch</option>
-          <option value="fr" <?= $dashLang === 'fr' ? 'selected' : '' ?>>Français</option>
         </select>
       </div>
       <button type="submit" class="btn btn-primary">Save language</button>

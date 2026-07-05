@@ -21,5 +21,5 @@ if ($referrer) {
     }
 }
 
-header('Location: ' . $loginUrl . '?mode=register&ref=' . urlencode($ref));
+header('Location: ' . page_url('login.php', ['mode' => 'register', 'ref' => $ref]));
 exit;

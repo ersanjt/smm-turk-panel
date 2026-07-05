@@ -97,7 +97,7 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <nav class="order-tabs" aria-label="Order type">
-  <a class="order-tab" href="<?= h(path('index.php')) ?>">New Order</a>
+  <a class="order-tab" href="<?= h(path('dashboard.php')) ?>">New Order</a>
   <a class="order-tab active" href="<?= h(path('mass-order.php')) ?>">Mass Order</a>
   <a class="order-tab" href="<?= h(path('services.php')) ?>">Services</a>
 </nav>

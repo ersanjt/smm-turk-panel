@@ -241,7 +241,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('maintenance_mode', '0'),
 ('registration_enabled', '1'),
 ('email_verification_required', '1'),
-('smtp_host', 'mail.smm-turk.com'),
+('smtp_host', 'smm-turk.com'),
 ('smtp_port', '465'),
 ('smtp_user', 'noreply@smm-turk.com'),
 ('smtp_pass', ''),

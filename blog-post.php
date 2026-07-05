@@ -4,7 +4,7 @@
  */
 require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
-$lang = Lang::init();
+$lang = Lang::initPublic();
 $db = Database::getInstance();
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
@@ -24,8 +24,16 @@ $post = $db->fetch(
 );
 
 if (!$post) {
-    header('HTTP/1.0 404 Not Found');
-    header('Location: ' . url('blog'));
+    http_response_code(404);
+    $pageTitle = 'Article Not Found';
+    $pageDescription = 'This blog article was not found.';
+    $blogNavActive = 'blog';
+    $seoIndexable = false;
+    $canonicalUrl = Seo::absoluteUrl(path('blog.php'));
+    require __DIR__ . '/layouts/blog-header.php';
+    echo '<main class="blog-article-wrap" role="main" style="max-width:640px;margin:40px auto;padding:20px;text-align:center;">';
+    echo '<h1>Article not found</h1><p><a href="' . h(path('blog.php')) . '">← Back to Blog</a></p></main>';
+    require __DIR__ . '/layouts/blog-footer.php';
     exit;
 }
 
@@ -37,9 +45,9 @@ $tags = $db->fetchAll(
 $pageTitle = $post['title'];
 $pageDescription = $post['meta_description'] ?: ($post['excerpt'] ?: strip_tags(mb_substr($post['body'], 0, 160)));
 $metaKeywords = $post['meta_keywords'];
-$canonicalUrl = ($siteUrl ? $siteUrl . path('blog') : path('blog')) . '/' . rawurlencode($post['slug']);
+$canonicalUrl = Seo::absoluteUrl(path('blog.php') . '/' . rawurlencode($post['slug']));
 $pageImage = $post['featured_image']
-    ? ($siteUrl ? $siteUrl . '/' . ltrim($post['featured_image'], '/') : path($post['featured_image']))
+    ? Seo::absoluteUrl($post['featured_image'])
     : og_image_url();
 $ogType = 'article';
 $articlePublished = $post['published_at'];
@@ -48,14 +56,14 @@ $articleSection = $post['category_name'] ?? '';
 $articleTags = array_column($tags, 'name');
 
 $jsonLd = [
-    '@context' => 'https://schema.org',
     '@type' => 'Article',
     'headline' => $post['title'],
     'description' => $pageDescription,
     'image' => $pageImage,
-    'url' => $canonicalUrl,
-    'datePublished' => $post['published_at'],
-    'dateModified' => $post['updated_at'] ?? $post['published_at'],
+    'url' => Seo::pageCanonical($canonicalUrl, $lang),
+    'inLanguage' => Seo::pageLanguage($lang),
+    'datePublished' => date('c', strtotime($post['published_at'])),
+    'dateModified' => date('c', strtotime($post['updated_at'] ?? $post['published_at'])),
     'author' => ['@type' => 'Organization', 'name' => $siteName],
     'publisher' => [
         '@type' => 'Organization',
@@ -63,13 +71,22 @@ $jsonLd = [
         'url' => $siteUrl,
         'logo' => ['@type' => 'ImageObject', 'url' => og_image_url()],
     ],
-    'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonicalUrl],
+    'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => Seo::pageCanonical($canonicalUrl, $lang)],
 ];
 if (!empty($tags)) {
     $jsonLd['keywords'] = implode(', ', array_column($tags, 'name'));
 }
 
 $blogNavActive = 'blog';
+$seoHreflang = true;
+$seoHreflangBase = $canonicalUrl;
+$jsonLdExtra = [
+    Seo::breadcrumbSchema([
+        ['name' => __('blog_nav_home'), 'url' => $siteUrl !== '' ? Seo::absoluteUrl(home_path()) : home_path()],
+        ['name' => function_exists('__') ? __('blog_title') : 'Blog', 'url' => $siteUrl !== '' ? Seo::absoluteUrl(path('blog.php')) : path('blog.php')],
+        ['name' => $post['title'], 'url' => Seo::pageCanonical($canonicalUrl, $lang)],
+    ], $lang),
+];
 require __DIR__ . '/layouts/blog-header.php';
 ?>
 <main class="blog-article-wrap" role="main">

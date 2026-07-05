@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $pageTitle = 'Settings';
 $db = Database::getInstance();
 
@@ -21,9 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         'child_panel_whm_port','child_panel_primary_domain','child_panel_dns_mode',
         'child_panel_template_path'];
     foreach ($fields as $f) {
-        if (isset($_POST[$f])) {
-            $db->setSetting($f, trim($_POST[$f]));
+        if (!isset($_POST[$f])) {
+            continue;
         }
+        if ($f === 'smtp_pass' && trim($_POST[$f]) === '') {
+            continue;
+        }
+        $db->setSetting($f, trim($_POST[$f]));
     }
     foreach (['provider_smmfa_enabled','payment_smmpaygate_enabled','payment_heleket_enabled','payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_zarinpal_enabled','payment_cryptocloud_enabled'] as $cb) {
         if (!isset($_POST[$cb])) {
@@ -87,9 +90,11 @@ require_once __DIR__ . '/../layouts/header.php';
     <div class="card" style="margin-bottom:18px;">
       <div class="card-title">📧 Email</div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.65;">
-        <strong>cPanel (smm-turk.com):</strong> use mailbox <code>contact@smm-turk.com</code> or create <code>noreply@smm-turk.com</code> for automated mail.<br>
-        Host <code>mail.smm-turk.com</code> · Port <code>465</code> + encryption <strong>SSL</strong> (recommended) or port <code>587</code> + <strong>TLS</strong>.<br>
-        Username = full email address · Password = cPanel mailbox password · <strong>Mail From</strong> must match the SMTP user.<br>
+        <strong>cPanel — noreply@smm-turk.com</strong> (SSL/TLS recommended):<br>
+        Host <code>smm-turk.com</code> · Port <code>465</code> · Encryption <strong>SSL</strong> (or Auto with port 465).<br>
+        Alternative: port <code>587</code> with encryption <strong>TLS</strong>.<br>
+        Username = full email (<code>noreply@smm-turk.com</code>) · Password = mailbox password from cPanel → Email Accounts.<br>
+        <strong>Mail From</strong> must match SMTP user. Use <code>contact@smm-turk.com</code> as Reply-To / contact if needed.<br>
         <a href="<?= h(path('admin/admin-mail.php')) ?>" style="color:var(--primary);font-weight:700;">Send test email →</a>
       </p>
       <div class="grid2">
@@ -122,7 +127,7 @@ require_once __DIR__ . '/../layouts/header.php';
       </div>
       <div class="form-group">
         <label class="form-label">Mail From (sender — must exist in cPanel)</label>
-        <input type="email" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="contact@smm-turk.com">
+        <input type="email" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@smm-turk.com">
       </div>
       <div class="form-group">
         <label class="form-label">Contact / Reply-To email</label>
@@ -134,7 +139,7 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="grid2" style="margin-top:10px;">
         <div class="form-group">
           <label class="form-label">SMTP Host</label>
-          <input type="text" name="smtp_host" class="form-control" value="<?= s($settings,'smtp_host') ?>" placeholder="mail.smm-turk.com">
+          <input type="text" name="smtp_host" class="form-control" value="<?= s($settings,'smtp_host') ?>" placeholder="smm-turk.com">
         </div>
         <div class="form-group">
           <label class="form-label">SMTP Port</label>
@@ -144,11 +149,14 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="grid2">
         <div class="form-group">
           <label class="form-label">SMTP User (full email)</label>
-          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="contact@smm-turk.com">
+          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="noreply@smm-turk.com">
         </div>
         <div class="form-group">
           <label class="form-label">SMTP Password</label>
-          <input type="password" name="smtp_pass" class="form-control" value="<?= s($settings,'smtp_pass') ?>" placeholder="Mailbox password" autocomplete="new-password">
+          <input type="password" name="smtp_pass" class="form-control" value="" placeholder="<?= !empty(trim($settings['smtp_pass'] ?? '')) ? 'Saved — enter only to change' : 'Mailbox password from cPanel' ?>" autocomplete="new-password">
+          <?php if (!empty(trim($settings['smtp_pass'] ?? ''))): ?>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Password is saved. Leave blank when saving other settings.</p>
+          <?php endif; ?>
         </div>
       </div>
     </div>

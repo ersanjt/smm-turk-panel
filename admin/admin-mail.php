@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $pageTitle = 'Email Test';
 $db = Database::getInstance();
 $mail = new Mail();
@@ -12,8 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
             flash('error', 'Enter a valid test email address.');
         } else {
             $ok = $mail->sendTest($to);
-            if ($ok) {
-                flash('success', 'Test email sent to ' . $to . '. Check inbox and spam folder.');
+            $via = $mail->getLastTransport();
+            $smtpConfigured = trim((string) ($db->getSetting('smtp_host') ?? '')) !== '';
+            if ($ok && $via === 'smtp') {
+                flash('success', 'Test email sent via SMTP to ' . $to . '. Check inbox and spam folder.');
+            } elseif ($ok && $via === 'mail' && $smtpConfigured) {
+                flash('error', 'SMTP auth failed — only PHP mail() fallback ran. Re-enter the noreply mailbox password in Settings → Email, set Encryption to SSL, Mail mode to SMTP only, save, and test again.');
+            } elseif ($ok) {
+                flash('success', 'Test email sent to ' . $to . ' (via PHP mail()). Check inbox and spam folder.');
             } else {
                 flash('error', 'Send failed: ' . ($mail->getLastError() ?? 'Unknown error'));
             }
@@ -50,8 +55,10 @@ require_once __DIR__ . '/../layouts/header.php';
       <tr><td>SMTP Host</td><td><code><?= h($diag['smtp_host']) ?></code></td></tr>
       <tr><td>SMTP Port</td><td><?= h($diag['smtp_port']) ?></td></tr>
       <tr><td>SMTP User</td><td><code><?= h($diag['smtp_user']) ?></code></td></tr>
-      <tr><td>Encryption</td><td><?= h($diag['smtp_encryption']) ?></td></tr>
-      <tr><td>cPanel SMTP hint</td><td><code><?= h($diag['cpanel_hint_host']) ?></code> port 465 (SSL) or 587 (TLS)</td></tr>
+      <tr><td>SMTP Password</td><td><?= !empty($diag['smtp_pass_set']) ? 'Saved in settings' : '<strong style="color:var(--primary);">Not set — enter in Settings</strong>' ?></td></tr>
+      <tr><td>Encryption</td><td><?= h($diag['smtp_encryption']) ?> <?= (int)$diag['smtp_port'] === 465 ? '(use SSL recommended)' : '' ?></td></tr>
+      <tr><td>cPanel SMTP (SSL)</td><td><code><?= h($diag['cpanel_hint_host']) ?></code> port 465 (SSL) — or <code><?= h($diag['cpanel_hint_alt'] ?? '') ?></code></td></tr>
+      <tr><td>cPanel SMTP (TLS)</td><td>port 587 + TLS</td></tr>
     </table>
     <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">
       <a href="<?= h(path('admin/admin-settings.php')) ?>">Edit email settings →</a>

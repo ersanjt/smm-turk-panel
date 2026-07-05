@@ -73,8 +73,10 @@ $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="<?= h(Seo::robotsContent(false)) ?>">
+<meta name="robots" content="<?= h(Seo::robotsContent(false)) ?>">
 <title><?= htmlspecialchars($siteName) ?> — Email Verification</title>
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -101,7 +103,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="box">
   <div class="box-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="48" height="48">
+    <img src="<?= h(logo_url()) ?>" alt="" width="48" height="48">
     <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="msg <?= $success ? 'ok' : 'err' ?>"><?= htmlspecialchars($message) ?></div>

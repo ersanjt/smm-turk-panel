@@ -3,11 +3,11 @@ require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
 
 if ($auth->isLoggedIn()) {
-    header('Location: ' . url('index.php'));
+    header('Location: ' . url('dashboard.php'));
     exit;
 }
 
-$lang = Lang::init();
+$lang = Lang::initPublic();
 $db = Database::getInstance();
 $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
 if (empty($_SESSION['csrf_token'])) {
@@ -16,77 +16,59 @@ if (empty($_SESSION['csrf_token'])) {
 
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$homePath = path('home.php');
-$canonicalUrl = $siteUrl ? $siteUrl . $homePath : $homePath;
-$baseCanonical = $canonicalUrl;
-$logoUrl = og_image_url();
-$geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
+$homePath = home_path();
+$baseCanonical = $siteUrl ? Seo::absoluteUrl($homePath) : $homePath;
+$canonicalUrl = Seo::pageCanonical($baseCanonical, $lang);
+$pageImg = og_image_url();
+if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
+    $pageImg = Seo::absoluteUrl($pageImg);
+}
 $seoTitle = $siteName . ' — ' . __('seo_title');
 $seoDescription = __('seo_description');
 $seoOgTitle = $siteName . ' — ' . __('seo_og_title');
 $seoOgDescription = __('seo_og_description');
-$ogLocale = $lang === 'tr' ? 'tr_TR' : ($lang === 'de' ? 'de_DE' : ($lang === 'fr' ? 'fr_FR' : 'en_US'));
-$faqSchema = [
-    '@context' => 'https://schema.org',
-    '@type' => 'FAQPage',
-    'mainEntity' => [],
-];
+$ogLocale = Seo::ogLocale($lang);
+$faqItems = [];
 for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
-    $faqSchema['mainEntity'][] = [
-        '@type' => 'Question',
-        'name' => __('faq_' . $faqIndex),
-        'acceptedAnswer' => [
-            '@type' => 'Answer',
-            'text' => __('faq_' . $faqIndex . '_a'),
-        ],
-    ];
+    $faqItems[] = ['name' => __('faq_' . $faqIndex), 'text' => __('faq_' . $faqIndex . '_a')];
 }
+$homeJsonLd = [
+    Seo::organizationSchema($seoDescription, $lang),
+    Seo::websiteSchema($seoDescription),
+    Seo::faqSchema($faqItems, $lang),
+];
 ?>
 <!DOCTYPE html>
-<html lang="<?= h($lang) ?>">
+<html lang="<?= h(Seo::htmlLang($lang)) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($seoTitle) ?></title>
     <meta name="description" content="<?= h($seoDescription) ?>">
+    <meta name="robots" content="<?= h(Seo::robotsContent(true)) ?>">
     <?php if ($canonicalUrl): ?><link rel="canonical" href="<?= h($canonicalUrl) ?>"><?php endif; ?>
-    <?php
-    foreach (Lang::allowed() as $l):
-        $href = $baseCanonical . ($l === 'en' ? '' : '?lang=' . $l);
-        $hreflang = $l === 'en' ? 'en' : ($l === 'tr' ? 'tr' : ($l === 'de' ? 'de' : 'fr'));
-    ?><link rel="alternate" hreflang="<?= h($hreflang) ?>" href="<?= h($href) ?>"><?php endforeach; ?>
-    <?php if ($baseCanonical): ?><link rel="alternate" hreflang="x-default" href="<?= h($baseCanonical) ?>"><?php endif; ?>
+    <?= Seo::hreflangTags($baseCanonical) ?>
+    <?= Seo::verificationMeta() ?>
     <meta name="theme-color" content="#E30A17">
-    <meta name="geo.region" content="<?= h($geoRegion) ?>">
-    <meta name="geo.country" content="<?= h($geoRegion) ?>">
-    <meta name="ICBM" content="39.9334, 32.8597">
+    <?= Seo::geoMetaTags($lang) ?>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="<?= h($siteName) ?>">
     <meta property="og:title" content="<?= h($seoOgTitle) ?>">
     <meta property="og:description" content="<?= h($seoOgDescription) ?>">
     <meta property="og:url" content="<?= h($canonicalUrl) ?>">
-    <meta property="og:image" content="<?= h($logoUrl) ?>">
+    <meta property="og:image" content="<?= h($pageImg) ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:locale" content="<?= h($ogLocale) ?>">
-    <?php foreach (array_diff(Lang::allowed(), [$lang]) as $alt): $loc = $alt === 'tr' ? 'tr_TR' : ($alt === 'de' ? 'de_DE' : ($alt === 'fr' ? 'fr_FR' : 'en_US')); ?>
-    <meta property="og:locale:alternate" content="<?= h($loc) ?>">
-    <?php endforeach; ?>
+    <?= Seo::ogLocaleAlternates($lang) ?>
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?= h($seoOgTitle) ?>">
     <meta name="twitter:description" content="<?= h($seoOgDescription) ?>">
-    <meta name="twitter:image" content="<?= h($logoUrl) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
-    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+    <meta name="twitter:image" content="<?= h($pageImg) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
+    <link rel="apple-touch-icon" href="<?= h(logo_url()) ?>">
     <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
-    <script type="application/ld+json"><?= json_encode([
-        '@context' => 'https://schema.org',
-        '@type' => 'Organization',
-        'name' => $siteName,
-        'url' => $siteUrl ?: path(''),
-        'description' => $seoDescription,
-        'logo' => $logoUrl,
-        'address' => ['@type' => 'PostalAddress', 'addressCountry' => $geoRegion],
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
-    <script type="application/ld+json"><?= json_encode($faqSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+    <script type="application/ld+json"><?= Seo::jsonLd($homeJsonLd) ?></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -98,16 +80,17 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
 
 <header class="nav" role="banner">
     <div class="nav-inner">
-        <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
+        <a href="<?= h(home_path()) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
+            <span class="nav-logo-icon"><img src="<?= h(logo_url()) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
             <span class="nav-logo-text">SMM <span>TURK</span></span>
             <span class="nav-logo-tag">SMM Panel</span>
         </a>
         <div class="nav-links">
-            <a href="<?= h(path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
+            <a href="<?= h(route_path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
             <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
+            <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
             <?php if ($registrationEnabled): ?>
-            <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('nav_sign_up')) ?></a>
+            <a href="<?= h(register_path()) ?>"><?= h(__('nav_sign_up')) ?></a>
             <?php endif; ?>
             <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
             <button type="button" class="nav-theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
@@ -117,15 +100,15 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
             <div class="nav-lang nav-lang-compact">
                 <div class="nav-lang-dropdown" id="langDropdown">
                     <?php foreach (Lang::allowed() as $l): ?>
-                    <a href="<?= h(path('home.php') . ($l === 'en' ? '' : '?lang=' . $l)) ?>"><?= $l === 'en' ? 'English' : ($l === 'tr' ? 'Türkçe' : ($l === 'de' ? 'Deutsch' : 'Français')) ?></a>
+                    <a href="<?= h(Lang::urlFor($l, home_path())) ?>"><?= h(Lang::label($l)) ?></a>
                     <?php endforeach; ?>
                 </div>
                 <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false"><?= strtoupper($lang) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
             </div>
             <?php if ($registrationEnabled): ?>
-            <a href="<?= h(path('login.php')) ?>?mode=register" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
+            <a href="<?= h(register_path()) ?>" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
             <?php else: ?>
-            <a href="<?= h(path('login.php')) ?>" class="nav-btn"><?= h(__('nav_sign_in')) ?> →</a>
+            <a href="<?= h(route_path('login.php')) ?>" class="nav-btn"><?= h(__('nav_sign_in')) ?> →</a>
             <?php endif; ?>
         </div>
     </div>
@@ -172,7 +155,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
                 <div class="remember"><label><input type="checkbox" name="remember"> <?= h(__('remember_me')) ?></label></div>
                 <div style="margin-bottom:12px;"><a href="<?= h(path('forgot-password.php')) ?>" class="forgot"><?= h(__('forgot_password')) ?></a></div>
                 <button type="submit" class="btn-login"><?= h(__('btn_login_dashboard')) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-                <p class="register-link"><?= h(__('no_account')) ?> <a href="<?= h(path('login.php')) ?>?mode=register">→ <?= h(__('register')) ?></a></p>
+                <p class="register-link"><?= h(__('no_account')) ?> <a href="<?= h(register_path()) ?>">→ <?= h(__('register')) ?></a></p>
             </form>
         </div>
     </div>
@@ -237,7 +220,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
         <div class="section-label"><?= h(__('quick_response_label')) ?></div>
         <h2 class="section-title"><?= h(__('quick_response')) ?></h2>
         <p class="section-desc"><?= h(__('quick_response_desc')) ?></p>
-        <a href="<?= h(path('login.php')) ?>?mode=register" class="btn-cta"><?= h(__('sign_up_now')) ?> →</a>
+        <a href="<?= h(register_path()) ?>" class="btn-cta"><?= h(__('sign_up_now')) ?> →</a>
     </div>
     <div class="stats-row">
         <div class="stat-item">
@@ -283,7 +266,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
         </div>
         <div>
             <p class="section-desc" style="margin-bottom:24px;"><?= h(__('why_us_desc')) ?></p>
-            <a href="<?= h(path('login.php')) ?>?mode=register" class="nav-btn" style="display:inline-block;"><?= h(__('sign_up_now')) ?> →</a>
+            <a href="<?= h(register_path()) ?>" class="nav-btn" style="display:inline-block;"><?= h(__('sign_up_now')) ?> →</a>
         </div>
     </div>
 </section>
@@ -292,7 +275,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <div class="cta-block">
         <h2 class="section-title"><?= h(__('cta_ready')) ?></h2>
         <p class="section-desc"><?= h(__('cta_join')) ?></p>
-        <a href="<?= h(path('login.php')) ?>?mode=register" class="btn-cta"><?= h(__('cta_btn')) ?></a>
+        <a href="<?= h(register_path()) ?>" class="btn-cta"><?= h(__('cta_btn')) ?></a>
     </div>
 </section>
 
@@ -300,19 +283,19 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
 
 <!-- Mobile-only fixed bottom bar: quick Login / Sign up (only visible on mobile) -->
 <nav class="mob-footer-bar" aria-label="<?= h(__('footer_login')) ?>">
-    <a href="<?= h(path('login.php')) ?>" class="mob-footer-btn mob-footer-btn-outline"><?= h(__('footer_login')) ?></a>
-    <a href="<?= h(path('login.php')) ?>?mode=register" class="mob-footer-btn mob-footer-btn-primary"><?= h(__('footer_signup')) ?> →</a>
+    <a href="<?= h(route_path('login.php')) ?>" class="mob-footer-btn mob-footer-btn-outline"><?= h(__('footer_login')) ?></a>
+    <a href="<?= h(register_path()) ?>" class="mob-footer-btn mob-footer-btn-primary"><?= h(__('footer_signup')) ?> →</a>
 </nav>
 
 <footer class="footer" role="contentinfo">
     <p class="footer-nav-label" aria-hidden="true"><?= h(__('footer_quick_links') ?: 'Quick links') ?></p>
     <div class="footer-links">
-        <a href="<?= h(path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
-        <a href="<?= h(path('login.php')) ?>?mode=register"><?= h(__('footer_signup')) ?></a>
+        <a href="<?= h(route_path('login.php')) ?>"><?= h(__('footer_login')) ?></a>
+        <a href="<?= h(register_path()) ?>"><?= h(__('footer_signup')) ?></a>
         <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
         <a href="<?= h(path('help.php')) ?>"><?= h(__('help_nav')) ?></a>
         <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
-        <a href="<?= h(path('api-page.php')) ?>"><?= h(__('footer_api')) ?></a>
+        <a href="<?= h(login_next_path('api-page.php')) ?>"><?= h(__('footer_api')) ?></a>
         <a href="<?= h(path('help.php')) ?>"><?= h(__('footer_support')) ?></a>
     </div>
     <div class="footer-copy">© <?= date('Y') ?> <?= h($siteName) ?>. <?= h(__('footer_copyright')) ?>.</div>

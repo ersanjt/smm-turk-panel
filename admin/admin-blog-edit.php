@@ -2,8 +2,7 @@
 /**
  * Admin: Edit or create blog article.
  */
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $db = Database::getInstance();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -23,12 +22,21 @@ if ($post) {
     $articleTags = array_column($articleTags, 'tag_id');
 }
 
-// POST save
+// POST save or delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
         flash('error', 'Invalid request. Please try again.');
         redirect(url('admin/admin-blog.php'));
     }
+
+    if (isset($_POST['delete_article']) && !$isNew) {
+        $db->execute("DELETE FROM blog_article_tags WHERE article_id = ?", [$id]);
+        $db->execute("DELETE FROM blog_articles WHERE id = ?", [$id]);
+        flash('success', 'Article deleted.');
+        header('Location: ' . url('admin/admin-blog.php'));
+        exit;
+    }
+
     $title = trim((string)($_POST['title'] ?? ''));
     $slug = trim(preg_replace('/[^a-z0-9\-]/', '-', strtolower((string)($_POST['slug'] ?? ''))));
     $categoryId = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
@@ -39,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = in_array($_POST['status'] ?? '', ['draft', 'published']) ? $_POST['status'] : 'draft';
     $publishedAt = trim((string)($_POST['published_at'] ?? ''));
     $readingTime = isset($_POST['reading_time_min']) && $_POST['reading_time_min'] !== '' ? (int)$_POST['reading_time_min'] : null;
+    $featuredImage = trim((string)($_POST['featured_image'] ?? ''));
     $tagIds = isset($_POST['tag_ids']) && is_array($_POST['tag_ids']) ? array_map('intval', array_filter($_POST['tag_ids'])) : [];
 
     if ($title === '' || $slug === '') {
@@ -50,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             if ($isNew) {
                 $newId = $db->insert(
-                    "INSERT INTO blog_articles (category_id, author_id, slug, title, meta_description, meta_keywords, excerpt, body, status, published_at, reading_time_min) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [$categoryId, $auth->getUserId(), $slug, $title, $metaDesc, $metaKeywords, $excerpt, $body, $status, $publishedAt ?: null, $readingTime]
+                    "INSERT INTO blog_articles (category_id, author_id, slug, title, meta_description, meta_keywords, excerpt, body, featured_image, status, published_at, reading_time_min) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [$categoryId, $auth->getUserId(), $slug, $title, $metaDesc, $metaKeywords, $excerpt, $body, $featuredImage ?: null, $status, $publishedAt ?: null, $readingTime]
                 );
                 foreach ($tagIds as $tid) {
                     $db->execute("INSERT IGNORE INTO blog_article_tags (article_id, tag_id) VALUES (?, ?)", [$newId, $tid]);
@@ -59,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('success', 'Article created.');
             } else {
                 $db->execute(
-                    "UPDATE blog_articles SET category_id = ?, slug = ?, title = ?, meta_description = ?, meta_keywords = ?, excerpt = ?, body = ?, status = ?, published_at = ?, reading_time_min = ?, updated_at = NOW() WHERE id = ?",
-                    [$categoryId, $slug, $title, $metaDesc, $metaKeywords, $excerpt, $body, $status, $publishedAt ?: null, $readingTime, $id]
+                    "UPDATE blog_articles SET category_id = ?, slug = ?, title = ?, meta_description = ?, meta_keywords = ?, excerpt = ?, body = ?, featured_image = ?, status = ?, published_at = ?, reading_time_min = ?, updated_at = NOW() WHERE id = ?",
+                    [$categoryId, $slug, $title, $metaDesc, $metaKeywords, $excerpt, $body, $featuredImage ?: null, $status, $publishedAt ?: null, $readingTime, $id]
                 );
                 $db->execute("DELETE FROM blog_article_tags WHERE article_id = ?", [$id]);
                 foreach ($tagIds as $tid) {
@@ -84,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'status' => $status ?? 'draft',
         'published_at' => $publishedAt ?? '',
         'reading_time_min' => $readingTime,
+        'featured_image' => $featuredImage ?? '',
     ];
     $articleTags = $tagIds;
 }
@@ -121,6 +131,11 @@ require_once __DIR__ . '/../layouts/header.php';
       <input type="text" name="meta_keywords" class="form-control" value="<?= h($post['meta_keywords'] ?? '') ?>" maxlength="512">
     </div>
     <div class="form-group">
+      <label class="form-label">Featured image (SEO / social sharing)</label>
+      <input type="text" name="featured_image" class="form-control" value="<?= h($post['featured_image'] ?? '') ?>" maxlength="512" placeholder="assets/img/blog/my-post.jpg or /uploads/blog/image.jpg">
+      <small style="color:var(--text-muted);">1200×630 recommended. Used in blog listing, article page, and Open Graph.</small>
+    </div>
+    <div class="form-group">
       <label class="form-label">Excerpt (short summary)</label>
       <textarea name="excerpt" class="form-control" rows="2"><?= h($post['excerpt'] ?? '') ?></textarea>
     </div>
@@ -154,6 +169,9 @@ require_once __DIR__ . '/../layouts/header.php';
     </div>
     <button type="submit" class="btn btn-primary">Save</button>
     <a href="<?= h(path('admin/admin-blog.php')) ?>" class="btn" style="margin-left:8px;">Cancel</a>
+    <?php if (!$isNew): ?>
+    <button type="submit" name="delete_article" value="1" class="btn" style="margin-left:8px;color:var(--red);border:1px solid var(--red);background:transparent;" onclick="return confirm('Delete this article permanently?');">Delete</button>
+    <?php endif; ?>
   </form>
 </div>
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

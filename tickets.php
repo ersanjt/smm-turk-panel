@@ -195,7 +195,7 @@ body.theme-dark .card .form-label {
 
 <div class="ticket-banner">
   <span class="ticket-banner-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
-  <span>To get a quicker response to your inquiries or issues, please refer to our <a href="<?= h(path('home.php')) ?>#faq">FAQs page</a> before submitting a ticket.</span>
+  <span>To get a quicker response to your inquiries or issues, please refer to our <a href="<?= h(home_path()) ?>#faq">FAQs page</a> before submitting a ticket.</span>
 </div>
 
 <div class="grid2" style="align-items: start; gap: 24px;">

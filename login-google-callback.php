@@ -5,7 +5,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect(url('index.php'));
+    redirect(url('dashboard.php'));
 }
 
 $clientId     = defined('GOOGLE_CLIENT_ID') ? trim(GOOGLE_CLIENT_ID) : '';

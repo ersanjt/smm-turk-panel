@@ -90,7 +90,7 @@ require_once __DIR__ . '/layouts/header.php';
         </svg>
         <h3><?= $status !== '' ? 'No orders in this filter' : 'No orders yet' ?></h3>
         <p><?= $status !== '' ? 'Try another status or place a new order.' : 'Place your first order to get started.' ?></p>
-        <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place New Order</a>
+        <a href="<?= h(path('dashboard.php')) ?>" class="btn btn-primary">Place New Order</a>
       </div>
     <?php else: ?>
       <div class="orders-table-wrap table-wrap">

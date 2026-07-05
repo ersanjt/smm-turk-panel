@@ -7,18 +7,18 @@
         <div>
             <h4>Explore</h4>
             <div class="blog-footer-links">
-                <a href="<?= h(path('home.php')) ?>"><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
+                <a href="<?= h(home_path()) ?>"><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
                 <a href="<?= h(path('blog.php')) ?>"><?= function_exists('__') ? h(__('blog_nav_blog')) : 'Blog' ?></a>
                 <a href="<?= h(path('help.php')) ?>"><?= function_exists('__') ? h(__('help_nav')) : 'Help' ?></a>
-                <a href="<?= h(path('services.php')) ?>">Services</a>
+                <a href="<?= h(login_next_path('services.php')) ?>">Services</a>
             </div>
         </div>
         <div>
             <h4>Panel</h4>
             <div class="blog-footer-links">
-                <a href="<?= h(path('login.php')) ?>?mode=register"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Sign Up' ?></a>
-                <a href="<?= h(path('add-funds.php')) ?>">Add Funds</a>
-                <a href="<?= h(path('api-page.php')) ?>">API</a>
+                <a href="<?= h(register_path()) ?>"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Sign Up' ?></a>
+                <a href="<?= h(login_next_path('add-funds.php')) ?>">Add Funds</a>
+                <a href="<?= h(login_next_path('api-page.php')) ?>">API</a>
                 <a href="<?= h(path('terms.php')) ?>"><?= function_exists('__') ? h(__('nav_terms')) : 'Terms' ?></a>
             </div>
         </div>

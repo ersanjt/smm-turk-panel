@@ -81,6 +81,27 @@ class Auth {
         return ['success' => true, 'user_id' => $id, 'verify_required' => false, 'email_sent' => false];
     }
 
+    /** Ensure user has a unique referral code (legacy accounts may lack one). */
+    public function ensureReferralCode(int $userId): string {
+        $user = $this->db->fetch("SELECT referral_code FROM users WHERE id = ?", [$userId]);
+        if (!$user) {
+            return '';
+        }
+        $code = trim((string)($user['referral_code'] ?? ''));
+        if ($code !== '') {
+            return $code;
+        }
+        for ($i = 0; $i < 8; $i++) {
+            $code = strtolower(substr(bin2hex(random_bytes(4)), 0, 8));
+            $exists = $this->db->fetch("SELECT id FROM users WHERE referral_code = ? AND id != ?", [$code, $userId]);
+            if (!$exists) {
+                $this->db->execute("UPDATE users SET referral_code = ? WHERE id = ?", [$code, $userId]);
+                return $code;
+            }
+        }
+        return '';
+    }
+
     /**
      * Resend verification email for pending accounts. Returns success even if email not found (avoid enumeration).
      */
@@ -296,7 +317,7 @@ class Auth {
 
     public function requireAdmin(): void {
         if (!$this->isAdmin()) {
-            header('Location: ' . url('index.php'));
+            header('Location: ' . url('dashboard.php'));
             exit;
         }
         $this->enforcePasswordChangeIfNeeded();
@@ -312,7 +333,7 @@ class Auth {
         if (($loginResult['role'] ?? $_SESSION['role'] ?? '') === 'admin') {
             return url('admin/index.php');
         }
-        return url('index.php');
+        return url('dashboard.php');
     }
 
     private function enforcePasswordChangeIfNeeded(): void {

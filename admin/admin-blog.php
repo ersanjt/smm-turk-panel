@@ -2,8 +2,7 @@
 /**
  * Admin: Blog — list articles, categories, tags. Add category/tag.
  */
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $pageTitle = 'Blog';
 $pageDescription = 'Manage blog articles, categories, and tags';
 $db = Database::getInstance();
@@ -38,6 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tag'])) {
     redirect(url('admin/admin-blog.php'));
 }
 
+// POST: delete article
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article']) && csrf_verify()) {
+    $articleId = (int) $_POST['delete_article'];
+    if ($articleId > 0) {
+        $db->execute("DELETE FROM blog_article_tags WHERE article_id = ?", [$articleId]);
+        $db->execute("DELETE FROM blog_articles WHERE id = ?", [$articleId]);
+        flash('success', 'Article deleted.');
+    }
+    redirect(url('admin/admin-blog.php'));
+}
+
 // POST: delete category/tag
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_cat']) && csrf_verify()) {
     $catId = (int)$_POST['delete_cat'];
@@ -63,14 +73,15 @@ $tags = $db->fetchAll("SELECT id, slug, name FROM blog_tags ORDER BY name");
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 <div class="card">
-  <h2 class="card-title">Blog — Articles</h2>
-  <p><a href="<?= h(path('admin/admin-blog-edit.php')) ?>" class="btn btn-primary">+ New Article</a> &nbsp; <a href="<?= h(path('blog.php')) ?>" target="_blank" class="btn" style="background:var(--border);">View Blog</a></p>
+  <h2 class="card-title">Blog — Articles (<?= count($articles) ?>)</h2>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Create, edit, or delete posts shown on <a href="<?= h(path('blog.php')) ?>" target="_blank" rel="noopener">/blog</a>.</p>
+  <p><a href="<?= h(path('admin/admin-blog-edit.php')) ?>" class="btn btn-primary">+ New Article</a> &nbsp; <a href="<?= h(path('blog.php')) ?>" target="_blank" rel="noopener" class="btn" style="background:var(--border);">View Blog</a></p>
   <?php if (empty($articles)): ?>
-  <p>No articles yet.</p>
+  <p>No articles yet. Click <strong>+ New Article</strong> to create your first post.</p>
   <?php else: ?>
   <div class="table-wrap">
     <table class="table">
-      <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Published</th><th></th></tr></thead>
+      <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Published</th><th>Actions</th></tr></thead>
       <tbody>
       <?php foreach ($articles as $a): ?>
       <tr>
@@ -78,7 +89,19 @@ require_once __DIR__ . '/../layouts/header.php';
         <td><?= h($a['category_name'] ?? '—') ?></td>
         <td><span class="badge badge-<?= $a['status'] === 'published' ? 'green' : 'gray' ?>"><?= h($a['status']) ?></span></td>
         <td><?= $a['published_at'] ? date('Y-m-d', strtotime($a['published_at'])) : '—' ?></td>
-        <td><a href="<?= h(path('admin/admin-blog-edit.php') . '?id=' . $a['id']) ?>">Edit</a></td>
+        <td style="white-space:nowrap;">
+          <?php if ($a['status'] === 'published'): ?>
+          <a href="<?= h(path('blog/' . $a['slug'])) ?>" target="_blank" rel="noopener">View</a>
+          &nbsp;·&nbsp;
+          <?php endif; ?>
+          <a href="<?= h(path('admin/admin-blog-edit.php') . '?id=' . $a['id']) ?>">Edit</a>
+          &nbsp;·&nbsp;
+          <form method="post" style="display:inline;margin:0;" onsubmit="return confirm('Delete this article permanently?');">
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="delete_article" value="<?= (int) $a['id'] ?>">
+            <button type="submit" class="btn-link" style="color:var(--red);background:none;border:none;padding:0;font:inherit;cursor:pointer;">Delete</button>
+          </form>
+        </td>
       </tr>
       <?php endforeach; ?>
       </tbody>

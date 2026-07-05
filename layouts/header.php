@@ -19,32 +19,31 @@ if ($user && !empty($user['id'])) {
     $spent   = number_format((float)($user['spent'] ?? 0), 3);
 }
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+$isAdminArea = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/admin/');
+$isAdminPanelActive = $isAdminArea && !in_array($currentPage, ['admin-blog', 'admin-blog-edit'], true);
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $canonicalPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-$canonicalUrl = $siteUrl ? $siteUrl . $canonicalPath : '';
+$canonicalPath = clean_page_path($canonicalPath);
+$canonicalUrl = $siteUrl !== '' ? $siteUrl . (function_exists('base_path') ? base_path() : '') . $canonicalPath : '';
 $pageDesc = $pageDescription ?? 'SMM Turk — Cheapest SMM panel. Instagram, YouTube, TikTok growth. Reseller API, crypto deposits, 24/7 support.';
 $pageImg  = $pageImage ?? og_image_url();
 $pageOgTitle = $pageTitle ?? 'Dashboard';
-$geoRegion = defined('GEO_REGION') ? GEO_REGION : 'TR';
 $seoNoindex = $seoNoindex ?? true;
-$dashLang = $_SESSION['lang'] ?? 'en';
-if (!in_array($dashLang, ['en', 'tr', 'de', 'fr'], true)) {
-    $dashLang = 'en';
-}
-$ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($dashLang === 'fr' ? 'fr_FR' : 'en_US'));
+require_once dirname(__DIR__) . '/app/Lang.php';
+$dashLang = Lang::initUser();
+$ogLocale = Seo::ogLocale($dashLang);
 ?>
 <!DOCTYPE html>
-<html lang="<?= h($dashLang) ?>">
+<html lang="<?= h(Seo::htmlLang($dashLang)) ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<?php if ($seoNoindex): ?><meta name="robots" content="noindex, follow"><?php endif; ?>
+<?php if ($seoNoindex): ?><meta name="robots" content="<?= h(Seo::robotsContent(false)) ?>"><?php else: ?><meta name="robots" content="<?= h(Seo::robotsContent(true)) ?>"><?php endif; ?>
 <title><?= h($pageTitle ?? 'Dashboard') ?> — <?= h($siteName) ?></title>
 <meta name="description" content="<?= h($pageDesc) ?>">
+<?= Seo::geoMetaTags($dashLang) ?>
 <meta name="theme-color" content="#E30A17">
-<meta name="geo.region" content="<?= h($geoRegion) ?>">
-<meta name="geo.country" content="<?= h($geoRegion) ?>">
 <?php if ($siteUrl !== '' && $canonicalUrl !== ''): ?>
 <link rel="canonical" href="<?= h($canonicalUrl) ?>">
 <?php endif; ?>
@@ -61,8 +60,8 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
 <meta name="twitter:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta name="twitter:description" content="<?= h($pageDesc) ?>">
 <meta name="twitter:image" content="<?= h($pageImg) ?>">
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
+<link rel="apple-touch-icon" href="<?= h(logo_url()) ?>">
 <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,6 +69,9 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/app.css')) ?>">
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/panel-follows.css')) ?>">
+<link rel="stylesheet" href="<?= h(asset_url('assets/css/mobile-header.css')) ?>">
+<?php if ($isAdminArea): ?><link rel="stylesheet" href="<?= h(asset_url('assets/css/admin.css')) ?>"><?php endif; ?>
+<?php if (!empty($extraCssHref)): ?><link rel="stylesheet" href="<?= h($extraCssHref) ?>"><?php endif; ?>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"<?= h($siteName) ?>","url":"<?= h($siteUrl) ?>","description":"<?= h($pageDesc) ?>"}</script>
 </head>
 <body class="panel-follows" data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
@@ -80,8 +82,8 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
   <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   <div class="sidebar-mob-balance" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
-    <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="36" height="36"></span>
+    <a href="<?= h(dashboard_path()) ?>">
+      <span class="logo-icon"><img src="<?= h(logo_url()) ?>" alt="" width="36" height="36"></span>
       <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
@@ -92,7 +94,7 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
       <div class="welcome-name"><?= h($user['username'] ?? '') ?></div>
     </div>
   </div>
-  <a href="<?= h(path('account-settings.php') . '#profile-photo') ?>" class="sidebar-user sidebar-user-link" title="Account settings" aria-label="Open account settings">
+  <a href="<?= h(route_path('account-settings.php', [], 'profile-photo')) ?>" class="sidebar-user sidebar-user-link" title="Account settings" aria-label="Open account settings">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="sidebar-user-info">
       <div class="user-name"><?= h($user['username'] ?? '') ?></div>
@@ -101,7 +103,7 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
     </div>
   </a>
   <nav class="sidebar-nav">
-    <a class="nav-item <?= $currentPage === 'index' ? 'active' : '' ?>" href="<?= h(path('index.php')) ?>">
+    <a class="nav-item <?= $currentPage === 'dashboard' ? 'active' : '' ?>" href="<?= h(dashboard_path()) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       New Order
     </a>
@@ -143,9 +145,9 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
     </a>
     <a class="nav-item <?= $currentPage === 'blog' || $currentPage === 'blog-post' ? 'active' : '' ?>" href="<?= h(path('blog.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Blog
+      View Blog
     </a>
-    <a class="nav-item <?= $currentPage === 'account-settings' ? 'active' : '' ?>" href="<?= h(path('account-settings.php')) ?>">
+    <a class="nav-item <?= $currentPage === 'account-settings' ? 'active' : '' ?>" href="<?= h(route_path('account-settings.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
     </a>
@@ -155,13 +157,13 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
     </a>
     <?php if ($auth->isAdmin()): ?>
     <div class="nav-label">Admin</div>
-    <a class="nav-item <?= strpos($currentPage, 'admin') !== false && $currentPage !== 'admin-blog' && $currentPage !== 'admin-blog-edit' ? 'active' : '' ?>" href="<?= h(path('admin/index.php')) ?>">
+    <a class="nav-item <?= $isAdminPanelActive ? 'active' : '' ?>" href="<?= h(admin_path('index.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       Admin Panel
     </a>
-    <a class="nav-item <?= $currentPage === 'admin-blog' || $currentPage === 'admin-blog-edit' ? 'active' : '' ?>" href="<?= h(path('admin/admin-blog.php')) ?>">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Blog
+    <a class="nav-item <?= $currentPage === 'admin-blog' || $currentPage === 'admin-blog-edit' ? 'active' : '' ?>" href="<?= h(admin_path('admin-blog.php')) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Manage Blog
     </a>
     <?php endif; ?>
     <div class="sidebar-nav-footer">
@@ -174,36 +176,86 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
 </aside>
 
 <main class="main" id="main-dashboard">
-  <div class="topbar">
+
+  <header class="mob-header" id="mobHeader" aria-label="Mobile navigation">
+    <div class="mob-header-bar">
+      <button type="button" class="mob-header-menu" id="mobHeaderMenuBtn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="mob-header-brand">
+        <img src="<?= h(logo_url()) ?>" alt="" width="36" height="36">
+        <div class="mob-header-brand-text">
+          <span class="mob-header-site">SMM TURK</span>
+          <span class="mob-header-page"><?= h($pageTitle ?? 'Dashboard') ?></span>
+        </div>
+      </div>
+      <div class="mob-header-actions">
+        <button type="button" class="mob-header-btn dash-theme-toggle" aria-label="Toggle dark mode">
+          <span class="theme-icon theme-icon-light" aria-hidden="true"><?= icon('sun', 18) ?></span>
+          <span class="theme-icon theme-icon-dark" aria-hidden="true"><?= icon('moon', 18) ?></span>
+        </button>
+        <a href="<?= h(path('add-funds.php')) ?>" class="mob-header-btn mob-header-funds<?= ((float)str_replace(',', '', $balance) <= 0) ? ' mob-header-funds-pulse' : '' ?>" title="Add Funds" aria-label="Add Funds">+</a>
+        <a href="<?= h(route_path('account-settings.php')) ?>" class="mob-header-avatar" title="Account settings" aria-label="Account settings">
+          <?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?>
+          <img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy">
+          <?php else: ?>
+          <?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?>
+          <?php endif; ?>
+        </a>
+      </div>
+    </div>
+    <div class="mob-stats-bar" role="group" aria-label="Account summary">
+      <a href="<?= h(path('add-funds.php')) ?>" class="mob-stat mob-stat-balance">
+        <span class="mob-stat-label">Balance</span>
+        <span class="mob-stat-value">$<?= $balance ?></span>
+      </a>
+      <div class="mob-stat mob-stat-spent">
+        <span class="mob-stat-label">Spent</span>
+        <span class="mob-stat-value">$<?= $spent ?></span>
+      </div>
+      <div class="mob-stat mob-stat-status<?= ($user['status'] ?? 'active') !== 'active' ? ' is-new' : '' ?>">
+        <span class="mob-stat-label">Status</span>
+        <span class="mob-stat-value"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="topbar topbar-desktop">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
-      <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
-      <div class="topbar-stats">
-        <div class="topbar-stat-card">
-          <span class="tsc-icon tsc-icon-status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-          <span><span class="tsc-label">Status</span><span class="tsc-value"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span></span>
+      <a href="<?= h(dashboard_path()) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(logo_url()) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <div class="topbar-stats" role="group" aria-label="Account summary">
+        <a href="<?= h(path('add-funds.php')) ?>" class="topbar-stat topbar-stat-balance">
+          <span class="topbar-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+          <span class="topbar-stat-body">
+            <span class="topbar-stat-label">Balance</span>
+            <span class="topbar-stat-value">$<?= $balance ?></span>
+          </span>
+        </a>
+        <div class="topbar-stat topbar-stat-spent">
+          <span class="topbar-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <span class="topbar-stat-body">
+            <span class="topbar-stat-label">Spent</span>
+            <span class="topbar-stat-value">$<?= $spent ?></span>
+          </span>
         </div>
-        <div class="topbar-stat-card">
-          <span class="tsc-icon tsc-icon-balance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-          <span><span class="tsc-label">Balance</span><span class="tsc-value">$<?= $balance ?></span></span>
+        <div class="topbar-stat topbar-stat-status<?= ($user['status'] ?? 'active') !== 'active' ? ' is-new' : '' ?>">
+          <span class="topbar-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <span class="topbar-stat-body">
+            <span class="topbar-stat-label">Status</span>
+            <span class="topbar-stat-value"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
+          </span>
         </div>
-        <div class="topbar-stat-card">
-          <span class="tsc-icon tsc-icon-spent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-          <span><span class="tsc-label">Spent</span><span class="tsc-value">$<?= $spent ?></span></span>
-        </div>
-        <div class="stat-pill"><span class="stat-label">Balance</span> $<?= $balance ?></div>
-        <div class="stat-pill"><span class="stat-label">Spent</span> $<?= $spent ?></div>
       </div>
     </div>
     <div class="topbar-right">
-      <button type="button" class="theme-toggle-btn" id="dashThemeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+      <button type="button" class="theme-toggle-btn dash-theme-toggle" id="dashThemeToggle" aria-label="Toggle dark mode" title="Toggle theme">
         <span class="theme-icon theme-icon-light" aria-hidden="true"><?= icon('sun', 18) ?></span>
         <span class="theme-icon theme-icon-dark" aria-hidden="true"><?= icon('moon', 18) ?></span>
       </button>
       <a href="<?= h(path('services.php')) ?>" class="icon-btn<?= $currentPage === 'services' ? ' active' : '' ?>" title="Search services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></a>
       <a href="<?= h(path('add-funds.php')) ?>" class="icon-btn<?= $currentPage === 'add-funds' ? ' active' : '' ?>" title="Add Funds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></a>
-      <a href="<?= h(path('account-settings.php')) ?>" class="icon-btn<?= $currentPage === 'account-settings' ? ' active' : '' ?>" title="Account Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
+      <a href="<?= h(route_path('account-settings.php')) ?>" class="icon-btn<?= $currentPage === 'account-settings' ? ' active' : '' ?>" title="Account Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
       <a href="<?= h(path('tickets.php')) ?>" class="icon-btn<?= $currentPage === 'tickets' || $currentPage === 'ticket' ? ' active' : '' ?>" title="Support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
       <a href="<?= h(path('logout.php')) ?>" class="icon-btn" title="Logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
       <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary btn-sm<?= ((float)str_replace(',', '', $balance) <= 0) ? ' btn-pulse-funds' : '' ?>">+ Add Funds</a>

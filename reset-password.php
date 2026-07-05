@@ -2,7 +2,7 @@
 require_once __DIR__ . '/app/init.php';
 
 if ($auth->isLoggedIn()) {
-    redirect(url('index.php'));
+    redirect(url('dashboard.php'));
 }
 
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
@@ -37,8 +37,9 @@ if (empty($_SESSION['csrf_token'])) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="<?= h(Seo::robotsContent(false)) ?>">
 <title><?= htmlspecialchars($siteName) ?> — Set new password</title>
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -67,7 +68,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <body>
 <div class="auth-box">
   <div class="auth-logo">
-    <img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="48" height="48">
+    <img src="<?= h(logo_url()) ?>" alt="" width="48" height="48">
     <span class="logo">SMM <span>TURK</span></span>
   </div>
   <div class="tagline">Set your new password</div>

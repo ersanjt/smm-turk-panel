@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/init.php';
-$auth->requireAdmin();
+require_once __DIR__ . '/_init.php';
 $pageTitle = 'Admin Panel';
 $db  = Database::getInstance();
 $api = new SmmApi();
@@ -16,6 +15,12 @@ $pendingDeposits = $db->fetch("SELECT COUNT(*) c FROM transactions WHERE type='d
 $pendingChildPanels = 0;
 try {
     $pendingChildPanels = (int) $db->fetch("SELECT COUNT(*) c FROM child_panels WHERE status='pending'")['c'];
+} catch (Throwable $e) {}
+$blogArticles = 0;
+$blogPublished = 0;
+try {
+    $blogArticles = (int) $db->fetch("SELECT COUNT(*) c FROM blog_articles")['c'];
+    $blogPublished = (int) $db->fetch("SELECT COUNT(*) c FROM blog_articles WHERE status='published'")['c'];
 } catch (Throwable $e) {}
 
 // Provider balance
@@ -53,128 +58,146 @@ for ($i = 6; $i >= 0; $i--) {
     $chartRevenue[] = round((float)($byDate[$d]['rev'] ?? 0), 2);
 }
 
+$chartHasData = array_sum($chartOrders) > 0 || array_sum($chartRevenue) > 0;
+
+$statCards = [
+    ['label' => 'Total Users', 'value' => number_format($totalUsers), 'icon' => 'users', 'tone' => 'primary', 'alert' => false],
+    ['label' => 'Total Orders', 'value' => number_format($totalOrders), 'icon' => 'orders', 'tone' => 'green', 'alert' => false],
+    ['label' => 'Total Revenue', 'value' => '$' . number_format((float)$totalRevenue, 2), 'icon' => 'dollar', 'tone' => 'orange', 'alert' => false],
+    ['label' => 'Pending Orders', 'value' => number_format($pendingOrders), 'icon' => 'pending', 'tone' => 'orange', 'alert' => $pendingOrders > 0, 'hint' => 'Needs attention'],
+    ['label' => 'Open Tickets', 'value' => number_format($openTickets), 'icon' => 'tickets', 'tone' => 'green', 'alert' => $openTickets > 0, 'hint' => 'Awaiting reply'],
+    ['label' => 'Active Services', 'value' => number_format($totalServices), 'icon' => 'services', 'tone' => 'primary', 'alert' => false],
+    ['label' => 'Provider Balance', 'value' => $providerBalance !== null ? '$' . number_format((float)$providerBalance, 2) : 'N/A', 'icon' => 'server', 'tone' => 'dark', 'alert' => false],
+    ['label' => 'Pending Deposits', 'value' => number_format($pendingDeposits), 'icon' => 'deposit', 'tone' => 'orange', 'alert' => $pendingDeposits > 0, 'hint' => 'Review deposits'],
+];
+
+$quickLinks = [
+    ['url' => 'admin/admin-users.php', 'label' => 'Manage Users', 'icon' => 'users', 'style' => 'primary'],
+    ['url' => 'admin/admin-orders.php', 'label' => 'Manage Orders', 'icon' => 'orders', 'style' => 'outline'],
+    ['url' => 'admin/admin-services.php', 'label' => 'Services', 'icon' => 'services', 'style' => 'outline'],
+    ['url' => 'admin/admin-sync.php', 'label' => 'Sync Services', 'icon' => 'sync', 'style' => 'dark'],
+    ['url' => 'admin/admin-tickets.php', 'label' => 'Tickets' . ($openTickets > 0 ? " ($openTickets)" : ''), 'icon' => 'tickets', 'style' => $openTickets > 0 ? 'urgent' : 'outline'],
+    ['url' => 'admin/admin-deposits.php', 'label' => 'Deposits' . ($pendingDeposits > 0 ? " ($pendingDeposits)" : ''), 'icon' => 'deposit', 'style' => $pendingDeposits > 0 ? 'urgent' : 'outline'],
+    ['url' => 'admin/admin-child-panels.php', 'label' => 'Child Panels' . ($pendingChildPanels > 0 ? " ($pendingChildPanels)" : ''), 'icon' => 'server', 'style' => $pendingChildPanels > 0 ? 'urgent' : 'outline'],
+    ['url' => 'admin/admin-settings.php', 'label' => 'Settings', 'icon' => 'settings', 'style' => 'outline'],
+    ['url' => 'admin/admin-mail.php', 'label' => 'Test Email', 'icon' => 'message', 'style' => 'outline'],
+    ['url' => 'admin/admin-blog.php', 'label' => 'Manage Blog' . ($blogArticles > 0 ? " ($blogArticles)" : ''), 'icon' => 'clipboard', 'style' => 'outline'],
+];
+
+$extraCssHref = asset_url('assets/css/admin-dashboard.css');
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<div class="admin-grid">
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('users', 'primary', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Total Users</div>
-      <div class="ac-value"><?= number_format($totalUsers) ?></div>
+<div class="admin-dash">
+  <header class="admin-dash-header">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>Overview of users, orders, revenue, and support at a glance.</p>
     </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('orders', 'green', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Total Orders</div>
-      <div class="ac-value"><?= number_format($totalOrders) ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('dollar', 'orange', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Total Revenue</div>
-      <div class="ac-value">$<?= number_format($totalRevenue, 2) ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('pending', 'orange', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Pending Orders</div>
-      <div class="ac-value"><?= number_format($pendingOrders) ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('tickets', 'green', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Open Tickets</div>
-      <div class="ac-value"><?= number_format($openTickets) ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('services', 'primary', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Active Services</div>
-      <div class="ac-value"><?= number_format($totalServices) ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('server', 'dark', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Provider Balance</div>
-      <div class="ac-value"><?= $providerBalance !== null ? '$' . number_format($providerBalance, 2) : 'N/A' ?></div>
-    </div>
-  </div>
-  <div class="admin-card">
-    <div class="ac-icon"><?= iconBox('deposit', 'orange', 24) ?></div>
-    <div class="ac-info">
-      <div class="ac-label">Pending Deposits</div>
-      <div class="ac-value"><?= number_format($pendingDeposits) ?></div>
-    </div>
-  </div>
-</div>
+    <div class="admin-dash-date"><?= date('l, M j, Y') ?></div>
+  </header>
 
-<div class="quick-actions">
-  <a href="<?= h(path('admin/admin-users.php')) ?>" class="qa-btn"><?= icon('users', 16) ?> Manage Users</a>
-  <a href="<?= h(path('admin/admin-orders.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('orders', 16) ?> Manage Orders</a>
-  <a href="<?= h(path('admin/admin-services.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('services', 16) ?> Services</a>
-  <a href="<?= h(path('admin/admin-sync.php')) ?>" class="qa-btn qa-btn-dark"><?= icon('sync', 16) ?> Sync Services</a>
-  <a href="<?= h(path('admin/admin-settings.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('settings', 16) ?> Settings</a>
-  <a href="<?= h(path('admin/admin-tickets.php')) ?>" class="qa-btn qa-btn-outline"><?= icon('tickets', 16) ?> Tickets</a>
-  <a href="<?= h(path('admin/admin-deposits.php')) ?>" class="qa-btn"><?= icon('deposit', 16) ?> Pending Deposits<?= $pendingDeposits > 0 ? ' (' . $pendingDeposits . ')' : '' ?></a>
-  <a href="<?= h(path('admin/admin-mail.php')) ?>" class="qa-btn"><?= icon('message', 16) ?> Test Email</a>
-  <a href="<?= h(path('admin/admin-child-panels.php')) ?>" class="qa-btn"><?= icon('server', 16) ?> Child Panels<?= $pendingChildPanels > 0 ? ' (' . $pendingChildPanels . ')' : '' ?></a>
-</div>
-
-<div class="admin-charts">
-  <div class="admin-chart-card">
-    <h3>Orders — last 7 days</h3>
-    <div class="admin-chart-wrap"><canvas id="ordersChart" aria-label="Orders last 7 days"></canvas></div>
+  <p class="admin-section-label">Overview</p>
+  <div class="admin-grid">
+    <?php foreach ($statCards as $card): ?>
+    <div class="admin-card<?= !empty($card['alert']) ? ' admin-card-alert' : '' ?>">
+      <div class="ac-icon"><?= iconBox($card['icon'], $card['tone'], 24) ?></div>
+      <div class="ac-info">
+        <div class="ac-label"><?= h($card['label']) ?></div>
+        <div class="ac-value"><?= h($card['value']) ?></div>
+        <?php if (!empty($card['hint']) && !empty($card['alert'])): ?>
+        <span class="ac-badge"><?= h($card['hint']) ?></span>
+        <?php endif; ?>
+      </div>
+    </div>
+    <?php endforeach; ?>
   </div>
-  <div class="admin-chart-card">
-    <h3>Revenue — last 7 days</h3>
-    <div class="admin-chart-wrap"><canvas id="revenueChart" aria-label="Revenue last 7 days"></canvas></div>
-  </div>
-</div>
 
-<div class="grid2">
-  <div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:18px 18px 0;"><div class="card-title">Recent Orders</div></div>
-    <div class="table-wrap">
-    <table class="table" style="font-size:12px;">
-      <thead><tr><th>ID</th><th>User</th><th>Charge</th><th>Status</th><th>Date</th></tr></thead>
-      <tbody>
-        <?php foreach ($recentOrders as $o): ?>
-        <tr>
-          <td>#<?= $o['id'] ?></td>
-          <td><?= h($o['username']) ?></td>
-          <td>$<?= number_format($o['charge'], 4) ?></td>
-          <td><span class="badge status-<?= str_replace(' ', '-', h($o['status'])) ?>"><?= h($o['status']) ?></span></td>
-          <td style="color:var(--text-muted)"><?= date('m/d H:i', strtotime($o['created_at'])) ?></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+  <p class="admin-section-label">Quick actions</p>
+  <div class="admin-qa-grid">
+    <?php foreach ($quickLinks as $link):
+      $cls = 'qa-btn';
+      if ($link['style'] === 'primary') {
+          $cls .= ' qa-btn-primary';
+      } elseif ($link['style'] === 'dark') {
+          $cls .= ' qa-btn-dark';
+      } elseif ($link['style'] === 'urgent') {
+          $cls .= ' qa-btn-outline qa-btn-urgent';
+      } else {
+          $cls .= ' qa-btn-outline';
+      }
+    ?>
+    <a href="<?= h(path($link['url'])) ?>" class="<?= $cls ?>"><?= icon($link['icon'], 16) ?> <?= h($link['label']) ?></a>
+    <?php endforeach; ?>
+  </div>
+
+  <p class="admin-section-label">Analytics — last 7 days</p>
+  <div class="admin-charts">
+    <div class="admin-chart-card">
+      <h3>Orders</h3>
+      <div class="admin-chart-wrap">
+        <?php if (!$chartHasData): ?><div class="admin-chart-empty">No orders in the last 7 days yet</div><?php endif; ?>
+        <canvas id="ordersChart" aria-label="Orders last 7 days"></canvas>
+      </div>
+    </div>
+    <div class="admin-chart-card">
+      <h3>Revenue</h3>
+      <div class="admin-chart-wrap">
+        <?php if (!$chartHasData): ?><div class="admin-chart-empty">No revenue recorded yet</div><?php endif; ?>
+        <canvas id="revenueChart" aria-label="Revenue last 7 days"></canvas>
+      </div>
     </div>
   </div>
 
-  <div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:18px 18px 0;"><div class="card-title">Recent Users</div></div>
-    <div class="table-wrap">
-    <table class="table" style="font-size:12px;">
-      <thead><tr><th>User</th><th>Balance</th><th>Spent</th><th>Joined</th></tr></thead>
-      <tbody>
-        <?php foreach ($recentUsers as $u): ?>
-        <tr>
-          <td><?= h($u['username']) ?><br><span style="color:var(--text-muted);font-size:10px;"><?= h($u['email']) ?></span></td>
-          <td>$<?= number_format($u['balance'], 2) ?></td>
-          <td>$<?= number_format($u['spent'], 2) ?></td>
-          <td style="color:var(--text-muted)"><?= date('Y-m-d', strtotime($u['created_at'])) ?></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+  <p class="admin-section-label">Recent activity</p>
+  <div class="grid2 admin-tables">
+    <div class="card" style="padding:0;">
+      <div class="admin-table-head">
+        <div class="card-title"><?= icon('orders', 18) ?> Recent Orders</div>
+        <a href="<?= h(path('admin/admin-orders.php')) ?>" class="admin-table-link">View all →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table" style="font-size:13px;">
+          <thead><tr><th>ID</th><th>User</th><th>Charge</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            <?php if (empty($recentOrders)): ?>
+            <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:24px;">No orders yet</td></tr>
+            <?php else: foreach ($recentOrders as $o): ?>
+            <tr>
+              <td><a href="<?= h(path('admin/admin-orders.php')) ?>" style="color:var(--primary);font-weight:600;">#<?= (int)$o['id'] ?></a></td>
+              <td><?= h($o['username']) ?></td>
+              <td>$<?= number_format((float)$o['charge'], 4) ?></td>
+              <td><span class="badge status-<?= str_replace(' ', '-', h($o['status'])) ?>"><?= h($o['status']) ?></span></td>
+              <td style="color:var(--text-muted)"><?= date('M j, H:i', strtotime($o['created_at'])) ?></td>
+            </tr>
+            <?php endforeach; endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div class="admin-table-head">
+        <div class="card-title"><?= icon('users', 18) ?> Recent Users</div>
+        <a href="<?= h(path('admin/admin-users.php')) ?>" class="admin-table-link">View all →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table" style="font-size:13px;">
+          <thead><tr><th>User</th><th>Balance</th><th>Spent</th><th>Joined</th></tr></thead>
+          <tbody>
+            <?php if (empty($recentUsers)): ?>
+            <tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:24px;">No users yet</td></tr>
+            <?php else: foreach ($recentUsers as $u): ?>
+            <tr>
+              <td><strong><?= h($u['username']) ?></strong><br><span style="color:var(--text-muted);font-size:11px;"><?= h($u['email']) ?></span></td>
+              <td>$<?= number_format((float)$u['balance'], 2) ?></td>
+              <td>$<?= number_format((float)$u['spent'], 2) ?></td>
+              <td style="color:var(--text-muted)"><?= date('M j, Y', strtotime($u['created_at'])) ?></td>
+            </tr>
+            <?php endforeach; endif; ?>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -189,19 +212,23 @@ require_once __DIR__ . '/../layouts/header.php';
   var gridColor = getComputedStyle(document.body).getPropertyValue('--border').trim() || '#f0e6e8';
   var textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#6b4a50';
   var primary = getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#E30A17';
-  var scales = {
-    x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
-    y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+  var maxOrders = Math.max.apply(null, orders.concat([1]));
+  var maxRev = Math.max.apply(null, revenue.concat([1]));
+  var scales = function (max) {
+    return {
+      x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11, weight: '600' } } },
+      y: { beginAtZero: true, suggestedMax: max, grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 }, precision: 0 } }
+    };
   };
   new Chart(document.getElementById('ordersChart'), {
     type: 'bar',
-    data: { labels: labels, datasets: [{ label: 'Orders', data: orders, backgroundColor: primary, borderRadius: 6 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales }
+    data: { labels: labels, datasets: [{ label: 'Orders', data: orders, backgroundColor: primary, borderRadius: 8, maxBarThickness: 36 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales(maxOrders) }
   });
   new Chart(document.getElementById('revenueChart'), {
     type: 'line',
-    data: { labels: labels, datasets: [{ label: 'Revenue ($)', data: revenue, borderColor: primary, backgroundColor: 'rgba(227,10,23,.12)', fill: true, tension: .35 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales }
+    data: { labels: labels, datasets: [{ label: 'Revenue ($)', data: revenue, borderColor: primary, backgroundColor: 'rgba(227,10,23,.1)', fill: true, tension: .35, pointRadius: 4, pointHoverRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: scales(maxRev) }
   });
 })();
 </script>

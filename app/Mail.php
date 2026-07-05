@@ -6,6 +6,12 @@ class Mail
 {
     private Database $db;
     private ?string $lastError = null;
+    private ?string $lastTransport = null;
+
+    public function getLastTransport(): ?string
+    {
+        return $this->lastTransport;
+    }
 
     public function __construct()
     {
@@ -67,7 +73,7 @@ class Mail
     {
         $lang = MailLocale::resolveLang($lang);
         $siteName = htmlspecialchars($this->getSiteName(), ENT_QUOTES, 'UTF-8');
-        $home = htmlspecialchars($this->siteUrl() ?: page_url('index.php'), ENT_QUOTES, 'UTF-8');
+        $home = htmlspecialchars($this->siteUrl() ?: page_url('home.php'), ENT_QUOTES, 'UTF-8');
         $year = date('Y');
         $footer = htmlspecialchars(MailLocale::t('footer_auto', $lang), ENT_QUOTES, 'UTF-8');
         $enNote = MailLocale::t('footer_en_note', $lang);
@@ -99,6 +105,7 @@ class Mail
     public function send(string $to, string $subject, string $bodyPlain, string $bodyHtml = '', ?string $lang = null): bool
     {
         $this->lastError = null;
+        $this->lastTransport = null;
         $to = trim($to);
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             $this->lastError = 'Invalid recipient email';
@@ -116,12 +123,17 @@ class Mail
         $smtpHost = trim((string) ($this->db->getSetting('smtp_host') ?? ''));
 
         if ($mode === 'mail' || ($mode === 'auto' && $smtpHost === '')) {
-            return $this->sendPhpMail($from, $to, $subject, $html, $siteName);
+            $ok = $this->sendPhpMail($from, $to, $subject, $html, $siteName);
+            if ($ok) {
+                $this->lastTransport = 'mail';
+            }
+            return $ok;
         }
 
         if ($smtpHost !== '') {
             $ok = $this->sendSmtp($smtpHost, $from, $to, $subject, $html, $siteName);
             if ($ok) {
+                $this->lastTransport = 'smtp';
                 return true;
             }
             if ($mode === 'smtp') {
@@ -131,7 +143,11 @@ class Mail
             Logger::log("SMTP failed ({$this->lastError}), falling back to mail() for {$to}", 'mail');
         }
 
-        return $this->sendPhpMail($from, $to, $subject, $html, $siteName);
+        $ok = $this->sendPhpMail($from, $to, $subject, $html, $siteName);
+        if ($ok) {
+            $this->lastTransport = 'mail';
+        }
+        return $ok;
     }
 
     private function sendPhpMail(string $from, string $to, string $subject, string $html, string $siteName): bool
@@ -176,19 +192,66 @@ class Mail
         return $lines === [] ? 500 : (int) substr($lines[0], 0, 3);
     }
 
-    private function smtpCmd($fp, string $cmd, array $expectCodes = [250]): bool
+    private function smtpCmd($fp, string $cmd, array $expectCodes = [250], bool $logCmd = true): bool
     {
         if (@fwrite($fp, $cmd . "\r\n") === false) {
-            $this->lastError = 'Write failed: ' . $cmd;
+            $this->lastError = 'Write failed: ' . ($logCmd ? $cmd : '(auth)');
             return false;
         }
         $lines = $this->readSmtpResponse($fp);
         $code = $this->smtpCode($lines);
         if (!in_array($code, $expectCodes, true) && !($code >= 200 && $code < 300)) {
-            $this->lastError = 'SMTP ' . $cmd . ' → ' . implode(' | ', $lines);
+            $shown = $logCmd ? $cmd : '(auth command hidden)';
+            $this->lastError = 'SMTP ' . $shown . ' → ' . implode(' | ', $lines);
             return false;
         }
         return true;
+    }
+
+    /** @param resource $fp */
+    private function smtpAuthenticate($fp, string $user, string $pass): bool
+    {
+        if ($user === '') {
+            return true;
+        }
+        if ($pass === '') {
+            $this->lastError = 'SMTP password is empty — enter mailbox password in Admin → Settings → Email';
+            return false;
+        }
+
+        $plain = base64_encode("\0" . $user . "\0" . $pass);
+        if ($this->smtpCmd($fp, 'AUTH PLAIN ' . $plain, [235], false)) {
+            return true;
+        }
+
+        $plainErr = $this->lastError;
+        if ($this->smtpCmd($fp, 'AUTH LOGIN', [334])
+            && $this->smtpCmd($fp, base64_encode($user), [334], false)
+            && $this->smtpCmd($fp, base64_encode($pass), [235], false)) {
+            return true;
+        }
+
+        $this->lastError = 'SMTP authentication failed'
+            . ($this->lastError ? ' — ' . $this->lastError : '')
+            . ($plainErr ? ' (PLAIN: ' . $plainErr . ')' : '');
+        return false;
+    }
+
+    /** @return string[] */
+    private function smtpHostCandidates(string $host): array
+    {
+        $host = trim($host);
+        if ($host === '') {
+            return [];
+        }
+        $siteHost = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: '';
+        $candidates = [$host];
+        if ($siteHost !== '' && $host === $siteHost && !str_starts_with($host, 'mail.')) {
+            $candidates[] = 'mail.' . $siteHost;
+        } elseif (str_starts_with($host, 'mail.') && $siteHost !== '') {
+            $candidates[] = $siteHost;
+        }
+        return array_values(array_unique($candidates));
     }
 
     private function sendSmtp(string $host, string $from, string $to, string $subject, string $body, string $siteName): bool
@@ -203,23 +266,76 @@ class Mail
             $enc = $port === 465 ? 'ssl' : ($port === 587 ? 'tls' : 'none');
         }
 
+        $lastErr = '';
+        foreach ($this->smtpHostCandidates($host) as $tryHost) {
+            if ($this->smtpSession($tryHost, $port, $enc, $user, $pass, $from, $to, $subject, $body, $siteName)) {
+                return true;
+            }
+            $lastErr = $this->lastError ?? 'unknown';
+        }
+
+        $this->lastError = $lastErr;
+        return false;
+    }
+
+    /** @return resource|null */
+    private function smtpConnect(string $host, int $port, string $enc)
+    {
         $target = ($enc === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
-        $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]);
+        $ctx = stream_context_create([
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'SNI_enabled' => true,
+                'peer_name' => $host,
+            ],
+        ]);
         $fp = @stream_socket_client($target, $errno, $errstr, 20, STREAM_CLIENT_CONNECT, $ctx);
         if (!$fp) {
+            $ctxRelaxed = stream_context_create([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                    'SNI_enabled' => true,
+                    'peer_name' => $host,
+                ],
+            ]);
+            $fp = @stream_socket_client($target, $errno, $errstr, 20, STREAM_CLIENT_CONNECT, $ctxRelaxed);
+        }
+        if (!$fp) {
             $this->lastError = "Cannot connect to {$target}: {$errstr} ({$errno})";
-            return false;
+            return null;
         }
         stream_set_timeout($fp, 20);
+        return $fp;
+    }
+
+    private function smtpSession(
+        string $host,
+        int $port,
+        string $enc,
+        string $user,
+        string $pass,
+        string $from,
+        string $to,
+        string $subject,
+        string $body,
+        string $siteName
+    ): bool {
+        $fp = $this->smtpConnect($host, $port, $enc);
+        if (!$fp) {
+            return false;
+        }
 
         $greeting = $this->readSmtpResponse($fp);
         if ($this->smtpCode($greeting) !== 220) {
-            $this->lastError = 'Bad greeting: ' . implode(' | ', $greeting);
+            $this->lastError = 'Bad greeting from ' . $host . ': ' . implode(' | ', $greeting);
             fclose($fp);
             return false;
         }
 
-        $ehloHost = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'localhost';
+        $ehloHost = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: $host;
         if (!$this->smtpCmd($fp, 'EHLO ' . $ehloHost, [250])) {
             fclose($fp);
             return false;
@@ -230,8 +346,12 @@ class Mail
                 fclose($fp);
                 return false;
             }
-            if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-                $this->lastError = 'STARTTLS handshake failed';
+            $crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                $crypto |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+            }
+            if (!@stream_socket_enable_crypto($fp, true, $crypto)) {
+                $this->lastError = 'STARTTLS handshake failed on ' . $host;
                 fclose($fp);
                 return false;
             }
@@ -241,12 +361,9 @@ class Mail
             }
         }
 
-        if ($user !== '') {
-            if (!$this->smtpCmd($fp, 'AUTH LOGIN', [334]) || !$this->smtpCmd($fp, base64_encode($user), [334]) || !$this->smtpCmd($fp, base64_encode($pass), [235])) {
-                $this->lastError = 'SMTP authentication failed';
-                fclose($fp);
-                return false;
-            }
+        if (!$this->smtpAuthenticate($fp, $user, $pass)) {
+            fclose($fp);
+            return false;
         }
 
         if (!$this->smtpCmd($fp, 'MAIL FROM:<' . $from . '>', [250]) || !$this->smtpCmd($fp, 'RCPT TO:<' . $to . '>', [250, 251]) || !$this->smtpCmd($fp, 'DATA', [354])) {
@@ -327,7 +444,7 @@ class Mail
         $inner = '<p>' . MailLocale::t('deposit_hi', $lang, ['name' => $username]) . '</p>'
             . '<p>' . MailLocale::t('deposit_body', $lang, ['amount' => $amountFmt, 'ref' => $ref]) . '</p>'
             . '<p><strong>' . MailLocale::t('deposit_balance', $lang) . '</strong> $' . htmlspecialchars($balanceFmt) . '</p>'
-            . $this->btn(page_url('index.php'), MailLocale::t('btn_deposit', $lang));
+            . $this->btn(page_url('add-funds.php'), MailLocale::t('btn_deposit', $lang));
         return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml(MailLocale::t('deposit_subject', $lang, ['amount' => $amountFmt]), $inner, $lang), $lang);
     }
 
@@ -424,8 +541,10 @@ class Mail
             'smtp_port' => $this->db->getSetting('smtp_port') ?: '587',
             'smtp_user' => $this->db->getSetting('smtp_user') ?: '(empty)',
             'smtp_encryption' => $this->db->getSetting('smtp_encryption') ?: 'auto',
+            'smtp_pass_set' => trim((string) ($this->db->getSetting('smtp_pass') ?? '')) !== '',
             'smtp_configured' => trim((string) ($this->db->getSetting('smtp_host') ?? '')) !== '',
-            'cpanel_hint_host' => 'mail.' . $host,
+            'cpanel_hint_host' => $host,
+            'cpanel_hint_alt' => 'mail.' . $host,
             'last_error' => $this->lastError,
         ];
     }

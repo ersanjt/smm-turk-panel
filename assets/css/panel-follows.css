@@ -212,33 +212,45 @@ body.panel-follows .topbar::after {
 }
 
 body.panel-follows .topbar-badge {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-  box-shadow: none;
-  font-size: 11px;
-  padding: 6px 12px;
+  display: none;
 }
 
-body.panel-follows .topbar-stat-card {
-  display: inline-flex;
+body.panel-follows .topbar-stats {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 520px;
+  border-radius: 14px;
+  border: 1px solid var(--pf-sidebar-border);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+body.panel-follows .topbar-stat {
+  display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 8px 14px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid var(--pf-sidebar-border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pf-sidebar-text);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
 }
 
-body.panel-follows.theme-dark .topbar-stat-card {
-  background: #1e293b;
+body.panel-follows .topbar-stat + .topbar-stat {
+  border-left: 1px solid var(--pf-sidebar-border);
 }
 
-body.panel-follows .topbar-stat-card .tsc-icon {
-  width: 32px;
-  height: 32px;
+body.panel-follows a.topbar-stat-balance:hover {
+  background: rgba(227, 10, 23, 0.04);
+}
+
+body.panel-follows .topbar-stat-icon {
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -246,53 +258,91 @@ body.panel-follows .topbar-stat-card .tsc-icon {
   flex-shrink: 0;
 }
 
-body.panel-follows .topbar-stat-card .tsc-icon svg {
+body.panel-follows .topbar-stat-icon svg {
   width: 16px;
   height: 16px;
 }
 
-body.panel-follows .tsc-icon-balance {
+body.panel-follows .topbar-stat-balance .topbar-stat-icon {
   background: rgba(227, 10, 23, 0.1);
   color: var(--primary);
 }
 
-body.panel-follows .tsc-icon-spent {
+body.panel-follows .topbar-stat-spent .topbar-stat-icon {
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
 }
 
-body.panel-follows .tsc-icon-status {
+body.panel-follows .topbar-stat-status .topbar-stat-icon {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
 }
 
-body.panel-follows .topbar-stat-card .tsc-label {
-  font-size: 10px;
+body.panel-follows .topbar-stat-status.is-new .topbar-stat-icon {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+body.panel-follows .topbar-stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+body.panel-follows .topbar-stat-label {
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.06em;
   color: #94a3b8;
-  display: block;
   line-height: 1.2;
 }
 
-body.panel-follows .topbar-stat-card .tsc-value {
+body.panel-follows .topbar-stat-value {
+  font-family: 'Syne', sans-serif;
   font-size: 14px;
   font-weight: 800;
   color: #0f172a;
-  font-family: 'Syne', sans-serif;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-body.panel-follows.theme-dark .topbar-stat-card .tsc-value {
+body.panel-follows .topbar-stat-balance .topbar-stat-value {
+  color: var(--primary);
+}
+
+body.panel-follows .topbar-stat-status .topbar-stat-value {
+  color: #059669;
+  font-size: 12px;
+}
+
+body.panel-follows .topbar-stat-status.is-new .topbar-stat-value {
+  color: #d97706;
+}
+
+body.panel-follows.theme-dark .topbar-stats {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.panel-follows.theme-dark .topbar-stat + .topbar-stat {
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+body.panel-follows.theme-dark .topbar-stat-value {
   color: #f1f5f9;
 }
 
-body.panel-follows .topbar-stats {
-  gap: 10px;
+body.panel-follows.theme-dark .topbar-stat-balance .topbar-stat-value {
+  color: var(--primary-light, #ff4d5a);
 }
 
-body.panel-follows .stat-pill {
-  display: none;
+body.panel-follows .stat-pill,
+body.panel-follows .topbar-stat-card {
+  display: none !important;
 }
 
 body.panel-follows .topbar-right .icon-btn {
@@ -711,12 +761,8 @@ body.panel-follows.theme-dark .order-tab:hover {
     margin-left: 0;
   }
 
-  body.panel-follows .topbar {
-    padding: 10px 16px;
-  }
-
-  body.panel-follows .topbar-stat-card:nth-child(n+3) {
-    display: none;
+  body.panel-follows .topbar-desktop {
+    display: none !important;
   }
 
   body.panel-follows .content {
@@ -726,6 +772,22 @@ body.panel-follows.theme-dark .order-tab:hover {
   .platform-chip {
     min-width: 50px;
     padding: 6px 8px;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.panel-follows .topbar-stat-icon {
+    display: none;
+  }
+
+  body.panel-follows .topbar-stat {
+    padding: 8px 12px;
+    justify-content: center;
+  }
+
+  body.panel-follows .topbar-stat-body {
+    align-items: center;
+    text-align: center;
   }
 }
 

@@ -16,10 +16,17 @@ define('DB_CHARSET', 'utf8mb4');
 //   - Site in subdir:   https://smm-turk.com/panel
 define('SITE_URL', 'https://smm-turk.com');
 define('SITE_NAME', 'SMM Turk');
-// Geo/SEO: primary region for meta geo.region (ISO 3166-1 alpha-2, e.g. TR for Turkey)
+// Geo/SEO — primary market Turkey, service worldwide (ISO 3166-1 alpha-2)
 define('GEO_REGION', 'TR');
+define('GEO_PLACENAME', 'Turkey');
+define('GEO_LOCALITY', 'Ankara');
+define('GEO_LAT', 39.9334);
+define('GEO_LNG', 32.8597);
+define('GEO_TIMEZONE', 'Europe/Istanbul');
 // Social sharing image (1200x630 PNG/JPG). Relative path or full URL.
 define('OG_IMAGE_URL', 'assets/img/og-default.png');
+// Google Search Console → HTML tag verification (optional)
+define('GOOGLE_SITE_VERIFICATION', '');
 define('MAIL_FROM', 'noreply@yourdomain.com'); // Optional; used for verification emails (cPanel: use an email from your domain)
 
 // SmmFollows API - Get key from https://smmfollows.com → Account → API

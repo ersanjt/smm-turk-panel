@@ -4,7 +4,7 @@
  */
 require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
-$lang = Lang::init();
+$lang = Lang::initPublic();
 $db = Database::getInstance();
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
@@ -20,7 +20,7 @@ $where = ["a.status = 'published'", "a.published_at IS NOT NULL AND a.published_
 $params = [];
 $pageTitle = function_exists('__') ? __('blog_title') : 'Blog';
 $pageDescription = function_exists('__') ? __('blog_meta_desc') : 'SMM Turk Blog — Social media marketing tips, SMM panel guides, Instagram, YouTube, TikTok growth.';
-$canonicalUrl = $baseBlogUrl;
+$canonicalUrl = Seo::absoluteUrl(path('blog.php'));
 $filterActive = false;
 
 if ($categorySlug !== '') {
@@ -33,7 +33,7 @@ if ($categorySlug !== '') {
     $params[] = $cat['id'];
     $pageTitle = $cat['name'];
     $pageDescription = $cat['meta_description'] ?: ($pageTitle . ' — ' . $siteName . ' Blog.');
-    $canonicalUrl = $baseBlogUrl . '?category=' . $categorySlug;
+    $canonicalUrl = Seo::absoluteUrl(path('blog.php') . '?category=' . rawurlencode($categorySlug));
     $filterActive = true;
 }
 
@@ -48,7 +48,7 @@ if ($tagSlug !== '') {
     if ($categorySlug === '') {
         $pageTitle = $tag['name'];
         $pageDescription = 'Articles tagged with ' . $tag['name'] . ' — ' . $siteName . ' Blog.';
-        $canonicalUrl = $baseBlogUrl . '?tag=' . $tagSlug;
+        $canonicalUrl = Seo::absoluteUrl(path('blog.php') . '?tag=' . rawurlencode($tagSlug));
     }
     $filterActive = true;
 }
@@ -90,19 +90,17 @@ $featured = $showFeatured ? array_shift($articles) : null;
 $gridArticles = $articles;
 
 $jsonLd = [
-    '@context' => 'https://schema.org',
     '@type' => 'Blog',
     'name' => $pageTitle . ' — ' . $siteName,
     'description' => $pageDescription,
     'url' => $canonicalUrl,
-    'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'url' => $siteUrl],
-    'blogPost' => array_map(function ($a) use ($siteUrl) {
-        $base = $siteUrl ? $siteUrl . path('blog') : path('blog');
+    'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'url' => $siteUrl ?: Seo::absoluteUrl(home_path())],
+    'blogPost' => array_map(function ($a) {
         return [
             '@type' => 'BlogPosting',
             'headline' => $a['title'],
             'description' => $a['excerpt'] ?? '',
-            'url' => rtrim($base, '/') . '/' . $a['slug'],
+            'url' => Seo::absoluteUrl(path('blog.php') . '/' . rawurlencode($a['slug'])),
             'datePublished' => $a['published_at'],
         ];
     }, $featured ? array_merge([$featured], $gridArticles) : $gridArticles),
@@ -116,17 +114,25 @@ if ($totalPages > 1) {
         $prevUrl = path('blog.php') . '?p=' . ($pageNum - 1);
         if ($categorySlug) $prevUrl .= '&category=' . rawurlencode($categorySlug);
         if ($tagSlug) $prevUrl .= '&tag=' . rawurlencode($tagSlug);
-        $paginationPrev = ($siteUrl ? $siteUrl : '') . $prevUrl;
+        $paginationPrev = Seo::absoluteUrl($prevUrl);
     }
     if ($pageNum < $totalPages) {
         $nextUrl = path('blog.php') . '?p=' . ($pageNum + 1);
         if ($categorySlug) $nextUrl .= '&category=' . rawurlencode($categorySlug);
         if ($tagSlug) $nextUrl .= '&tag=' . rawurlencode($tagSlug);
-        $paginationNext = ($siteUrl ? $siteUrl : '') . $nextUrl;
+        $paginationNext = Seo::absoluteUrl($nextUrl);
     }
 }
 
 $blogNavActive = 'blog';
+$seoHreflang = true;
+$seoHreflangBase = $canonicalUrl;
+$jsonLdExtra = [
+    Seo::breadcrumbSchema([
+        ['name' => __('blog_nav_home'), 'url' => Seo::absoluteUrl(home_path())],
+        ['name' => $pageTitle, 'url' => $canonicalUrl],
+    ], $lang),
+];
 require __DIR__ . '/layouts/blog-header.php';
 
 function blog_post_url(array $a): string {
