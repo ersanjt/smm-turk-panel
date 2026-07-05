@@ -228,7 +228,7 @@ function getFlash(): ?array {
 function asset_url(string $path): string {
     $clean = ltrim($path, '/');
     $url = path($clean);
-    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=7';
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=8';
 }
 
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */

@@ -191,15 +191,19 @@
 .add-funds-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .add-funds-presets button,
 .add-funds-presets .preset-btn {
+  -webkit-appearance: none;
+  appearance: none;
   padding: 10px 16px;
   border-radius: 10px;
   border: 1.5px solid var(--border);
   background: var(--white);
   color: var(--text);
+  font-family: inherit;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
-  transition: border-color .2s, background .2s, color .2s;
+  transition: border-color .2s, background .2s, color .2s, box-shadow .2s;
 }
 .add-funds-presets button:hover,
 .add-funds-presets .preset-btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -208,6 +212,7 @@
   border-color: var(--primary);
   background: rgba(227, 10, 23, .08);
   color: var(--primary);
+  box-shadow: 0 0 0 1px rgba(227, 10, 23, .15);
 }
 
 /* Coin picker */
@@ -441,21 +446,23 @@
 }
 [data-theme="dark"] .add-funds-presets button,
 [data-theme="dark"] .add-funds-presets .preset-btn {
-  background: #1a1416;
-  color: var(--text);
-  border-color: rgba(255, 255, 255, .14);
+  background: #2a2226;
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] .add-funds-presets button:hover,
 [data-theme="dark"] .add-funds-presets .preset-btn:hover {
-  border-color: var(--primary);
-  color: #ff8a96;
-  background: rgba(227, 10, 23, .12);
+  border-color: #ff6b7a;
+  color: #ffb3bb;
+  background: rgba(227, 10, 23, 0.18);
 }
 [data-theme="dark"] .add-funds-presets button.active,
 [data-theme="dark"] .add-funds-presets .preset-btn.active {
-  border-color: var(--primary);
-  background: rgba(227, 10, 23, .2);
-  color: #ff9aa5;
+  border-color: #ff5566;
+  background: rgba(227, 10, 23, 0.28);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 85, 102, 0.45), 0 2px 8px rgba(227, 10, 23, 0.25);
 }
 [data-theme="dark"] .add-funds-banner {
   background: rgba(56, 189, 248, .08);
@@ -618,23 +625,34 @@ body.theme-dark .pay-summary .pay-coin-pill {
   background: #1a1416;
 }
 body.theme-dark .add-funds-presets button,
-body.theme-dark .add-funds-presets .preset-btn {
-  background: #1a1416;
-  color: #f0e9eb;
-  border-color: rgba(255, 255, 255, .14);
+body.theme-dark .add-funds-presets .preset-btn,
+body.panel-follows.theme-dark .add-funds-presets button,
+body.panel-follows.theme-dark .add-funds-presets .preset-btn {
+  background: #2a2226;
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 body.theme-dark .add-funds-presets button:hover,
-body.theme-dark .add-funds-presets .preset-btn:hover {
-  border-color: var(--primary);
-  color: #ff8a96;
-  background: rgba(227, 10, 23, .12);
+body.theme-dark .add-funds-presets .preset-btn:hover,
+body.panel-follows.theme-dark .add-funds-presets button:hover,
+body.panel-follows.theme-dark .add-funds-presets .preset-btn:hover {
+  border-color: #ff6b7a;
+  color: #ffb3bb;
+  background: rgba(227, 10, 23, 0.18);
 }
 body.theme-dark .add-funds-presets button.active,
-body.theme-dark .add-funds-presets .preset-btn.active {
-  border-color: var(--primary);
-  background: rgba(227, 10, 23, .22);
-  color: #ff9aa5;
-  box-shadow: 0 0 0 1px rgba(227, 10, 23, .35);
+body.theme-dark .add-funds-presets .preset-btn.active,
+body.panel-follows.theme-dark .add-funds-presets button.active,
+body.panel-follows.theme-dark .add-funds-presets .preset-btn.active {
+  border-color: #ff5566;
+  background: rgba(227, 10, 23, 0.28);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 85, 102, 0.45), 0 2px 8px rgba(227, 10, 23, 0.25);
+}
+body.panel-follows.theme-dark .af-amount-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 body.theme-dark .add-funds-banner {
   background: rgba(56, 189, 248, .08);
