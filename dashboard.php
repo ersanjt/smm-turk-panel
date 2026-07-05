@@ -13,7 +13,13 @@ if (!$auth->isLoggedIn()) {
 $pageTitle = 'New Order';
 $db = Database::getInstance();
 $om = new OrderManager();
-$userBalance = (float)($db->fetch("SELECT balance FROM users WHERE id = ?", [$auth->getUserId()])['balance'] ?? 0);
+$revenue = new RevenueEngine();
+$userId = (int) $auth->getUserId();
+$userBalance = (float)($db->fetch("SELECT balance FROM users WHERE id = ?", [$userId])['balance'] ?? 0);
+$vip = $revenue->vipTier($userId);
+$promo = $revenue->promoBanner();
+$depositBonusPct = (float) ($db->getSetting('deposit_bonus_percent') ?: 0);
+$hasChildPanel = (int) ($db->fetch("SELECT COUNT(*) c FROM child_panels WHERE user_id = ? AND status != 'cancelled'", [$userId])['c'] ?? 0) > 0;
 
 $message = '';
 $error   = '';
@@ -23,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $serviceId = (int)($_POST['service_id'] ?? 0);
     $link      = trim($_POST['link'] ?? '');
     $quantity  = (int)($_POST['quantity'] ?? 0);
+    $coupon    = trim($_POST['coupon_code'] ?? '');
 
     if (!$serviceId || !$link || !$quantity) {
         $error = 'Please fill in all required fields.';
@@ -31,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         if ($link === '') {
             $error = 'Please enter a valid link (e.g. https://instagram.com/username).';
         } else {
-        $result = $om->placeOrder($auth->getUserId(), $serviceId, $link, $quantity);
+        $extra = $coupon !== '' ? ['coupon' => $coupon] : [];
+        $result = $om->placeOrder($userId, $serviceId, $link, $quantity, $extra);
         if ($result['success']) {
             flash('success', "✅ Order #{$result['order_id']} placed! Charged: \${$result['charge']}");
             header('Location: ' . url('orders.php'));
@@ -147,19 +155,54 @@ if ($searchQ !== '') {
 }
 $hasServices = count($services) > 0;
 $showEmptyFilterWarning = !$hasServices && !$searchQ;
+$featuredServices = $revenue->featuredServices(8, $providerFilter ?: null);
 
 require_once __DIR__ . '/app/PlatformIcons.php';
 require_once __DIR__ . '/layouts/header.php';
 ?>
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/order.css')) ?>">
 
+<link rel="stylesheet" href="<?= h(asset_url('assets/css/order.css')) ?>">
+
+<?php require_once __DIR__ . '/partials/onboarding-strip.php'; ?>
+
 <div class="panel-promo-banner" data-reveal>
   <div>
-    <strong>🎁 Crypto deposits — fast balance credit</strong>
-    <p>Add funds via BTC, ETH, USDT and start ordering in minutes.</p>
+    <strong><?= h($promo['title']) ?></strong>
+    <p><?= h($promo['text']) ?></p>
+    <?php if ($depositBonusPct > 0): ?>
+    <p style="font-size:12px;margin-top:6px;opacity:.9;">🎁 First deposit bonus: <strong><?= number_format($depositBonusPct, 0) ?>%</strong> extra balance</p>
+    <?php endif; ?>
   </div>
-  <a href="<?= h(path('add-funds.php')) ?>" class="btn-promo">Add Funds →</a>
+  <a href="<?= h($promo['cta_url']) ?>" class="btn-promo"><?= h($promo['cta_label']) ?></a>
 </div>
+
+<?php if (!$hasChildPanel): ?>
+<div class="panel-promo-banner" style="margin-top:10px;background:linear-gradient(135deg,#1a1a2e,#16213e);" data-reveal>
+  <div>
+    <strong>🚀 Start your own SMM panel</strong>
+    <p>Resell services under your brand — earn markup on every customer order.</p>
+  </div>
+  <a href="<?= h(path('earn.php')) ?>" class="btn-promo">Earn Money →</a>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($featuredServices)): ?>
+<div class="card" style="margin-bottom:16px;" data-reveal>
+  <div class="card-title">⭐ Popular services</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <?php foreach ($featuredServices as $fs):
+        $retail = $revenue->retailRatePerThousand($fs, $userId);
+        $qs = http_build_query(array_filter(['service' => (int)$fs['service_id'], 'tier' => $tier ?: null]));
+    ?>
+    <a href="<?= h(path('dashboard.php') . ($qs ? '?' . $qs : '')) ?>" class="order-cat-pill" style="text-decoration:none;">
+      <span class="order-cat-name"><?= h(mb_substr($fs['name'], 0, 40)) ?></span>
+      <span class="order-cat-count">$<?= number_format($retail, 3) ?>/1k</span>
+    </a>
+    <?php endforeach; ?>
+  </div>
+</div>
+<?php endif; ?>
 
 <div class="page-header">
   <div>
@@ -167,7 +210,9 @@ require_once __DIR__ . '/layouts/header.php';
       <?= iconBox('plus', 'primary', 22) ?>
       <div>
         <h1 class="page-title">New Order</h1>
-        <p class="page-subtitle"><?= number_format($totalServicesCount) ?> services<?= $tier === 'one' ? ' · ' . ProviderRegistry::BRAND_ONE : ($tier === 'pro' ? ' · ' . ProviderRegistry::BRAND_PRO : '') ?> — pick tier, category, submit</p>
+        <p class="page-subtitle"><?= number_format($totalServicesCount) ?> services<?= $tier === 'one' ? ' · ' . ProviderRegistry::BRAND_ONE : ($tier === 'pro' ? ' · ' . ProviderRegistry::BRAND_PRO : '') ?>
+          <?php if ($vip['discount_percent'] > 0): ?> · <span class="badge badge-blue"><?= h($vip['name']) ?> −<?= number_format($vip['discount_percent'], 0) ?>%</span><?php endif; ?>
+        </p>
       </div>
     </div>
   </div>
@@ -266,7 +311,7 @@ echo platformFilterStrip('dashboard.php', $platform, $searchQ, $tierExtra);
 <div class="order-grid">
   <div class="card">
     <div class="card-title"><?= icon('plus', 18) ?> New Order</div>
-    <form method="POST" action="<?= h(path('dashboard.php') . (($orderQs = http_build_query(array_filter(['cat' => $selectedCat ?: null, 'platform' => $platform ?: null, 'tier' => $tier ?: null, 'q' => $searchQ ?: null]))) ? '?' . $orderQs : '')) ?>" id="order-form" data-preselect-service="<?= (int)$preselectServiceId ?>">
+    <form method="POST" action="<?= h(path('dashboard.php') . (($orderQs = http_build_query(array_filter(['cat' => $selectedCat ?: null, 'platform' => $platform ?: null, 'tier' => $tier ?: null, 'q' => $searchQ ?: null]))) ? '?' . $orderQs : '')) ?>" id="order-form" data-preselect-service="<?= (int)$preselectServiceId ?>" data-vip-discount="<?= number_format((float)$vip['discount_percent'], 2, '.', '') ?>">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
       <div class="form-group">
@@ -318,6 +363,11 @@ echo platformFilterStrip('dashboard.php', $platform, $searchQ, $tierExtra);
           <div class="lbl">Rate / 1000</div>
           <div id="rate-display">—</div>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="coupon-code">Coupon code <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input type="text" name="coupon_code" id="coupon-code" class="form-control" placeholder="SAVE10" autocomplete="off" style="text-transform:uppercase;">
       </div>
 
       <button type="submit" class="btn btn-primary btn-block" <?= !$hasServices ? 'disabled' : '' ?>>Submit</button>

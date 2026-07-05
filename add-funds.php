@@ -3,7 +3,9 @@ require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $db = Database::getInstance();
 $user = $auth->getCurrentUser();
-
+$revenue = new RevenueEngine();
+$depositBonusPct = (float) ($db->getSetting('deposit_bonus_percent') ?: 0);
+$completedDeposits = (int) $db->fetch("SELECT COUNT(*) c FROM transactions WHERE user_id = ? AND type = 'deposit' AND status = 'completed'", [$user['id']])['c'];
 $minDeposit = (float) ($db->getSetting('min_deposit') ?: 10);
 $minDeposit = $minDeposit >= 1 ? $minDeposit : 10;
 
@@ -92,6 +94,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_funds']) && csrf_
     if ($amount < $minDeposit) {
         flash('error', "Minimum deposit is \${$minDeposit}.");
         redirect(url('add-funds.php'));
+    }
+
+    $coupon = strtoupper(trim($_POST['coupon_code'] ?? ''));
+    if ($coupon !== '') {
+        $check = $revenue->validateCoupon($coupon, (int) $user['id'], 'deposit', $amount);
+        if (!$check['valid']) {
+            flash('error', $check['error'] ?? 'Invalid coupon.');
+            redirect(url('add-funds.php'));
+        }
+        $_SESSION['deposit_coupon'] = $coupon;
+    } else {
+        unset($_SESSION['deposit_coupon']);
     }
 
     if ($pendingDeposit) {
@@ -311,7 +325,11 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
     <div>
       <h1 class="af-hero-title">Add Funds</h1>
-      <p class="af-hero-sub">Top up your balance with crypto or payment gateways. Funds are credited in USD.</p>
+      <p class="af-hero-sub">Top up your balance with crypto or payment gateways. Funds are credited in USD.
+        <?php if ($depositBonusPct > 0 && $completedDeposits === 0): ?>
+        <strong style="color:var(--primary);"> First deposit: +<?= number_format($depositBonusPct, 0) ?>% bonus!</strong>
+        <?php endif; ?>
+      </p>
     </div>
   </div>
   <div class="add-funds-stats">
@@ -592,6 +610,11 @@ require_once __DIR__ . '/layouts/header.php';
             <strong id="afterBalance">$<?= number_format($currentBalance + $defaultAmount, 3) ?></strong>
           </div>
         </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px;">
+        <label class="form-label" for="deposit-coupon">Promo / coupon code <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+        <input type="text" name="coupon_code" id="deposit-coupon" class="form-control" placeholder="DEPOSIT10" autocomplete="off" style="text-transform:uppercase;">
       </div>
 
       <button type="submit" class="btn btn-primary btn-block add-funds-submit" id="addFundsSubmit">

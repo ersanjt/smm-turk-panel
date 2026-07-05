@@ -4,6 +4,17 @@ $auth->requireLogin();
 $pageTitle = 'Affiliates';
 $db   = Database::getInstance();
 $user = $auth->getCurrentUser();
+$revenue = new RevenueEngine();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify() && ($_POST['action'] ?? '') === 'payout_balance') {
+    $result = $revenue->payoutReferralEarnings((int) $user['id']);
+    if ($result['success']) {
+        flash('success', '✅ $' . number_format((float) $result['amount'], 2) . ' transferred to your balance.');
+    } else {
+        flash('error', $result['error'] ?? 'Payout failed.');
+    }
+    redirect(url('affiliates.php'));
+}
 
 $refCode = $auth->ensureReferralCode((int)$user['id']);
 $refLink = $refCode !== '' ? url('c/' . $refCode) : url('login.php') . '?mode=register';
@@ -107,7 +118,16 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
   <div class="aff-footer-note">
-    When someone registers with your link and places an order, you earn <strong><?= number_format($commission, 0) ?>%</strong> commission. Request payout via <a href="<?= h(path('tickets.php')) ?>">support ticket</a> when you reach the minimum.
+    When someone registers with your link and places an order, you earn <strong><?= number_format($commission, 0) ?>%</strong> commission.
+    <?php if ($unpaid >= $minPayout): ?>
+    <form method="POST" style="display:inline;margin-left:8px;">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+      <input type="hidden" name="action" value="payout_balance">
+      <button type="submit" class="btn btn-primary btn-sm">Transfer $<?= number_format($unpaid, 2) ?> to balance</button>
+    </form>
+    <?php else: ?>
+    Minimum payout: <strong>$<?= number_format($minPayout, 2) ?></strong> — or request via <a href="<?= h(path('tickets.php')) ?>">support ticket</a>.
+    <?php endif; ?>
   </div>
 </div>
 

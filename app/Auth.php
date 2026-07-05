@@ -66,6 +66,8 @@ class Auth {
                 Logger::log('Verification email failed for ' . $email . ': ' . ($mail->getLastError() ?? 'unknown'), 'mail');
             }
             Notify::signup($username, $email, (int) $id);
+            $this->reportChildEndUser((int) $id, $username, $email, 'pending');
+            $this->applyGrowthOnSignup((int) $id, false);
             return [
                 'success' => true,
                 'user_id' => $id,
@@ -81,6 +83,8 @@ class Auth {
 
         Notify::signup($username, $email, (int) $id);
         Notify::welcome($username, $email);
+        $this->reportChildEndUser((int) $id, $username, $email, 'active');
+        $this->applyGrowthOnSignup((int) $id, true);
 
         return ['success' => true, 'user_id' => $id, 'verify_required' => false, 'email_sent' => false];
     }
@@ -149,9 +153,10 @@ class Auth {
 
     public function login(string $email_or_username, string $password): array {
         $email_or_username = trim($email_or_username);
+        $loginEmail = str_contains($email_or_username, '@') ? strtolower($email_or_username) : $email_or_username;
         $user = $this->db->fetch(
-            "SELECT * FROM users WHERE (email = ? OR username = ?) AND status != 'banned'",
-            [$email_or_username, $email_or_username]
+            "SELECT * FROM users WHERE (LOWER(email) = ? OR username = ?) AND status != 'banned'",
+            [$loginEmail, $email_or_username]
         );
 
         if (!$user || !password_verify($password, $user['password'])) {
@@ -409,6 +414,11 @@ class Auth {
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $this->db->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
         $this->clearPasswordChangeRequirement($userId);
+        try {
+            (new ChildPanelManager())->syncChildPanelsPasswordHashForUser($userId, $hash);
+        } catch (Throwable $e) {
+            Logger::log('Child panel password sync: ' . $e->getMessage(), 'child_panel');
+        }
         return ['success' => true];
     }
 
@@ -526,9 +536,37 @@ class Auth {
         if ($user) {
             Notify::signup($username, $email, (int) $id, true);
             Notify::welcome($username, $email);
+            $this->reportChildEndUser((int) $id, $username, $email, 'active');
+            $this->applyGrowthOnSignup((int) $id, true);
             return $this->finalizeLogin($user);
         }
         return ['success' => false, 'error' => 'Could not create account'];
+    }
+
+    private function reportChildEndUser(int $userId, string $username, string $email, string $status): void
+    {
+        if (!class_exists('ChildPanelUserSync', false)) {
+            return;
+        }
+        ChildPanelUserSync::reportRegistration([
+            'user_id' => $userId,
+            'username' => $username,
+            'email' => $email,
+            'status' => $status,
+            'registered_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function applyGrowthOnSignup(int $userId, bool $grantCredit): void
+    {
+        if (!class_exists('GrowthEngine', false)) {
+            return;
+        }
+        $growth = new GrowthEngine();
+        $growth->applyUtmToUser($userId);
+        if ($grantCredit) {
+            $growth->grantWelcomeCredit($userId);
+        }
     }
 
     private function setSession(array $user): void {

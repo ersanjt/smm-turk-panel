@@ -23,6 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
                 flash('error', $result['error'] ?? 'Failed to add balance.');
             }
         }
+    } elseif ($action === 'payout_referral' && $uid) {
+        $result = (new RevenueEngine())->payoutReferralEarnings($uid, true);
+        flash($result['success'] ? 'success' : 'error', $result['success'] ? 'Referral earnings paid to balance.' : ($result['error'] ?? 'Failed.'));
     } elseif ($action === 'ban' && $uid) {
         $db->execute("UPDATE users SET status='banned' WHERE id=? AND role='user'", [$uid]);
         flash('success', "User banned.");
@@ -52,7 +55,7 @@ require_once __DIR__ . '/../layouts/header.php';
   <div style="overflow-x:auto;margin-top:16px;">
     <table class="table">
       <thead>
-        <tr><th>ID</th><th>Username</th><th>Email</th><th>Balance</th><th>Spent</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Username</th><th>Email</th><th>Balance</th><th>Spent</th><th>Referral $</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
       </thead>
       <tbody>
         <?php foreach ($users as $u): ?>
@@ -62,6 +65,7 @@ require_once __DIR__ . '/../layouts/header.php';
           <td style="font-size:12px;"><?= h($u['email']) ?></td>
           <td><strong>$<?= number_format($u['balance'], 4) ?></strong></td>
           <td>$<?= number_format($u['spent'], 4) ?></td>
+          <td>$<?= number_format((float)($u['referral_earnings'] ?? 0), 2) ?></td>
           <td>
             <span class="badge <?= $u['status']==='active' ? 'badge-green' : 'badge-red' ?>">
               <?= h($u['status']) ?>
@@ -79,6 +83,14 @@ require_once __DIR__ . '/../layouts/header.php';
                 <button type="submit" class="btn btn-success" style="padding:5px 10px;font-size:11px;">+$</button>
               </form>
               <!-- Ban/Unban -->
+              <?php if ((float)($u['referral_earnings'] ?? 0) > 0): ?>
+              <form method="POST" onsubmit="return confirm('Pay referral earnings to balance?')">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="action" value="payout_referral">
+                <input type="hidden" name="uid" value="<?= $u['id'] ?>">
+                <button type="submit" class="btn" style="padding:5px 10px;font-size:11px;">💰 Ref</button>
+              </form>
+              <?php endif; ?>
               <?php if ($u['role'] !== 'admin'): ?>
               <form method="POST" onsubmit="return confirm('Are you sure?')">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">

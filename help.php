@@ -63,6 +63,15 @@ $helpSections = [
         'icon' => 'code',
     ],
     [
+        'id' => 'earn',
+        'title' => 'Earn money',
+        'body' => 'Start a child panel on your domain, share affiliate links, or integrate our API to resell SMM services at your own prices.',
+        'items' => ['Child panel from $5/month', 'Affiliate commission on referrals', 'API for developers & agencies'],
+        'link' => path('earn.php'),
+        'link_label' => 'Earn money guide',
+        'icon' => 'funds',
+    ],
+    [
         'id' => 'support',
         'title' => __('help_section_support'),
         'body' => __('help_support_body'),

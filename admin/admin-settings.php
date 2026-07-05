@@ -18,7 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         'child_panel_whm_host','child_panel_whm_username','child_panel_whm_api_token',
         'child_panel_cpanel_user','child_panel_server_ip','child_panel_home_path',
         'child_panel_whm_port','child_panel_primary_domain','child_panel_dns_mode',
-        'child_panel_template_path'];
+        'child_panel_template_path','child_panel_min_reseller_balance',
+        'deposit_bonus_percent','deposit_bonus_first_only',
+        'revenue_vip_silver_spent','revenue_vip_silver_discount',
+        'revenue_vip_gold_spent','revenue_vip_gold_discount',
+        'revenue_vip_platinum_spent','revenue_vip_platinum_discount',
+        'dashboard_promo_title','dashboard_promo_text','dashboard_promo_cta_label','dashboard_promo_cta_url',
+        'revenue_low_balance_threshold','revenue_winback_days',
+        'signup_welcome_credit','growth_promo_bar_enabled','growth_promo_bar_text',
+        'growth_promo_bar_cta_label','growth_promo_bar_cta_url',
+        'growth_stats_boost_orders','growth_stats_boost_users'];
     foreach ($fields as $f) {
         if (!isset($_POST[$f])) {
             continue;
@@ -28,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         }
         $db->setSetting($f, trim($_POST[$f]));
     }
-    foreach (['provider_smmfa_enabled','payment_smmpaygate_enabled','payment_heleket_enabled','payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_zarinpal_enabled','payment_cryptocloud_enabled'] as $cb) {
+    foreach (['provider_smmfa_enabled','payment_smmpaygate_enabled','payment_heleket_enabled','payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_zarinpal_enabled','payment_cryptocloud_enabled','growth_promo_bar_enabled'] as $cb) {
         if (!isset($_POST[$cb])) {
             $db->setSetting($cb, '0');
         }
@@ -260,6 +269,129 @@ require_once __DIR__ . '/../layouts/header.php';
         <div class="form-group">
           <label class="form-label">Referral Commission (%)</label>
           <input type="number" name="referral_commission" class="form-control" value="<?= s($settings,'referral_commission') ?>" min="0" step="0.5">
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:8px;">
+        <div class="form-group">
+          <label class="form-label">Referral min payout ($)</label>
+          <input type="number" name="referral_min_payout" class="form-control" value="<?= s($settings,'referral_min_payout') ?: '10' ?>" min="1" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">First deposit bonus (%)</label>
+          <input type="number" name="deposit_bonus_percent" class="form-control" value="<?= s($settings,'deposit_bonus_percent') ?: '10' ?>" min="0" max="50" step="0.5">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deposit bonus — first deposit only</label>
+        <select name="deposit_bonus_first_only" class="form-control">
+          <option value="1" <?= ($settings['deposit_bonus_first_only']??'1')==='1'?'selected':'' ?>>Yes — first deposit only</option>
+          <option value="0" <?= ($settings['deposit_bonus_first_only']??'1')==='0'?'selected':'' ?>>No — every deposit</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">📈 Traffic & signups</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">More visitors → more accounts → more deposits. Public <a href="<?= h(path('pricing.php')) ?>" style="color:var(--primary);">/pricing</a> page is indexed for Google.</p>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Welcome credit on signup ($)</label>
+          <input type="number" name="signup_welcome_credit" class="form-control" value="<?= s($settings,'signup_welcome_credit') ?: '0.50' ?>" min="0" max="5" step="0.01">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Free balance so new users can try first order without deposit. Set 0 to disable.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Promo bar on homepage</label>
+          <input type="hidden" name="growth_promo_bar_enabled" value="0">
+          <label class="checkbox-label"><input type="checkbox" name="growth_promo_bar_enabled" value="1" <?= ($settings['growth_promo_bar_enabled']??'1')==='1'?'checked':'' ?>> Show sticky promo bar</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Promo bar text</label>
+        <input type="text" name="growth_promo_bar_text" class="form-control" value="<?= s($settings,'growth_promo_bar_text') ?>" placeholder="Sign up free — get $0.50 + 10% deposit bonus!">
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Promo CTA label</label>
+          <input type="text" name="growth_promo_bar_cta_label" class="form-control" value="<?= s($settings,'growth_promo_bar_cta_label') ?: 'Create account →' ?>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Promo CTA URL</label>
+          <input type="text" name="growth_promo_bar_cta_url" class="form-control" value="<?= s($settings,'growth_promo_bar_cta_url') ?: '/login.php?mode=register' ?>">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Stats boost — orders display</label>
+          <input type="number" name="growth_stats_boost_orders" class="form-control" value="<?= s($settings,'growth_stats_boost_orders') ?: '50000' ?>" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stats boost — users display</label>
+          <input type="number" name="growth_stats_boost_users" class="form-control" value="<?= s($settings,'growth_stats_boost_users') ?: '1200' ?>" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">🏆 VIP tiers (spend-based discounts)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Users get automatic order discounts based on lifetime <code>spent</code>. <a href="<?= h(path('admin/admin-coupons.php')) ?>" style="color:var(--primary);">Manage coupons →</a></p>
+      <div class="grid3">
+        <div class="form-group">
+          <label class="form-label">Silver at spent ($)</label>
+          <input type="number" name="revenue_vip_silver_spent" class="form-control" value="<?= s($settings,'revenue_vip_silver_spent') ?: '100' ?>" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Silver discount (%)</label>
+          <input type="number" name="revenue_vip_silver_discount" class="form-control" value="<?= s($settings,'revenue_vip_silver_discount') ?: '2' ?>" min="0" max="30" step="0.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gold at spent ($)</label>
+          <input type="number" name="revenue_vip_gold_spent" class="form-control" value="<?= s($settings,'revenue_vip_gold_spent') ?: '500' ?>" min="0">
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="form-group">
+          <label class="form-label">Gold discount (%)</label>
+          <input type="number" name="revenue_vip_gold_discount" class="form-control" value="<?= s($settings,'revenue_vip_gold_discount') ?: '5' ?>" min="0" max="30" step="0.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platinum at spent ($)</label>
+          <input type="number" name="revenue_vip_platinum_spent" class="form-control" value="<?= s($settings,'revenue_vip_platinum_spent') ?: '2000' ?>" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platinum discount (%)</label>
+          <input type="number" name="revenue_vip_platinum_discount" class="form-control" value="<?= s($settings,'revenue_vip_platinum_discount') ?: '10' ?>" min="0" max="30" step="0.5">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-title">📣 Dashboard promo banner</div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" name="dashboard_promo_title" class="form-control" value="<?= s($settings,'dashboard_promo_title') ?>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Text</label>
+        <input type="text" name="dashboard_promo_text" class="form-control" value="<?= s($settings,'dashboard_promo_text') ?>">
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Button label</label>
+          <input type="text" name="dashboard_promo_cta_label" class="form-control" value="<?= s($settings,'dashboard_promo_cta_label') ?: 'Add Funds →' ?>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Button URL (path)</label>
+          <input type="text" name="dashboard_promo_cta_url" class="form-control" value="<?= s($settings,'dashboard_promo_cta_url') ?: '/add-funds.php' ?>">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Low balance email threshold ($)</label>
+          <input type="number" name="revenue_low_balance_threshold" class="form-control" value="<?= s($settings,'revenue_low_balance_threshold') ?: '5' ?>" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Win-back after days inactive</label>
+          <input type="number" name="revenue_winback_days" class="form-control" value="<?= s($settings,'revenue_winback_days') ?: '30' ?>" min="7">
         </div>
       </div>
     </div>
@@ -524,8 +656,14 @@ require_once __DIR__ . '/../layouts/header.php';
           <input type="number" name="child_panel_whm_port" class="form-control" value="<?= s($settings,'child_panel_whm_port') ?: '2087' ?>">
         </div>
       </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Min reseller balance alert ($)</label>
+        <input type="number" name="child_panel_min_reseller_balance" class="form-control" value="<?= s($settings,'child_panel_min_reseller_balance') ?: '10' ?>" min="1" step="0.01">
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Email alert once per day when a child-panel owner balance falls below this (orders use parent balance).</p>
+      </div>
       <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
-        Cron: <code>*/5 * * * * php /home/smmturk/public_html/cron-child-panels.php</code>
+        <strong>24/7 automation (one cron — replaces separate sync/deposit/child crons):</strong><br>
+        <code>*/5 * * * * php /home/smmturk/public_html/cron-master.php</code>
       </p>
     </div>
 

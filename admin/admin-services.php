@@ -5,6 +5,18 @@ $pageTitle = 'Services';
 $extraCssHref = asset_url('assets/css/admin-services.css');
 $db = Database::getInstance();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
+    $action = $_POST['action'] ?? '';
+    if ($action === 'update_service' && ($sid = (int) ($_POST['service_id'] ?? 0))) {
+        $markup = (float) ($_POST['markup'] ?? 0);
+        $featured = isset($_POST['is_featured']) ? 1 : 0;
+        $priority = (int) ($_POST['sort_priority'] ?? 0);
+        $db->execute('UPDATE services SET markup = ?, is_featured = ?, sort_priority = ? WHERE service_id = ?', [$markup, $featured, $priority, $sid]);
+        flash('success', 'Service #' . $sid . ' updated.');
+        redirect(url('admin/admin-services.php') . '?' . http_build_query(array_filter(['q' => trim($_GET['q'] ?? '') ?: null, 'cat' => trim($_GET['cat'] ?? '') ?: null, 'p' => max(1, (int) ($_GET['p'] ?? 1)) > 1 ? (int) $_GET['p'] : null])));
+    }
+}
+
 $search = trim($_GET['q'] ?? '');
 $category = trim($_GET['cat'] ?? '');
 $page = max(1, (int) ($_GET['p'] ?? 1));
@@ -155,13 +167,14 @@ require_once __DIR__ . '/../layouts/header.php';
             <th>Retail / 1k</th>
             <th>Min – Max</th>
             <th>Markup</th>
+            <th>Featured</th>
             <th>Refill</th>
           </tr>
         </thead>
         <tbody>
         <?php if (empty($services)): ?>
           <tr>
-            <td colspan="<?= $hasProviderCol ? 9 : 8 ?>">
+            <td colspan="<?= $hasProviderCol ? 10 : 9 ?>">
               <div class="admin-svc-empty">
                 <div class="admin-svc-empty-icon">📭</div>
                 <h3>No services found</h3>
@@ -198,7 +211,18 @@ require_once __DIR__ . '/../layouts/header.php';
               </span>
             </td>
             <td class="admin-svc-range"><?= number_format((int) $s['min']) ?> – <?= number_format((int) $s['max']) ?></td>
-            <td><span class="admin-svc-markup <?= $markup <= 0 ? 'zero' : '' ?>"><?= number_format($markup, 1) ?>%</span></td>
+            <td>
+              <form method="POST" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="action" value="update_service">
+                <input type="hidden" name="service_id" value="<?= (int) $s['service_id'] ?>">
+                <input type="number" name="markup" step="0.1" min="0" max="200" value="<?= number_format($markup, 1, '.', '') ?>" class="form-control" style="width:64px;padding:4px 6px;font-size:12px;">
+                <input type="number" name="sort_priority" min="0" max="999" value="<?= (int) ($s['sort_priority'] ?? 0) ?>" title="Sort priority" class="form-control" style="width:48px;padding:4px;font-size:11px;">
+                <label title="Featured on dashboard" style="font-size:11px;white-space:nowrap;"><input type="checkbox" name="is_featured" value="1" <?= !empty($s['is_featured']) ? 'checked' : '' ?>> ⭐</label>
+                <button type="submit" class="btn btn-sm" style="padding:4px 8px;font-size:11px;">Save</button>
+              </form>
+            </td>
+            <td><?= !empty($s['is_featured']) ? '⭐' : '—' ?></td>
             <td>
               <span class="admin-svc-pill <?= !empty($s['refill']) ? 'yes' : 'no' ?>">
                 <?= !empty($s['refill']) ? 'Yes' : 'No' ?>

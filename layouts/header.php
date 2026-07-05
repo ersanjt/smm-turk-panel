@@ -98,7 +98,16 @@ $ogLocale = Seo::ogLocale($dashLang);
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="sidebar-user-info">
       <div class="user-name"><?= h($user['username'] ?? '') ?></div>
-      <div class="user-bal">Balance <strong>$<?= $balance ?></strong></div>
+      <div class="user-bal">Balance <strong>$<?= $balance ?></strong>
+        <?php
+        if (!empty($user['id'])) {
+            $vipNav = (new RevenueEngine())->vipTier((int) $user['id']);
+            if ($vipNav['discount_percent'] > 0) {
+                echo ' · <span style="color:var(--primary);font-weight:700;">' . h($vipNav['name']) . '</span>';
+            }
+        }
+        ?>
+      </div>
       <span class="user-status"><?= h(ucfirst($user['status'] ?? 'active')) ?></span>
     </div>
   </a>
@@ -138,6 +147,10 @@ $ogLocale = Seo::ogLocale($dashLang);
     <a class="nav-item <?= $currentPage === 'tickets' || $currentPage === 'ticket' ? 'active' : '' ?>" href="<?= h(path('tickets.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Tickets
+    </a>
+    <a class="nav-item <?= $currentPage === 'earn' ? 'active' : '' ?>" href="<?= h(path('earn.php')) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Earn Money
     </a>
     <a class="nav-item <?= $currentPage === 'affiliates' ? 'active' : '' ?>" href="<?= h(path('affiliates.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>

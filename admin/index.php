@@ -78,6 +78,7 @@ $quickLinks = [
     ['url' => 'admin/admin-sync.php', 'label' => 'Sync Services', 'icon' => 'sync', 'style' => 'dark'],
     ['url' => 'admin/admin-tickets.php', 'label' => 'Tickets' . ($openTickets > 0 ? " ($openTickets)" : ''), 'icon' => 'tickets', 'style' => $openTickets > 0 ? 'urgent' : 'outline'],
     ['url' => 'admin/admin-deposits.php', 'label' => 'Deposits' . ($pendingDeposits > 0 ? " ($pendingDeposits)" : ''), 'icon' => 'deposit', 'style' => $pendingDeposits > 0 ? 'urgent' : 'outline'],
+    ['url' => 'admin/admin-coupons.php', 'label' => 'Coupons', 'icon' => 'clipboard', 'style' => 'outline'],
     ['url' => 'admin/admin-child-panels.php', 'label' => 'Child Panels' . ($pendingChildPanels > 0 ? " ($pendingChildPanels)" : ''), 'icon' => 'server', 'style' => $pendingChildPanels > 0 ? 'urgent' : 'outline'],
     ['url' => 'admin/admin-settings.php', 'label' => 'Settings', 'icon' => 'settings', 'style' => 'outline'],
     ['url' => 'admin/admin-mail.php', 'label' => 'Test Email', 'icon' => 'message', 'style' => 'outline'],

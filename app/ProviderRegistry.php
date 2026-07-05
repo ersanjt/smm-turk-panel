@@ -174,6 +174,13 @@ class ProviderRegistry
 
     public static function api(string $slug): ?SmmApi
     {
+        if ($slug === self::PRIMARY && defined('SMM_CHILD_PANEL') && SMM_CHILD_PANEL) {
+            $url = defined('PROVIDER_API_URL') ? trim((string) PROVIDER_API_URL) : '';
+            $key = defined('PROVIDER_API_KEY') ? trim((string) PROVIDER_API_KEY) : '';
+            if ($url !== '' && $key !== '') {
+                return new SmmApi($url, $key);
+            }
+        }
         if (!self::isEnabled($slug)) {
             return null;
         }

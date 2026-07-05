@@ -31,6 +31,17 @@ require_once __DIR__ . '/ServiceDeduper.php';
 require_once __DIR__ . '/MassOrderHelper.php';
 require_once __DIR__ . '/ChildPanelManager.php';
 require_once __DIR__ . '/ChildPanelDeployer.php';
+require_once __DIR__ . '/ChildPanelRemoteSettings.php';
+require_once __DIR__ . '/ChildPanelUserSync.php';
+require_once __DIR__ . '/ChildPanelEndUsers.php';
+require_once __DIR__ . '/ChildPanelAutomation.php';
+require_once __DIR__ . '/RevenueEngine.php';
+require_once __DIR__ . '/ChildPanelRenewal.php';
+
+RevenueEngine::ensureSchema(Database::getInstance());
+require_once __DIR__ . '/GrowthEngine.php';
+GrowthEngine::ensureSchema(Database::getInstance());
+require_once __DIR__ . '/UserOnboarding.php';
 require_once __DIR__ . '/WhmProvisioner.php';
 require_once __DIR__ . '/Seo.php';
 
@@ -53,6 +64,10 @@ if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
 $db   = Database::getInstance();
 OrderManager::ensureProviderSchema();
 $auth = new Auth();
+
+if (php_sapi_name() !== 'cli' && !$auth->isLoggedIn()) {
+    GrowthEngine::captureUtm();
+}
 
 // Security headers (web only)
 if (php_sapi_name() !== 'cli') {

@@ -652,7 +652,9 @@ class Mail
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_login', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;"><a href="' . htmlspecialchars($loginUrl) . '">' . htmlspecialchars($loginUrl) . '</a></td></tr>'
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_dashboard', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;"><a href="' . htmlspecialchars($adminUrl) . '">' . htmlspecialchars($adminUrl) . '</a></td></tr>'
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_user', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;">' . htmlspecialchars($adminUsername) . '</td></tr>'
-            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_pass', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;">' . htmlspecialchars($adminPassword) . '</td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_admin_pass', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;">'
+            . ($adminPassword !== '' ? htmlspecialchars($adminPassword) : htmlspecialchars(MailLocale::t('child_admin_pass_parent', $lang)))
+            . '</td></tr>'
             . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('child_parent_api', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;word-break:break-all;font-size:12px;">' . htmlspecialchars($parentApi) . '</td></tr>'
             . '<tr><td style="padding:8px;color:#666;">' . MailLocale::t('child_api_key', $lang) . '</td><td style="padding:8px;font-family:monospace;font-size:12px;word-break:break-all;">' . htmlspecialchars($apiKey) . '</td></tr>'
             . '</table>'
@@ -661,6 +663,81 @@ class Mail
             . $this->btn($loginUrl, MailLocale::t('btn_login', $lang))
             . $this->btn(page_url('child-panel.php'), MailLocale::t('btn_child_panel', $lang));
         return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml($domain, $inner, $lang), $lang);
+    }
+
+    public function sendResellerLowBalance(string $to, string $username, float $balance, float $minBalance, ?string $lang = null): bool
+    {
+        $lang = MailLocale::resolveLang($lang);
+        $addFunds = page_url('add-funds.php');
+        $childPanel = page_url('child-panel.php');
+        $subject = $this->subjectPrefix('Low balance — child panel orders may stop', $lang);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Your SMM Turk balance is <strong>$' . number_format($balance, 2) . '</strong>. '
+            . 'Child panel orders use your parent balance; we recommend at least <strong>$' . number_format($minBalance, 2) . '</strong>.</p>'
+            . '<p>Top up now so your customers can keep placing orders 24/7.</p>'
+            . $this->btn($addFunds, 'Add funds')
+            . $this->btn($childPanel, 'Child panel');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Low balance', $inner, $lang), $lang);
+    }
+
+    public function sendWelcomeCredit(string $to, string $username, float $amount, ?string $lang = null): bool
+    {
+        $dash = page_url('dashboard.php');
+        $funds = page_url('add-funds.php');
+        $subject = $this->subjectPrefix('Welcome — $' . number_format($amount, 2) . ' free balance', null);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Your account is ready with <strong>$' . number_format($amount, 2) . '</strong> free balance. Place your first order now!</p>'
+            . '<p>Add crypto later for bigger campaigns — first deposit bonus may apply.</p>'
+            . $this->btn($dash, 'Place first order')
+            . $this->btn($funds, 'Add funds');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Welcome', $inner, null), null);
+    }
+
+    public function sendDepositNudge(string $to, string $username, float $balance, ?string $lang = null): bool
+    {
+        $addFunds = page_url('add-funds.php');
+        $subject = $this->subjectPrefix('Your balance is low — add funds to keep ordering', null);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Your balance is <strong>$' . number_format($balance, 2) . '</strong>. Top up to avoid interrupted orders.</p>'
+            . $this->btn($addFunds, 'Add Funds');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Low balance', $inner, null), null);
+    }
+
+    public function sendWinBack(string $to, string $username, float $spent, ?string $lang = null): bool
+    {
+        $dash = page_url('dashboard.php');
+        $subject = $this->subjectPrefix('We miss you — exclusive deals inside', null);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>You have spent <strong>$' . number_format($spent, 2) . '</strong> with us. Come back and place a new order — check our featured services.</p>'
+            . $this->btn($dash, 'Place order');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Welcome back', $inner, null), null);
+    }
+
+    public function sendChildPanelRenewalReminder(string $to, string $username, string $domain, string $expiresAt, float $price, float $balance, ?string $lang = null): bool
+    {
+        $child = page_url('child-panel.php');
+        $funds = page_url('add-funds.php');
+        $subject = $this->subjectPrefix('Child panel renewal — ' . $domain, null);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Your child panel <strong>' . htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') . '</strong> renews on '
+            . htmlspecialchars($expiresAt, ENT_QUOTES, 'UTF-8') . ' ($' . number_format($price, 2) . '/month).</p>'
+            . '<p>Current balance: <strong>$' . number_format($balance, 2) . '</strong>.</p>'
+            . $this->btn($funds, 'Add funds')
+            . $this->btn($child, 'Child panel');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Renewal', $inner, null), null);
+    }
+
+    public function sendChildPanelSuspended(string $to, string $username, string $domain, float $price, ?string $lang = null): bool
+    {
+        $child = page_url('child-panel.php');
+        $funds = page_url('add-funds.php');
+        $subject = $this->subjectPrefix('Child panel suspended — ' . $domain, null);
+        $inner = '<p>Hi ' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Panel <strong>' . htmlspecialchars($domain, ENT_QUOTES, 'UTF-8') . '</strong> was suspended (insufficient balance for $' . number_format($price, 2) . ' renewal).</p>'
+            . '<p>Add funds and contact support or renew from your dashboard.</p>'
+            . $this->btn($funds, 'Add funds')
+            . $this->btn($child, 'Child panel');
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Suspended', $inner, null), null);
     }
 
     /** @return array{domain: string, ok: bool, mx: list<array{priority: int, host: string, resolves: bool, ip: string}>, hint: string, recommended_mx: string, mail_a_ip: string} */

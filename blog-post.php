@@ -127,11 +127,15 @@ require __DIR__ . '/layouts/blog-header.php';
 </article>
 
 <div class="blog-cta" style="margin-top:40px;">
+  <?php
+  $growthCta = new GrowthEngine();
+  $ctaOffers = $growthCta->offerLines();
+  ?>
   <div>
     <h3>Start using <?= h($siteName) ?> today</h3>
-    <p>Cheapest SMM services — Instagram, YouTube, TikTok. Pay with USDT, BTC, or ETH.</p>
+    <p><?= h(implode(' · ', array_slice($ctaOffers, 0, 3))) ?></p>
   </div>
-  <a href="<?= h(path('login.php')) ?>?mode=register" class="blog-cta-btn"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Get Started' ?></a>
+  <a href="<?= h(register_path()) ?>" class="blog-cta-btn"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Get Started' ?> →</a>
 </div>
 
 <a href="<?= h(path('blog')) ?>" class="blog-back-link">← <?= function_exists('__') ? h(__('blog_back')) : 'Back to Blog' ?></a>

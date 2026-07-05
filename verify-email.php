@@ -39,13 +39,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             "UPDATE users SET status = 'active', email_verification_token = NULL, email_verification_expires = NULL WHERE id = ?",
             [$user['id']]
         );
+        if (class_exists('ChildPanelUserSync', false)) {
+            ChildPanelUserSync::reportRegistration([
+                'user_id' => (int) $user['id'],
+                'username' => (string) $user['username'],
+                'email' => (string) $user['email'],
+                'status' => 'active',
+                'registered_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
         $loginResult = $auth->loginById((int)$user['id']);
         if ($loginResult['success']) {
+            $credit = (new GrowthEngine())->grantWelcomeCredit((int) $user['id']);
             Notify::welcome($user['username'], $user['email']);
             if (!empty($loginResult['needs_2fa'])) {
                 redirect(url('login-2fa.php'));
             }
-            flash('success', 'Email verified! Welcome to your dashboard.');
+            $flashMsg = 'Email verified! Welcome to your dashboard.';
+            if (!empty($credit['granted'])) {
+                $flashMsg .= ' You received $' . number_format((float) $credit['amount'], 2) . ' free balance.';
+            }
+            flash('success', $flashMsg);
             redirect($auth->postLoginRedirectUrl($loginResult));
         }
         $message = 'Email verified successfully! You can now log in.';

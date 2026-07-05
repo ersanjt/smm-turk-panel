@@ -375,6 +375,13 @@ body.theme-dark .settings-hub .card .form-label { color: #c9b4b9; }
     </div>
   </a>
 
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+    <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary btn-sm">Add Funds</a>
+    <a href="<?= h(path('dashboard.php')) ?>" class="btn btn-sm">New Order</a>
+    <a href="<?= h(path('earn.php')) ?>" class="btn btn-sm">Earn Money</a>
+    <a href="<?= h(path('orders.php')) ?>" class="btn btn-sm">Orders</a>
+  </div>
+
   <?php if ($forcePasswordChange): ?>
   <div class="alert alert-error" style="margin-bottom:20px;">
     For security, you must change the default admin password before using the panel.

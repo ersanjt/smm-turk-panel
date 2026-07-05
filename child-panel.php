@@ -5,6 +5,8 @@ $pageTitle = 'Child Panel';
 $db   = Database::getInstance();
 $user = $auth->getCurrentUser();
 $cpm  = new ChildPanelManager();
+$cprs = new ChildPanelRemoteSettings();
+$endUsers = new ChildPanelEndUsers();
 
 $price    = $cpm->monthlyPrice();
 $autoMode = $cpm->autoMode();
@@ -25,6 +27,104 @@ $currencies = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
+    if (isset($_POST['import_panel_customers'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $endUsers->importFromChildDatabase($panelId, (int) $user['id']);
+        if ($result['success']) {
+            flash('success', 'Imported ' . (int) ($result['imported'] ?? 0) . ' customers from your panel.');
+        } else {
+            flash('error', $result['error'] ?? 'Import failed.');
+        }
+        redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+    }
+
+    if (isset($_POST['save_panel_settings'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $section = trim((string) ($_POST['settings_section'] ?? ''));
+        $post = $_POST;
+
+        if ($section === 'branding') {
+            if (!empty($_FILES['upload_logo']['tmp_name'])) {
+                $up = $cprs->uploadBranding($panelId, (int) $user['id'], 'logo', $_FILES['upload_logo']);
+                if ($up['success'] && !empty($up['path'])) {
+                    $post['site_logo'] = $up['path'];
+                } elseif (!$up['success']) {
+                    flash('error', $up['error'] ?? 'Logo upload failed.');
+                    redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+                }
+            }
+            if (!empty($_FILES['upload_favicon']['tmp_name'])) {
+                $up = $cprs->uploadBranding($panelId, (int) $user['id'], 'favicon', $_FILES['upload_favicon']);
+                if ($up['success'] && !empty($up['path'])) {
+                    $post['site_favicon'] = $up['path'];
+                } elseif (!$up['success']) {
+                    flash('error', $up['error'] ?? 'Favicon upload failed.');
+                    redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+                }
+            }
+        }
+
+        $result = $cprs->saveSection($panelId, (int) $user['id'], $section, $post);
+        if ($result['success']) {
+            flash('success', 'Panel settings saved.');
+        } else {
+            flash('error', $result['error'] ?? 'Could not save settings.');
+        }
+        redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+    }
+
+    if (isset($_POST['save_panel_google'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $cprs->saveGoogleOAuth($panelId, (int) $user['id'], $_POST);
+        if ($result['success']) {
+            flash('success', 'Google login settings saved for your panel.');
+        } else {
+            flash('error', $result['error'] ?? 'Could not save Google settings.');
+        }
+        redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+    }
+
+    if (isset($_POST['change_panel_password'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $cpm->changeChildPanelLoginPassword(
+            $panelId,
+            (int) $user['id'],
+            $_POST['current_password'] ?? '',
+            $_POST['new_password'] ?? '',
+            $_POST['new_password_confirm'] ?? ''
+        );
+        if ($result['success']) {
+            flash('success', 'Panel login password updated. Use the same password on SMM Turk and all your child panels.');
+        } else {
+            flash('error', $result['error'] ?? 'Could not change password.');
+        }
+        redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+    }
+
+    if (isset($_POST['sync_parent_login'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $cpm->syncAdminFromParentAccount($panelId, (int) $user['id']);
+        if ($result['success']) {
+            flash('success', 'Panel login synced. Use your SMM Turk username (' . ($result['admin_username'] ?? '') . ') and password to sign in.');
+        } else {
+            flash('error', $result['error'] ?? 'Could not sync login.');
+        }
+        redirect(page_url('child-panel.php', ['panel' => $panelId, 'manage' => $panelId]));
+    }
+
+    if (isset($_POST['reset_admin_password'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $cpm->resetAdminLoginPassword($panelId, (int) $user['id'], true);
+        if ($result['success']) {
+            $msg = 'Admin password reset. Username: ' . ($result['admin_username'] ?? '')
+                . ' — New password: ' . ($result['admin_password'] ?? '');
+            flash('success', $msg);
+        } else {
+            flash('error', $result['error'] ?? 'Could not reset admin password.');
+        }
+        redirect(url('child-panel.php'));
+    }
+
     if (isset($_POST['cancel_order'])) {
         $panelId = (int) ($_POST['panel_id'] ?? 0);
         $result = $cpm->cancelOrder($panelId, (int) $user['id']);
@@ -86,36 +186,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     if (isset($_POST['submit_child'])) {
         $domain    = trim($_POST['domain'] ?? '');
         $currency  = trim($_POST['currency'] ?? 'USD');
-        $adminUser = trim($_POST['admin_username'] ?? '');
-        $adminPass = $_POST['admin_password'] ?? '';
-        $adminPass2 = $_POST['admin_password_confirm'] ?? '';
         $adminEmail = trim($_POST['admin_email'] ?? '');
 
-        $err = [];
         if (!in_array($currency, array_keys($currencies), true)) {
             $currency = 'USD';
-        }
-        if (strlen($adminUser) < 3) {
-            $err[] = 'Admin username must be at least 3 characters.';
-        }
-        if (strlen($adminPass) < 6) {
-            $err[] = 'Admin password must be at least 6 characters.';
-        }
-        if ($adminPass !== $adminPass2) {
-            $err[] = 'Passwords do not match.';
-        }
-
-        if (!empty($err)) {
-            flash('error', implode(' ', $err));
-            redirect(page_url('child-panel.php', ['domain' => ChildPanelManager::normalizeDomain($domain)]));
         }
 
         $result = $cpm->placeOrder(
             (int) $user['id'],
             $domain,
             $currency,
-            $adminUser,
-            $adminPass,
             $adminEmail !== '' ? $adminEmail : null
         );
 
@@ -149,6 +229,9 @@ try {
 
 $balance = (float) ($user['balance'] ?? 0);
 $canOrder = $balance >= $price;
+$hasActivePanel = !empty(array_filter($myPanels, fn($p) => ($p['status'] ?? '') === 'active' && ($p['provision_status'] ?? '') === ChildPanelManager::PROVISION_READY));
+$minResellerBalance = (float) ($db->getSetting('child_panel_min_reseller_balance') ?: 10);
+$lowBalance = $hasActivePanel && $balance < $minResellerBalance;
 $prefillDomain = ChildPanelManager::normalizeDomain((string) ($_POST['domain'] ?? $_GET['domain'] ?? ''));
 
 require_once __DIR__ . '/layouts/header.php';
@@ -213,12 +296,32 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
 .cp-panel-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
 .cp-btn-cancel { font-size:12px; padding:8px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
 .cp-btn-cancel:hover { border-color:var(--primary); color:var(--primary); }
+.cp-manage { margin-top:14px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--white); }
+body.theme-dark .cp-manage, body.panel-follows.theme-dark .cp-manage { background:#1a1416; }
+.cp-manage-head { padding:14px 16px; background:var(--bg); border-bottom:1px solid var(--border); }
+.cp-manage-head strong { display:block; font-size:14px; margin-bottom:4px; }
+.cp-manage-tabs { display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px; border-bottom:1px solid var(--border); background:var(--bg); }
+.cp-manage-tab { font-size:11px; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; font-weight:600; }
+.cp-manage-tab:hover { border-color:var(--primary); color:var(--primary); }
+.cp-manage-tab.active { background:rgba(227,10,23,.1); border-color:rgba(227,10,23,.35); color:var(--primary); }
+.cp-manage-pane { display:none; padding:16px; }
+.cp-manage-pane.active { display:block; }
+.cp-manage-form .form-label { font-size:12px; }
+.cp-gw-block { margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed var(--border); }
+.cp-gw-block:last-of-type { border-bottom:0; }
+.cp-brand-preview { margin:8px 0; padding:8px; background:var(--bg); border:1px solid var(--border); border-radius:8px; max-width:180px; }
+.cp-brand-preview img { max-width:100%; max-height:64px; display:block; }
+.cp-brand-preview-sm img { max-height:32px; }
+.cp-open-panel { margin-top:10px; }
 </style>
 
 <div class="cp-hero">
   <div class="cp-stat">
-    <div class="cp-stat-label">Your balance</div>
-    <div class="cp-stat-value <?= $canOrder ? 'ok' : 'warn' ?>">$<?= number_format($balance, 2) ?></div>
+    <div class="cp-stat-label">SMM Turk balance (for orders)</div>
+    <div class="cp-stat-value <?= $lowBalance ? 'warn' : 'ok' ?>">$<?= number_format($balance, 2) ?></div>
+    <?php if ($hasActivePanel): ?>
+    <span class="cp-status-hint">Your customers' orders use this balance via API.</span>
+    <?php endif; ?>
   </div>
   <div class="cp-stat">
     <div class="cp-stat-label">Monthly price</div>
@@ -236,12 +339,18 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
     </div>
   </div>
 </div>
+<?php if ($lowBalance): ?>
+<div class="cp-nsbox" style="background:rgba(227,10,23,.08);border-color:rgba(227,10,23,.25);color:var(--primary);margin-bottom:18px;">
+  <strong>Low balance — add funds</strong>
+  Child panel orders need SMM Turk credit. <a href="<?= h(path('add-funds.php')) ?>" style="color:inherit;font-weight:700;">Add Funds</a> (min recommended $<?= number_format($minResellerBalance, 0) ?>).
+</div>
+<?php endif; ?>
 
 <div class="grid2" style="align-items:start;gap:28px;">
   <div>
     <p class="cp-intro">
-      Launch your own white-label SMM website for <strong>$<?= number_format($price, 0) ?>/month</strong> (deducted from balance).
-      After payment, your panel is <?= $autoMode === 'instant' || $autoMode === 'whm' ? '<span class="cp-auto-badge">activated automatically</span>' : ($autoMode === 'dns' ? 'activated once nameservers are verified' : 'reviewed by our team') ?> and connected to SMM Turk — orders flow to us automatically.
+      Launch your own white-label SMM website for <strong>$<?= number_format($price, 0) ?>/month</strong>.
+      Your customers register on <em>your</em> domain and pay <em>you</em> — you keep SMM Turk balance charged so their orders are fulfilled through your API key (your income = retail price minus wholesale).
     </p>
 
     <?php if (!$canOrder): ?>
@@ -320,35 +429,21 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
 
         <?php if ($isActive):
             $panelUrl = rtrim((string) ($p['panel_url'] ?: 'https://' . $p['domain']), '/');
-            $adminPass = $cpm->getStoredAdminPassword($p);
+            $usesParentLogin = $cpm->usesParentLogin($p);
+            $loginUsername = $usesParentLogin ? ($user['username'] ?? $p['admin_username']) : $p['admin_username'];
         ?>
         <dl class="cp-connect">
           <dt>Panel URL</dt>
-          <dd><a href="<?= h($panelUrl) ?>" target="_blank" rel="noopener"><?= h($panelUrl) ?></a></dd>
-          <dt>Login (admin)</dt>
-          <dd><a href="<?= h($panelUrl . '/login') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/login') ?></a></dd>
-          <dt>Admin dashboard</dt>
-          <dd><a href="<?= h($panelUrl . '/admin') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/admin') ?></a></dd>
-          <dt>Admin username</dt>
-          <dd><code><?= h($p['admin_username']) ?></code></dd>
-          <dt>Admin password</dt>
-          <dd><code id="cp-pass-<?= (int) $p['id'] ?>"><?= $adminPass !== '' ? h($adminPass) : '— (contact support)' ?></code>
-            <?php if ($adminPass !== ''): ?>
-            <button type="button" class="btn" style="font-size:10px;padding:4px 8px;margin-left:6px;" onclick="navigator.clipboard.writeText(document.getElementById('cp-pass-<?= (int) $p['id'] ?>').textContent)">Copy</button>
-            <?php endif; ?>
+          <dd><a href="<?= h($panelUrl) ?>" target="_blank" rel="noopener"><?= h($panelUrl) ?></a>
+            <a href="<?= h($panelUrl . '/login') ?>" target="_blank" rel="noopener" class="btn" style="font-size:10px;padding:4px 10px;margin-left:8px;">Open panel →</a>
           </dd>
-          <dt>Parent API URL</dt>
-          <dd><code><?= h($parentApi) ?></code></dd>
-          <dt>API key</dt>
-          <dd><code style="word-break:break-all;"><?= h($p['panel_api_key'] ?? '') ?></code></dd>
+          <dt>Login</dt>
+          <dd><code><?= h($loginUsername) ?></code> · password = your SMM Turk password</dd>
+          <dt>Parent API</dt>
+          <dd><code style="font-size:11px;"><?= h($parentApi) ?></code></dd>
         </dl>
-        <div class="cp-dns-status ok" style="margin-top:10px;">
-          <strong>Customize your panel</strong><br>
-          1. Open <strong>Login</strong> above with admin username &amp; password.<br>
-          2. After login, open <strong>Admin Panel</strong> in the sidebar (or Admin dashboard link).<br>
-          3. Go to <strong>Admin → Settings</strong>: change <em>Site Name</em>, <em>Logo path</em>, <em>Favicon path</em>.<br>
-          4. Upload your logo via cPanel File Manager to e.g. <code>assets/img/my-logo.png</code> and set that path in Settings.
-        </div>
+
+        <?php require __DIR__ . '/partials/child-panel-manage.php'; ?>
         <?php endif; ?>
 
         <?php if ($st === 'cancelled'): ?>
@@ -414,23 +509,14 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Admin email</label>
+            <label class="form-label">Notification email</label>
             <input type="email" name="admin_email" class="form-control" value="<?= h($_POST['admin_email'] ?? $user['email'] ?? '') ?>" <?= $canOrder ? '' : 'disabled' ?>>
           </div>
         </div>
-        <div class="grid2">
-          <div class="form-group">
-            <label class="form-label">Admin username</label>
-            <input type="text" name="admin_username" class="form-control" value="<?= h($_POST['admin_username'] ?? '') ?>" minlength="3" required <?= $canOrder ? '' : 'disabled' ?>>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Admin password</label>
-            <input type="password" name="admin_password" class="form-control" minlength="6" required <?= $canOrder ? '' : 'disabled' ?>>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Confirm password</label>
-          <input type="password" name="admin_password_confirm" class="form-control" minlength="6" required <?= $canOrder ? '' : 'disabled' ?>>
+        <div class="cp-dns-status ok" style="margin-bottom:14px;font-size:13px;">
+          <strong>Panel login</strong><br>
+          You will sign in with your SMM Turk account:<br>
+          Username <code><?= h($user['username'] ?? '') ?></code> · same password as this site.
         </div>
         <div class="form-group">
           <label class="form-label">Price (charged now)</label>
@@ -448,9 +534,13 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
     <div class="cp-faq">
       <div class="cp-faq-item"><div class="cp-faq-q">What is a child panel? <span>+</span></div><div class="cp-faq-a">Your own branded SMM website. You set prices; we fulfill orders through our API. No separate hosting bill from us.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How fast is activation? <span>+</span></div><div class="cp-faq-a"><?= $autoMode === 'instant' || $autoMode === 'whm' ? 'Usually within seconds after payment. You get panel URL and API connection details on this page and by email.' : ($autoMode === 'dns' ? 'After you point nameservers to ours, click Check DNS — activation is automatic.' : 'Our team activates within 24–48 hours after reviewing your domain.') ?></div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How do I customize my panel? <span>+</span></div><div class="cp-faq-a">Everything is on this page under <strong>Manage your panel</strong>: upload logo &amp; favicon, set site name, crypto wallets, payment gateways (Heleket, Binance Pay, etc.), email SMTP, and Google sign-in — no cPanel needed.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How do I log in to my child panel? <span>+</span></div><div class="cp-faq-a">Use the <strong>same username and password</strong> as your SMM Turk account. Change password from the <strong>Login</strong> tab in Manage your panel.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">How do I connect to SMM Turk? <span>+</span></div><div class="cp-faq-a">Use the <strong>Parent API URL</strong> and <strong>API key</strong> shown on your active panel card. Standard SMM panel API format — same as ordering from this site.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Do I need hosting? <span>+</span></div><div class="cp-faq-a">You need a domain. We host the panel infrastructure; point nameservers to <?= $ns1 !== '' ? h($ns1) : 'our NS' ?><?= $ns2 !== '' ? ' and ' . h($ns2) : '' ?>.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Payment on this panel? <span>+</span></div><div class="cp-faq-a">Child panel fee is deducted from your <strong>balance</strong> (crypto via Add Funds). Your customers pay you through gateways you configure on your child panel.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How does money flow? <span>+</span></div><div class="cp-faq-a">Your customers add funds on <strong>your child panel</strong> (your payment gateways). When they order, you earn the retail price. SMM Turk deducts the <strong>wholesale cost</strong> from <strong>your SMM Turk balance</strong> — keep it charged via Add Funds.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Who sees my customers? <span>+</span></div><div class="cp-faq-a">You see them under <strong>Customers</strong> on this page. SMM Turk admin also sees all child panel registrations for support and platform oversight.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Payment on this panel? <span>+</span></div><div class="cp-faq-a">Monthly child panel fee is from your <strong>balance</strong>. Your end-customers pay you on your own panel site — configure wallets &amp; gateways in <strong>Manage your panel</strong>.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Refund policy? <span>+</span></div><div class="cp-faq-a">If your panel was not deployed yet, use <strong>Cancel order</strong> on your panel card — payment returns to your balance automatically. For live panels, contact <a href="<?= h(path('tickets.php')) ?>">support</a>.</div></div>
     </div>
   </div>
@@ -465,6 +555,27 @@ document.querySelectorAll('.cp-faq-q').forEach(function(el) {
     if (!isOpen) item.classList.add('open');
   });
 });
+
+document.querySelectorAll('.cp-manage-tab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var panelId = this.getAttribute('data-cp-panel');
+    var tab = this.getAttribute('data-cp-tab');
+    document.querySelectorAll('.cp-manage-tab[data-cp-panel="' + panelId + '"]').forEach(function(b) {
+      b.classList.toggle('active', b === btn);
+    });
+    document.querySelectorAll('.cp-manage-pane[data-cp-panel="' + panelId + '"]').forEach(function(p) {
+      p.classList.toggle('active', p.getAttribute('data-cp-pane') === tab);
+    });
+  });
+});
+
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var manage = params.get('manage') || params.get('panel');
+  if (!manage) return;
+  var root = document.getElementById('cp-manage-' + manage);
+  if (root) root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+})();
 </script>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

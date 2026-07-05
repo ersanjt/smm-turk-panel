@@ -30,6 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         } else {
             flash('error', $result['error'] ?? 'Provisioning failed.');
         }
+    } elseif ($action === 'sync_parent_login' && ($panel['status'] ?? '') === 'active') {
+        $result = $cpm->syncAdminFromParentAccount($id, null);
+        if ($result['success']) {
+            flash('success', 'Synced parent login for ' . $panel['domain'] . ' — username: ' . ($result['admin_username'] ?? ''));
+        } else {
+            flash('error', $result['error'] ?? 'Could not sync login.');
+        }
+    } elseif ($action === 'reset_admin_password' && ($panel['status'] ?? '') === 'active') {
+        $result = $cpm->resetAdminLoginPassword($id, null, true);
+        if ($result['success']) {
+            $msg = 'Admin password reset for ' . $panel['domain'] . '. Username: '
+                . ($result['admin_username'] ?? '') . ' — Password: ' . ($result['admin_password'] ?? '');
+            flash('success', $msg);
+        } else {
+            flash('error', $result['error'] ?? 'Could not reset admin password.');
+        }
     } elseif ($action === 'suspend' && $panel['status'] === 'active') {
         $db->execute("UPDATE child_panels SET status = 'suspended' WHERE id = ?", [$id]);
         flash('success', 'Child panel suspended.');
@@ -74,10 +90,10 @@ require_once __DIR__ . '/../layouts/header.php';
 <div style="max-width:1200px;">
   <div class="card" style="margin-bottom:18px;">
     <div class="card-title"><?= icon('server', 20, '', ['style' => 'vertical-align:-4px;margin-right:8px']) ?> Child panel orders</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.65;">
       Automation: <strong><?= h($autoMode) ?></strong>
       — WHM + auto-deploy <?= $cpm->provisioningEnabled() ? '<span style="color:#16a34a;">configured</span>' : '<span style="color:var(--primary);">not configured (set WHM API in Settings)</span>' ?>.
-      Cron retries DNS-waiting orders every 5 min.
+      <a href="<?= h(path('admin/admin-child-panel-users.php')) ?>" style="color:var(--primary);font-weight:700;">View all child panel customers →</a>
       <?= $pendingCount > 0 ? '<br><strong style="color:var(--primary);">' . $pendingCount . ' pending.</strong>' : '' ?>
     </p>
     <?php if (empty($panels)): ?>
@@ -141,6 +157,20 @@ require_once __DIR__ . '/../layouts/header.php';
                 <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
                 <input type="hidden" name="action" value="provision">
                 <button type="submit" class="btn btn-primary" style="padding:6px 10px;font-size:11px;"><?= $canRepair ? 'Repair deploy' : ($st === 'pending' ? 'Deploy' : 'Retry deploy') ?></button>
+              </form>
+              <?php endif; ?>
+              <?php if ($canRepair): ?>
+              <form method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
+                <input type="hidden" name="action" value="sync_parent_login">
+                <button type="submit" class="btn" style="padding:6px 10px;font-size:11px;">Sync SMM login</button>
+              </form>
+              <form method="POST" style="display:inline;" onsubmit="return confirm('Generate random admin password (legacy mode)?');">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
+                <input type="hidden" name="action" value="reset_admin_password">
+                <button type="submit" class="btn" style="padding:6px 10px;font-size:11px;">Random password</button>
               </form>
               <?php endif; ?>
               <?php if ($cpm->canCancel($p, true)): ?>

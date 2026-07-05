@@ -13,7 +13,7 @@
 DirectoryIndex home.php index.php
 
 # Block direct web access to setup/migration/cron scripts (use CLI or cron token)
-<FilesMatch "^(install-db|migrate-db|migrate-.*|seed-blog|cron-sync|cron-verify-deposits|cron-child-panels)\.php$">
+<FilesMatch "^(install-db|migrate-db|migrate-.*|seed-blog|cron-sync|cron-verify-deposits|cron-child-panels|cron-master)\.php$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

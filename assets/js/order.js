@@ -1,6 +1,16 @@
 (function () {
   'use strict';
 
+  function vipMultiplier() {
+    var form = document.getElementById('order-form');
+    var pct = form ? parseFloat(form.dataset.vipDiscount || '0') : 0;
+    return 1 - (pct / 100);
+  }
+
+  function retailRate(rate, markup) {
+    return rate * (1 + markup / 100) * vipMultiplier();
+  }
+
   function updateDesc() {
     var sel = document.getElementById('service-select');
     var descEl = document.getElementById('desc-content');
@@ -19,7 +29,7 @@
     var min = parseInt(opt.dataset.min, 10) || 0;
     var max = parseInt(opt.dataset.max, 10) || 0;
     var markup = parseFloat(opt.dataset.markup) || 0;
-    var markupRate = rate * (1 + markup / 100);
+    var markupRate = retailRate(rate, markup);
     var refill = opt.dataset.refill || 'No';
     rateEl.textContent = '$' + markupRate.toFixed(5);
     qtyHint.textContent = 'Min: ' + min.toLocaleString() + ' — Max: ' + max.toLocaleString();
@@ -76,7 +86,7 @@
     if (!opt || !opt.value) { priceEl.textContent = '$0.0000'; return; }
     var rate = parseFloat(opt.dataset.rate) || 0;
     var markup = parseFloat(opt.dataset.markup) || 0;
-    var markupRate = rate * (1 + markup / 100);
+    var markupRate = retailRate(rate, markup);
     var qty = parseFloat(orderQty.value, 10) || 0;
     priceEl.textContent = '$' + ((qty / 1000) * markupRate).toFixed(4);
   }

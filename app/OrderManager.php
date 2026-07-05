@@ -27,8 +27,14 @@ class OrderManager {
             return ['success' => false, 'error' => "Quantity must be between {$service['min']} and {$service['max']}"];
         }
 
-        $markup = 1 + ($service['markup'] / 100);
-        $charge = round(($service['rate'] / 1000) * $quantity * $markup, 4);
+        $couponCode = trim((string) ($extra['coupon'] ?? $extra['coupon_code'] ?? ''));
+        unset($extra['coupon'], $extra['coupon_code']);
+        $revenue = new RevenueEngine();
+        $pricing = $revenue->computeOrderCharge($userId, $service, $quantity, $couponCode !== '' ? $couponCode : null);
+        if ($couponCode !== '' && !empty($pricing['coupon_error']) && empty($pricing['coupon_id'])) {
+            return ['success' => false, 'error' => $pricing['coupon_error']];
+        }
+        $charge = (float) $pricing['charge'];
         $upstreamId = ProviderRegistry::upstreamServiceId($service);
         $provider = ProviderRegistry::providerForService($service);
         $orderData = array_merge(['service' => $upstreamId, 'link' => $link, 'quantity' => $quantity], $extra);
@@ -91,6 +97,16 @@ class OrderManager {
                         $this->db->execute("UPDATE users SET total_referral_earnings = total_referral_earnings + ? WHERE id = ?", [$commission, $buyer['referred_by']]);
                     } catch (Throwable $e) { /* column may not exist */ }
                 }
+            }
+
+            if (!empty($pricing['coupon_id'])) {
+                $revenue->recordCouponUse(
+                    (int) $pricing['coupon_id'],
+                    $userId,
+                    'order',
+                    (float) ($pricing['coupon_discount'] ?? 0),
+                    (int) $orderId
+                );
             }
 
             $this->db->commit();

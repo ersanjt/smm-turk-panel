@@ -9,6 +9,10 @@ if ($auth->isLoggedIn()) {
 
 $lang = Lang::initPublic();
 $db = Database::getInstance();
+$growth = new GrowthEngine();
+$stats = $growth->publicStats();
+$promoBar = $growth->promoBar();
+$offerLines = $growth->offerLines();
 $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1';
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -73,10 +77,17 @@ $homeJsonLd = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/pricing-public.css')) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 </head>
 <body data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
 <script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
+<?php if ($promoBar['enabled']): ?>
+<div class="growth-promo-bar">
+    <span><?= h($promoBar['text']) ?></span>
+    <a href="<?= h($promoBar['cta_url']) ?>"><?= h($promoBar['cta_label']) ?></a>
+</div>
+<?php endif; ?>
 
 <header class="nav" role="banner">
     <div class="nav-inner">
@@ -87,6 +98,8 @@ $homeJsonLd = [
         </a>
         <div class="nav-links">
             <a href="<?= h(route_path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
+            <a href="<?= h(path('pricing.php')) ?>">Prices</a>
+            <a href="<?= h(path('earn.php')) ?>">Earn Money</a>
             <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
             <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
             <?php if ($registrationEnabled): ?>
@@ -123,6 +136,13 @@ $homeJsonLd = [
             <span class="hero-badge"><?= h(__('hero_badge')) ?></span>
             <h1 id="hero-title"><?= h(__('hero_title')) ?><br><span class="hero-title-2"><?= h(__('hero_title_2')) ?></span></h1>
             <p class="hero-desc"><?= __('hero_desc_1') ?></p>
+            <?php if (!empty($offerLines)): ?>
+            <div class="hero-offers">
+                <?php foreach (array_slice($offerLines, 0, 4) as $offer): ?>
+                <span class="hero-offer-pill"><?= h($offer) ?></span>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="hero-desc"><?= __('hero_desc_2') ?></p>
             <p class="hero-desc"><?= __('hero_desc_3') ?></p>
         </div>
@@ -213,6 +233,32 @@ $homeJsonLd = [
             <p><?= h(__('support_24_7_desc')) ?></p>
         </div>
     </div>
+    <p style="text-align:center;margin-top:20px;"><a href="<?= h(path('pricing.php')) ?>" style="color:var(--primary);font-weight:700;">View public price list →</a></p>
+</section>
+
+<section id="earn" class="section" style="background: linear-gradient(180deg, var(--light-warm), var(--white)); padding: 60px 24px;">
+    <div class="section-label">💰 Income</div>
+    <h2 class="section-title">Earn money with SMM Turk</h2>
+    <p class="section-desc">Resell services, run your own panel, or refer friends — three ways to build income.</p>
+    <div class="benefit-grid" style="margin-top:24px;">
+        <div class="benefit-card">
+            <div class="benefit-icon"><?= iconBox('server', 'primary') ?></div>
+            <div><h3>Child Panel</h3><p>Your own SMM website on your domain. Customers pay you; you earn markup on every order.</p></div>
+        </div>
+        <div class="benefit-card">
+            <div class="benefit-icon"><?= iconBox('users', 'green') ?></div>
+            <div><h3>Affiliates</h3><p>Share your referral link and earn commission when friends place orders.</p></div>
+        </div>
+        <div class="benefit-card">
+            <div class="benefit-icon"><?= iconBox('plug', 'blue') ?></div>
+            <div><h3>API Reseller</h3><p>Connect your app or agency tools via API. Wholesale prices, your retail rates.</p></div>
+        </div>
+    </div>
+    <p style="text-align:center;margin-top:28px;">
+        <a href="<?= h(path('earn.php')) ?>" class="btn-cta">Learn how to earn →</a>
+        &nbsp;
+        <a href="<?= h(path('pricing.php')) ?>" class="btn-cta-outline" style="display:inline-block;padding:14px 28px;border:2px solid var(--primary);color:var(--primary);border-radius:12px;font-weight:700;text-decoration:none;">View prices</a>
+    </p>
 </section>
 
 <section class="section">
@@ -230,13 +276,18 @@ $homeJsonLd = [
         </div>
         <div class="stat-item">
             <div class="icon"><?= iconBox('check-circle', 'green') ?></div>
-            <div class="stat-value">59M+</div>
+            <div class="stat-value"><?= h($stats['orders']) ?></div>
             <div class="stat-label"><?= h(__('stat_orders_completed')) ?></div>
         </div>
         <div class="stat-item">
             <div class="icon"><?= iconBox('dollar', 'primary') ?></div>
-            <div class="stat-value">$0.001/1K</div>
+            <div class="stat-value"><?= h($stats['min_price']) ?></div>
             <div class="stat-label"><?= h(__('stat_prices_from')) ?></div>
+        </div>
+        <div class="stat-item">
+            <div class="icon"><?= iconBox('users', 'blue') ?></div>
+            <div class="stat-value"><?= h($stats['users']) ?></div>
+            <div class="stat-label">Active users</div>
         </div>
     </div>
 </section>

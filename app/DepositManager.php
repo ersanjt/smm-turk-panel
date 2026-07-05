@@ -132,11 +132,19 @@ class DepositManager {
             );
         }
 
+        $couponCode = null;
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $couponCode = $_SESSION['deposit_coupon'] ?? null;
+            unset($_SESSION['deposit_coupon']);
+        }
+        $bonusResult = (new RevenueEngine())->applyDepositBonus($userId, $amount, is_string($couponCode) ? $couponCode : null);
+
         return [
             'success' => true,
             'amount' => $amount,
             'balance_after' => $balanceAfter,
             'email_sent' => $emailSent,
+            'bonus' => (float) ($bonusResult['bonus'] ?? 0),
         ];
     }
 }

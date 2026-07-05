@@ -59,7 +59,7 @@ class ChildPanelDeployer
      * @param array<string, mixed> $panel
      * @return array{success: bool, error?: string, document_root?: string, db_name?: string}
      */
-    public function deploy(array $panel, string $documentRoot, string $adminPlainPassword): array
+    public function deploy(array $panel, string $documentRoot, string $adminPlainPassword = '', ?string $adminPasswordHash = null): array
     {
         $domain = ChildPanelManager::normalizeDomain((string) ($panel['domain'] ?? ''));
         $template = $this->templatePath();
@@ -116,15 +116,17 @@ class ChildPanelDeployer
         $adminOk = $this->createAdminUser(
             $dbResult['pdo'],
             (string) ($panel['admin_username'] ?? ''),
-            $adminPlainPassword,
+            $adminPasswordHash !== null && $adminPasswordHash !== '' ? $adminPasswordHash : $adminPlainPassword,
             (string) ($panel['admin_email'] ?? $panel['email'] ?? ''),
-            $apiKey
+            $apiKey,
+            $adminPasswordHash !== null && $adminPasswordHash !== ''
         );
         if (!$adminOk['success']) {
             return $adminOk;
         }
 
         $this->syncServicesFromParent($dbResult['pdo']);
+        $this->syncParentProviderSettings($dbResult['pdo'], $parentApi, $apiKey);
 
         @mkdir($documentRoot . '/storage/logs', 0755, true);
         @mkdir($documentRoot . '/uploads', 0755, true);
@@ -318,29 +320,191 @@ class ChildPanelDeployer
         return @file_put_contents($documentRoot . '/config.php', $content) !== false;
     }
 
+    /** @param list<string> $keys @return array<string, string> */
+    public function readConfigConstants(string $documentRoot, array $keys): array
+    {
+        $configPath = rtrim($documentRoot, '/\\') . '/config.php';
+        if (!is_file($configPath)) {
+            return [];
+        }
+        $content = @file_get_contents($configPath);
+        if (!is_string($content) || $content === '') {
+            return [];
+        }
+        $out = [];
+        foreach ($keys as $key) {
+            if (!preg_match("/define\('{$key}',\s*([^)]+)\)/", $content, $m)) {
+                $out[$key] = '';
+                continue;
+            }
+            $decoded = $this->decodePhpConfigValue(trim($m[1]));
+            $out[$key] = $decoded ?? '';
+        }
+        return $out;
+    }
+
+    /** @param array<string, string> $constants */
+    public function updateConfigConstants(string $documentRoot, array $constants): bool
+    {
+        $configPath = rtrim($documentRoot, '/\\') . '/config.php';
+        if (!is_file($configPath)) {
+            return false;
+        }
+        $content = @file_get_contents($configPath);
+        if (!is_string($content) || $content === '') {
+            return false;
+        }
+        foreach ($constants as $key => $value) {
+            $exported = var_export((string) $value, true);
+            if (preg_match("/define\('{$key}',\s*[^)]+\)/", $content)) {
+                $content = preg_replace(
+                    "/define\('{$key}',\s*[^)]+\)/",
+                    "define('{$key}', {$exported})",
+                    $content,
+                    1
+                );
+            }
+        }
+        return @file_put_contents($configPath, $content) !== false;
+    }
+
+    /** @return array{db_host: string, db_name: string, db_user: string, db_pass: string}|null */
+    public function readChildDbConfig(string $documentRoot): ?array
+    {
+        $configPath = rtrim($documentRoot, '/\\') . '/config.php';
+        if (!is_file($configPath)) {
+            return null;
+        }
+        $content = @file_get_contents($configPath);
+        if (!is_string($content) || $content === '') {
+            return null;
+        }
+        $out = [];
+        foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $key) {
+            if (!preg_match("/define\('{$key}',\s*([^)]+)\)/", $content, $m)) {
+                return null;
+            }
+            $decoded = $this->decodePhpConfigValue(trim($m[1]));
+            if ($decoded === null) {
+                return null;
+            }
+            $out[strtolower($key)] = $decoded;
+        }
+        return $out;
+    }
+
+    private function decodePhpConfigValue(string $raw): ?string
+    {
+        if ($raw === "''" || $raw === '""') {
+            return '';
+        }
+        $first = $raw[0] ?? '';
+        $last = $raw[strlen($raw) - 1] ?? '';
+        if (($first === "'" && $last === "'") || ($first === '"' && $last === '"')) {
+            return stripcslashes(substr($raw, 1, -1));
+        }
+        return null;
+    }
+
+    public function pdoFromDocumentRoot(string $documentRoot): ?PDO
+    {
+        $cfg = $this->readChildDbConfig($documentRoot);
+        if ($cfg === null || ($cfg['db_name'] ?? '') === '') {
+            return null;
+        }
+        try {
+            $dsn = 'mysql:host=' . ($cfg['db_host'] ?: 'localhost')
+                . ';dbname=' . $cfg['db_name'] . ';charset=utf8mb4';
+            return new PDO($dsn, $cfg['db_user'] ?? '', $cfg['db_pass'] ?? '', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ]);
+        } catch (PDOException $e) {
+            Logger::log('Child panel DB connect: ' . $e->getMessage(), 'child_panel');
+            return null;
+        }
+    }
+
     /** @return array{success: bool, error?: string} */
-    private function createAdminUser(PDO $pdo, string $username, string $password, string $email, string $apiKey): array
+    public function syncAdminUser(string $documentRoot, string $username, string $password, string $email, string $apiKey = '', bool $passwordIsHash = false): array
+    {
+        $pdo = $this->pdoFromDocumentRoot($documentRoot);
+        if ($pdo === null) {
+            return ['success' => false, 'error' => 'Could not connect to child panel database.'];
+        }
+        $result = $this->createAdminUser($pdo, $username, $password, $email, $apiKey, $passwordIsHash);
+        if ($result['success']) {
+            $this->clearLoginRateLimits($documentRoot);
+        }
+        return $result;
+    }
+
+    /** @return array{success: bool, error?: string} */
+    public function syncAdminUserHash(string $documentRoot, string $username, string $passwordHash, string $email, string $apiKey = ''): array
+    {
+        return $this->syncAdminUser($documentRoot, $username, $passwordHash, $email, $apiKey, true);
+    }
+
+    public function clearLoginRateLimits(string $documentRoot): void
+    {
+        $dir = rtrim($documentRoot, '/\\') . '/tmp/rate_limit';
+        if (!is_dir($dir)) {
+            return;
+        }
+        foreach (glob($dir . '/*.json') ?: [] as $file) {
+            @unlink($file);
+        }
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function createAdminUser(PDO $pdo, string $username, string $password, string $email, string $apiKey, bool $passwordIsHash = false): array
     {
         $username = trim($username);
         $email = trim($email);
-        if ($username === '' || strlen($password) < 6) {
+        if ($username === '') {
             return ['success' => false, 'error' => 'Invalid admin credentials for child panel.'];
+        }
+        if ($passwordIsHash) {
+            if (!preg_match('/^\$2[ayb]\$.{56}$/', $password)) {
+                return ['success' => false, 'error' => 'Invalid password hash for child panel.'];
+            }
+            $hash = $password;
+        } else {
+            if (strlen($password) < 6) {
+                return ['success' => false, 'error' => 'Invalid admin credentials for child panel.'];
+            }
+            $hash = password_hash($password, PASSWORD_DEFAULT);
         }
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'error' => 'Invalid admin email for child panel.'];
         }
         try {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare(
                 "INSERT INTO users (username, email, password, role, status, api_key, api_key_created_at, email_verification_token)
                  VALUES (?, ?, ?, 'admin', 'active', ?, NOW(), NULL)
-                 ON DUPLICATE KEY UPDATE password = VALUES(password), role = 'admin', status = 'active'"
+                 ON DUPLICATE KEY UPDATE password = VALUES(password), role = 'admin', status = 'active', email = VALUES(email), username = VALUES(username)"
             );
             $stmt->execute([$username, $email, $hash, $apiKey !== '' ? $apiKey : bin2hex(random_bytes(20))]);
         } catch (PDOException $e) {
             return ['success' => false, 'error' => 'Admin user create failed: ' . $e->getMessage()];
         }
         return ['success' => true];
+    }
+
+    private function syncParentProviderSettings(PDO $pdo, string $parentApiUrl, string $apiKey): void
+    {
+        if ($parentApiUrl === '' || $apiKey === '') {
+            return;
+        }
+        try {
+            $stmt = $pdo->prepare(
+                'INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)'
+            );
+            foreach (['api_url' => $parentApiUrl, 'api_key' => $apiKey] as $key => $value) {
+                $stmt->execute([$key, $value]);
+            }
+        } catch (PDOException $e) {
+            Logger::log('Child panel parent API settings sync: ' . $e->getMessage(), 'child_panel');
+        }
     }
 
     private function syncServicesFromParent(PDO $childPdo): void

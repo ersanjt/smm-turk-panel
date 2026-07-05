@@ -143,28 +143,296 @@ class ChildPanelManager
         );
     }
 
-    /** @return array{password: string, regenerated: bool} */
+    public function usesParentLogin(array $panel): bool
+    {
+        return trim((string) ($panel['admin_password_enc'] ?? '')) === '';
+    }
+
+    /** @return array{password: string, hash: ?string, regenerated: bool} */
     private function resolveDeployPassword(int $panelId, array $panel, ?string $provided = null): array
     {
         if ($provided !== null && $provided !== '') {
             $this->storeAdminPassword($panelId, $provided);
-            return ['password' => $provided, 'regenerated' => false];
+            return ['password' => $provided, 'hash' => null, 'regenerated' => false];
+        }
+
+        if ($this->usesParentLogin($panel)) {
+            $parent = $this->db->fetch('SELECT username, email, password FROM users WHERE id = ?', [$panel['user_id'] ?? 0]);
+            if (!empty($parent['password'])) {
+                $this->db->execute(
+                    'UPDATE child_panels SET admin_username = ?, admin_email = ?, admin_password = ? WHERE id = ?',
+                    [
+                        (string) ($parent['username'] ?? $panel['admin_username'] ?? ''),
+                        (string) ($parent['email'] ?? $panel['admin_email'] ?? ''),
+                        (string) $parent['password'],
+                        $panelId,
+                    ]
+                );
+                return ['password' => '', 'hash' => (string) $parent['password'], 'regenerated' => false];
+            }
         }
 
         $plain = self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
         if ($plain !== '') {
-            return ['password' => $plain, 'regenerated' => false];
+            return ['password' => $plain, 'hash' => null, 'regenerated' => false];
         }
 
         $plain = self::generateDeployPassword();
         $this->storeAdminPassword($panelId, $plain);
         $this->appendLog($panelId, 'Generated new admin password for deploy.');
-        return ['password' => $plain, 'regenerated' => true];
+        return ['password' => $plain, 'hash' => null, 'regenerated' => true];
     }
 
     public function getStoredAdminPassword(array $panel): string
     {
         return self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
+    }
+
+    /**
+     * @return array{success: bool, error?: string, admin_password?: string, admin_username?: string, uses_parent_login?: bool}
+     */
+    public function syncAdminFromParentAccount(int $panelId, ?int $userId = null): array
+    {
+        $panel = $this->fetchPanelForOwner($panelId, $userId);
+        if ($panel === null) {
+            return ['success' => false, 'error' => 'Panel not found.'];
+        }
+        $check = $this->assertPanelReadyForLoginSync($panel);
+        if (!$check['success']) {
+            return $check;
+        }
+
+        $parent = $this->db->fetch('SELECT username, email, password FROM users WHERE id = ?', [$panel['user_id']]);
+        if (!$parent || empty($parent['password'])) {
+            return ['success' => false, 'error' => 'Parent account not found.'];
+        }
+
+        $username = trim((string) $parent['username']);
+        $email = trim((string) $parent['email']);
+        $hash = (string) $parent['password'];
+
+        $this->db->execute(
+            'UPDATE child_panels SET admin_username = ?, admin_email = ?, admin_password = ?, admin_password_enc = NULL WHERE id = ?',
+            [$username, $email, $hash, $panelId]
+        );
+        $this->appendLog($panelId, 'Admin login synced with parent SMM Turk account.');
+
+        $sync = $this->pushAdminCredentialsToChild($panel, $username, $email, $hash, true);
+        if (!$sync['success']) {
+            return $sync;
+        }
+
+        return [
+            'success' => true,
+            'admin_username' => $username,
+            'uses_parent_login' => true,
+        ];
+    }
+
+    /**
+     * Change panel login password (also updates your SMM Turk account when using shared login).
+     *
+     * @return array{success: bool, error?: string, uses_parent_login?: bool}
+     */
+    public function changeChildPanelLoginPassword(int $panelId, int $userId, string $currentPassword, string $newPassword, string $confirmPassword): array
+    {
+        if (strlen($newPassword) < 6) {
+            return ['success' => false, 'error' => 'New password must be at least 6 characters.'];
+        }
+        if ($newPassword !== $confirmPassword) {
+            return ['success' => false, 'error' => 'New passwords do not match.'];
+        }
+
+        $panel = $this->fetchPanelForOwner($panelId, $userId);
+        if ($panel === null) {
+            return ['success' => false, 'error' => 'Panel not found.'];
+        }
+        $check = $this->assertPanelReadyForLoginSync($panel);
+        if (!$check['success']) {
+            return $check;
+        }
+
+        $parent = $this->db->fetch('SELECT username, email, password FROM users WHERE id = ?', [$userId]);
+        if (!$parent || !password_verify($currentPassword, (string) ($parent['password'] ?? ''))) {
+            return ['success' => false, 'error' => 'Current password is incorrect.'];
+        }
+
+        $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->db->execute('UPDATE users SET password = ? WHERE id = ?', [$newHash, $userId]);
+
+        $username = trim((string) $parent['username']);
+        $email = trim((string) $parent['email']);
+        $this->db->execute(
+            'UPDATE child_panels SET admin_username = ?, admin_email = ?, admin_password = ?, admin_password_enc = NULL WHERE user_id = ? AND status = ? AND provision_status = ?',
+            [$username, $email, $newHash, $userId, self::STATUS_ACTIVE, self::PROVISION_READY]
+        );
+        $this->appendLog($panelId, 'Panel login password changed (synced with SMM Turk account).');
+
+        $panels = $this->db->fetchAll(
+            'SELECT * FROM child_panels WHERE user_id = ? AND status = ? AND provision_status = ?',
+            [$userId, self::STATUS_ACTIVE, self::PROVISION_READY]
+        );
+        foreach ($panels as $childPanel) {
+            $sync = $this->pushAdminCredentialsToChild($childPanel, $username, $email, $newHash, true);
+            if (!$sync['success']) {
+                return $sync;
+            }
+        }
+
+        return ['success' => true, 'uses_parent_login' => true];
+    }
+
+    public function syncChildPanelsPasswordHashForUser(int $userId, string $passwordHash): void
+    {
+        if ($passwordHash === '') {
+            return;
+        }
+        $parent = $this->db->fetch('SELECT username, email FROM users WHERE id = ?', [$userId]);
+        if (!$parent) {
+            return;
+        }
+        $username = trim((string) $parent['username']);
+        $email = trim((string) $parent['email']);
+        $this->db->execute(
+            'UPDATE child_panels SET admin_username = ?, admin_email = ?, admin_password = ?, admin_password_enc = NULL
+             WHERE user_id = ? AND status = ? AND provision_status = ? AND (admin_password_enc IS NULL OR admin_password_enc = \'\')',
+            [$username, $email, $passwordHash, $userId, self::STATUS_ACTIVE, self::PROVISION_READY]
+        );
+        $panels = $this->db->fetchAll(
+            'SELECT * FROM child_panels WHERE user_id = ? AND status = ? AND provision_status = ? AND (admin_password_enc IS NULL OR admin_password_enc = \'\')',
+            [$userId, self::STATUS_ACTIVE, self::PROVISION_READY]
+        );
+        foreach ($panels as $panel) {
+            $this->pushAdminCredentialsToChild($panel, $username, $email, $passwordHash, true);
+        }
+    }
+
+    /**
+     * Reset child panel admin login (DB password + optional new secret). Clears login rate limits on the child site.
+     *
+     * @return array{success: bool, error?: string, admin_password?: string, admin_username?: string}
+     */
+    public function resetAdminLoginPassword(int $panelId, ?int $userId = null, bool $regenerate = true): array
+    {
+        if (!$regenerate) {
+            return $this->syncAdminFromParentAccount($panelId, $userId);
+        }
+
+        $panel = $this->fetchPanelForOwner($panelId, $userId);
+        if (!$panel) {
+            return ['success' => false, 'error' => 'Panel not found.'];
+        }
+        if (($panel['status'] ?? '') !== self::STATUS_ACTIVE) {
+            return ['success' => false, 'error' => 'Panel is not active yet.'];
+        }
+        if (($panel['provision_status'] ?? '') !== self::PROVISION_READY) {
+            return ['success' => false, 'error' => 'Panel is not fully deployed yet.'];
+        }
+
+        $documentRoot = trim((string) ($panel['document_root'] ?? ''));
+        if ($documentRoot === '') {
+            $deployer = new ChildPanelDeployer();
+            $documentRoot = $deployer->docrootForDomain((string) ($panel['domain'] ?? ''));
+        }
+        if ($documentRoot === '' || !is_dir($documentRoot)) {
+            return ['success' => false, 'error' => 'Child panel files not found on server.'];
+        }
+
+        $adminUsername = trim((string) ($panel['admin_username'] ?? ''));
+        $adminEmail = trim((string) ($panel['admin_email'] ?? $panel['email'] ?? ''));
+        if ($adminUsername === '' || $adminEmail === '') {
+            return ['success' => false, 'error' => 'Admin username or email missing on order.'];
+        }
+
+        if ($regenerate) {
+            $plain = self::generateDeployPassword();
+            $this->storeAdminPassword($panelId, $plain);
+            $this->appendLog($panelId, 'Admin login password reset.');
+        } else {
+            $plain = self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
+            if ($plain === '') {
+                $plain = self::generateDeployPassword();
+                $this->storeAdminPassword($panelId, $plain);
+                $this->appendLog($panelId, 'Generated admin password (none stored).');
+            }
+        }
+
+        $deployer = new ChildPanelDeployer();
+        $sync = $deployer->syncAdminUser(
+            $documentRoot,
+            $adminUsername,
+            $plain,
+            $adminEmail,
+            trim((string) ($panel['panel_api_key'] ?? ''))
+        );
+        if (!$sync['success']) {
+            return ['success' => false, 'error' => $sync['error'] ?? 'Could not update admin user on child panel.'];
+        }
+
+        return [
+            'success' => true,
+            'admin_password' => $plain,
+            'admin_username' => $adminUsername,
+            'uses_parent_login' => false,
+        ];
+    }
+
+    /** @return ?array<string, mixed> */
+    public function getPanelForUser(int $panelId, int $userId): ?array
+    {
+        return $this->fetchPanelForOwner($panelId, $userId);
+    }
+
+    public function appendLogPublic(int $panelId, string $line): void
+    {
+        $this->appendLog($panelId, $line);
+    }
+
+    /** @return ?array<string, mixed> */
+    private function fetchPanelForOwner(int $panelId, ?int $userId): ?array
+    {
+        $sql = 'SELECT cp.*, u.username, u.email FROM child_panels cp JOIN users u ON u.id = cp.user_id WHERE cp.id = ?';
+        $params = [$panelId];
+        if ($userId !== null) {
+            $sql .= ' AND cp.user_id = ?';
+            $params[] = $userId;
+        }
+        $panel = $this->db->fetch($sql, $params);
+        return $panel ?: null;
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function assertPanelReadyForLoginSync(array $panel): array
+    {
+        if (($panel['status'] ?? '') !== self::STATUS_ACTIVE) {
+            return ['success' => false, 'error' => 'Panel is not active yet.'];
+        }
+        if (($panel['provision_status'] ?? '') !== self::PROVISION_READY) {
+            return ['success' => false, 'error' => 'Panel is not fully deployed yet.'];
+        }
+        return ['success' => true];
+    }
+
+    /** @return array{success: bool, error?: string} */
+    private function pushAdminCredentialsToChild(array $panel, string $username, string $email, string $passwordOrHash, bool $passwordIsHash): array
+    {
+        $documentRoot = trim((string) ($panel['document_root'] ?? ''));
+        if ($documentRoot === '') {
+            $deployer = new ChildPanelDeployer();
+            $documentRoot = $deployer->docrootForDomain((string) ($panel['domain'] ?? ''));
+        }
+        if ($documentRoot === '' || !is_dir($documentRoot)) {
+            return ['success' => false, 'error' => 'Child panel files not found on server.'];
+        }
+        $deployer = new ChildPanelDeployer();
+        return $deployer->syncAdminUser(
+            $documentRoot,
+            $username,
+            $passwordOrHash,
+            $email,
+            trim((string) ($panel['panel_api_key'] ?? '')),
+            $passwordIsHash
+        );
     }
 
     /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string} */
@@ -423,8 +691,6 @@ class ChildPanelManager
         int $userId,
         string $domain,
         string $currency,
-        string $adminUsername,
-        string $adminPassword,
         ?string $adminEmail = null
     ): array {
         $domain = self::normalizeDomain($domain);
@@ -442,7 +708,7 @@ class ChildPanelManager
         }
 
         $price = $this->monthlyPrice();
-        $user = $this->db->fetch('SELECT id, username, email, balance, api_key FROM users WHERE id = ?', [$userId]);
+        $user = $this->db->fetch('SELECT id, username, email, password, balance, api_key FROM users WHERE id = ?', [$userId]);
         if (!$user) {
             return ['success' => false, 'error' => 'User not found.'];
         }
@@ -454,6 +720,14 @@ class ChildPanelManager
         if ($adminEmail === '' || !filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'error' => 'A valid admin email is required.'];
         }
+        $adminUsername = trim((string) ($user['username'] ?? ''));
+        if (strlen($adminUsername) < 3) {
+            return ['success' => false, 'error' => 'Your account username is too short for panel login.'];
+        }
+        $parentPasswordHash = (string) ($user['password'] ?? '');
+        if ($parentPasswordHash === '') {
+            return ['success' => false, 'error' => 'Account password missing.'];
+        }
 
         $mode = $this->autoMode();
         $initialStatus = self::STATUS_PENDING;
@@ -463,7 +737,8 @@ class ChildPanelManager
             default => self::PROVISION_QUEUED,
         };
 
-        $passwordEnc = self::encryptSecret($adminPassword);
+        $passwordEnc = null;
+
         $cancelledRow = $this->db->fetch(
             'SELECT id FROM child_panels WHERE domain = ? AND user_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
             [$domain, $userId, self::STATUS_CANCELLED]
@@ -500,7 +775,7 @@ class ChildPanelManager
                     [
                         $currency,
                         $adminUsername,
-                        password_hash($adminPassword, PASSWORD_DEFAULT),
+                        $parentPasswordHash,
                         $passwordEnc,
                         $adminEmail,
                         $price,
@@ -522,7 +797,7 @@ class ChildPanelManager
                         $domain,
                         $currency,
                         $adminUsername,
-                        password_hash($adminPassword, PASSWORD_DEFAULT),
+                        $parentPasswordHash,
                         $passwordEnc,
                         $adminEmail,
                         $price,
@@ -612,6 +887,7 @@ class ChildPanelManager
 
         $passwordMeta = $this->resolveDeployPassword($panelId, $panel, $adminPlainPassword);
         $adminPlainPassword = $passwordMeta['password'];
+        $adminPasswordHash = $passwordMeta['hash'];
 
         if ($this->provisioningEnabled()) {
             $whm = new WhmProvisioner();
@@ -638,9 +914,9 @@ class ChildPanelManager
                 $this->appendLog($panelId, 'Local deploy path: ' . $documentRoot);
             }
 
-            if ($deployError === null && $documentRoot !== '' && $adminPlainPassword !== '') {
+            if ($deployError === null && $documentRoot !== '' && ($adminPlainPassword !== '' || ($adminPasswordHash ?? '') !== '')) {
                 $deployer = new ChildPanelDeployer();
-                $deploy = $deployer->deploy($panel, $documentRoot, $adminPlainPassword);
+                $deploy = $deployer->deploy($panel, $documentRoot, $adminPlainPassword, $adminPasswordHash);
                 if (!$deploy['success']) {
                     $deployError = $deploy['error'] ?? 'Deploy failed';
                     $this->appendLog($panelId, 'Deploy error: ' . $deployError);
@@ -648,7 +924,7 @@ class ChildPanelManager
                     $documentRoot = $deploy['document_root'] ?? $documentRoot;
                     $this->appendLog($panelId, 'Files deployed to ' . $documentRoot);
                 }
-            } elseif ($deployError === null && $adminPlainPassword === '') {
+            } elseif ($deployError === null && $adminPlainPassword === '' && ($adminPasswordHash ?? '') === '') {
                 $deployError = 'Could not resolve admin password for deploy.';
             }
         } else {
@@ -707,6 +983,7 @@ class ChildPanelManager
         if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
             try {
                 $mail = new Mail();
+                $mailPassword = $this->usesParentLogin($panel) ? '' : $adminPlainPassword;
                 $mail->sendChildPanelReady(
                     $to,
                     (string) $panel['username'],
@@ -715,7 +992,7 @@ class ChildPanelManager
                     $parentApi,
                     $apiKey,
                     (string) $panel['admin_username'],
-                    $adminPlainPassword
+                    $mailPassword
                 );
             } catch (Throwable $e) {
                 Logger::log('Child panel email failed #' . $panelId . ': ' . $e->getMessage(), 'mail');

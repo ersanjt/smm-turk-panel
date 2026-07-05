@@ -38,6 +38,7 @@ if ($apiRateLimit->isLimited()) {
 $apiRateLimit->recordAttempt();
 
 $om  = new OrderManager();
+$revenue = new RevenueEngine();
 
 switch ($action) {
 
@@ -52,7 +53,7 @@ switch ($action) {
                 'name'     => $s['name'],
                 'type'     => $s['type'] ?? 'Default',
                 'category' => $s['category'] ?? '',
-                'rate'     => number_format((float)$s['rate'] * (1 + (float)($s['markup'] ?? 0) / 100), 5),
+                'rate'     => number_format($revenue->retailRatePerThousand($s, (int) $user['id']), 5),
                 'min'      => (string)$s['min'],
                 'max'      => (string)$s['max'],
                 'refill'   => (bool)$s['refill'],
@@ -69,6 +70,7 @@ switch ($action) {
         $extra     = [];
         if (isset($_POST['runs']) && $_POST['runs'] !== '') $extra['runs'] = (int)$_POST['runs'];
         if (isset($_POST['interval']) && $_POST['interval'] !== '') $extra['interval'] = (int)$_POST['interval'];
+        if (!empty($_POST['coupon'])) $extra['coupon'] = trim((string) $_POST['coupon']);
 
         if (!$serviceId || !$link || !$quantity) {
             http_response_code(400);
@@ -298,6 +300,23 @@ switch ($action) {
             }
         }
         echo json_encode($out);
+        break;
+
+    case 'child_user_register':
+        $panelDomain = ChildPanelManager::normalizeDomain(trim((string) ($_POST['panel_domain'] ?? '')));
+        $localUserId = (int) ($_POST['local_user_id'] ?? 0);
+        $username = trim((string) ($_POST['username'] ?? ''));
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+        $euStatus = trim((string) ($_POST['status'] ?? 'active'));
+        $registeredAt = trim((string) ($_POST['registered_at'] ?? ''));
+        $registry = new ChildPanelEndUsers();
+        $reg = $registry->registerFromApi($key, $panelDomain, $localUserId, $username, $email, $euStatus, $registeredAt !== '' ? $registeredAt : null);
+        if ($reg['success']) {
+            echo json_encode(['success' => true]);
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => $reg['error'] ?? 'Registration sync failed']);
+        }
         break;
 
     default:
