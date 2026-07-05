@@ -65,6 +65,7 @@ class Auth {
             if (!$emailSent) {
                 Logger::log('Verification email failed for ' . $email . ': ' . ($mail->getLastError() ?? 'unknown'), 'mail');
             }
+            Notify::signup($username, $email, (int) $id);
             return [
                 'success' => true,
                 'user_id' => $id,
@@ -77,6 +78,9 @@ class Auth {
             "INSERT INTO users (username, email, password, referral_code, referred_by, api_key, status) VALUES (?, ?, ?, ?, ?, ?, 'active')",
             [$username, $email, $hashed, $ref_code, $referred_by, $api_key]
         );
+
+        Notify::signup($username, $email, (int) $id);
+        Notify::welcome($username, $email);
 
         return ['success' => true, 'user_id' => $id, 'verify_required' => false, 'email_sent' => false];
     }
@@ -520,6 +524,8 @@ class Auth {
         );
         $user = $this->db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
         if ($user) {
+            Notify::signup($username, $email, (int) $id, true);
+            Notify::welcome($username, $email);
             return $this->finalizeLogin($user);
         }
         return ['success' => false, 'error' => 'Could not create account'];

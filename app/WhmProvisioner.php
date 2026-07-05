@@ -13,13 +13,17 @@ class WhmProvisioner
 
     public function isConfigured(): bool
     {
-        return $this->apiHost() !== '' && $this->whmUser() !== '' && $this->apiToken() !== '';
+        return $this->apiHost() !== '' && $this->whmUser() !== '' && $this->apiToken() !== ''
+            && $this->cpanelUser() !== '';
     }
 
     public function cpanelUser(): string
     {
         $user = trim((string) ($this->db->getSetting('child_panel_cpanel_user') ?? ''));
-        return $user !== '' ? $user : $this->whmUser();
+        if ($user === '' || strtolower($user) === 'root') {
+            return '';
+        }
+        return $user;
     }
 
     private function apiHost(): string
@@ -52,8 +56,16 @@ class WhmProvisioner
             return ['success' => false, 'error' => 'WHM API not configured.'];
         }
 
+        $cpUser = $this->cpanelUser();
+        if ($cpUser === '') {
+            return [
+                'success' => false,
+                'error' => 'cPanel user not set — in Admin → Settings → Child Panel set cPanel user to smmturk (not root).',
+            ];
+        }
+
         $query = array_merge([
-            'cpanel_jsonapi_user' => $this->cpanelUser(),
+            'cpanel_jsonapi_user' => $cpUser,
             'cpanel_jsonapi_apiversion' => $apiVersion,
             'cpanel_jsonapi_module' => $module,
             'cpanel_jsonapi_func' => $func,
@@ -232,36 +244,111 @@ class WhmProvisioner
     {
         $baseName = preg_replace('/[^a-z0-9_]/', '', strtolower($baseName)) ?: 'cpdb';
         $baseUser = preg_replace('/[^a-z0-9_]/', '', strtolower($baseUser)) ?: $baseName;
+        $prefix = $this->cpanelUser() . '_';
 
-        $dbRes = $this->whmCpanelCall('Mysql', 'create_database', ['name' => $baseName]);
-        if (!$dbRes['success'] && stripos($dbRes['error'] ?? '', 'exists') === false) {
-            return ['success' => false, 'error' => $dbRes['error'] ?? 'create_database failed'];
+        $dbRes = $this->mysqlUapi('create_database', ['name' => $baseName]);
+        if (!$dbRes['success'] && !$this->isAlreadyExistsError($dbRes['error'] ?? '')) {
+            return ['success' => false, 'error' => 'MySQL create_database: ' . ($dbRes['error'] ?? 'failed')];
         }
 
-        $userRes = $this->whmCpanelCall('Mysql', 'create_user', [
+        $userRes = $this->mysqlUapi('create_user', [
             'name' => $baseUser,
             'password' => $password,
         ]);
-        if (!$userRes['success'] && stripos($userRes['error'] ?? '', 'exists') === false) {
-            return ['success' => false, 'error' => $userRes['error'] ?? 'create_user failed'];
+        if (!$userRes['success'] && $this->isAlreadyExistsError($userRes['error'] ?? '')) {
+            $userRes = $this->mysqlUapi('set_password', [
+                'name' => $baseUser,
+                'password' => $password,
+            ]);
+        }
+        if (!$userRes['success']) {
+            return ['success' => false, 'error' => 'MySQL create_user: ' . ($userRes['error'] ?? 'failed')];
         }
 
-        $privRes = $this->whmCpanelCall('Mysql', 'set_privileges_on_database', [
+        $privRes = $this->mysqlUapi('set_privileges_on_database', [
             'user' => $baseUser,
             'database' => $baseName,
-            'privileges' => 'ALL PRIVILEGES',
+            'privileges' => 'ALL',
         ]);
         if (!$privRes['success']) {
-            return ['success' => false, 'error' => $privRes['error'] ?? 'set_privileges failed'];
+            $privRes = $this->mysqlUapi('set_privileges_on_database', [
+                'user' => $baseUser,
+                'database' => $baseName,
+                'privileges' => 'ALL PRIVILEGES',
+            ]);
+        }
+        if (!$privRes['success']) {
+            $privRes = $this->mysqlUapi('set_all_privileges_on_database', [
+                'user' => $baseUser,
+                'database' => $baseName,
+            ]);
+        }
+        if (!$privRes['success']) {
+            return ['success' => false, 'error' => 'MySQL privileges: ' . ($privRes['error'] ?? 'set_privileges failed')];
         }
 
-        $prefix = $this->cpanelUser() . '_';
         return [
             'success' => true,
             'db_name' => $prefix . $baseName,
             'db_user' => $prefix . $baseUser,
             'db_pass' => $password,
         ];
+    }
+
+    /** @return array{success: bool, data?: mixed, error?: string, http_code?: int} */
+    private function mysqlUapi(string $func, array $params): array
+    {
+        $res = $this->whmCpanelCall('Mysql', $func, $params, 3);
+        if ($res['success'] || !$this->shouldTryMysqlFeFallback($res['error'] ?? '')) {
+            return $res;
+        }
+        return $this->mysqlFeLegacy($func, $params);
+    }
+
+    private function shouldTryMysqlFeFallback(string $error): bool
+    {
+        $error = strtolower($error);
+        return str_contains($error, 'could not find function')
+            || str_contains($error, 'unknown module');
+    }
+
+    /** @return array{success: bool, data?: mixed, error?: string, http_code?: int} */
+    private function mysqlFeLegacy(string $func, array $params): array
+    {
+        $map = [
+            'create_database' => ['func' => 'createdb', 'params' => ['db' => $params['name'] ?? '']],
+            'create_user' => ['func' => 'createdbuser', 'params' => [
+                'dbuser' => $params['name'] ?? '',
+                'password' => $params['password'] ?? '',
+            ]],
+            'set_password' => ['func' => 'passwduser', 'params' => [
+                'dbuser' => $params['name'] ?? '',
+                'password' => $params['password'] ?? '',
+            ]],
+            'set_privileges_on_database' => ['func' => 'setdbuserprivileges', 'params' => [
+                'privileges' => $params['privileges'] ?? 'ALL',
+                'dbuser' => $params['user'] ?? '',
+                'database' => $params['database'] ?? '',
+            ]],
+            'set_all_privileges_on_database' => ['func' => 'setdbuserprivileges', 'params' => [
+                'privileges' => 'ALL',
+                'dbuser' => $params['user'] ?? '',
+                'database' => $params['database'] ?? '',
+            ]],
+        ];
+        $entry = $map[$func] ?? null;
+        if ($entry === null) {
+            return ['success' => false, 'error' => 'No legacy fallback for ' . $func];
+        }
+        return $this->whmCpanelCall('MysqlFE', $entry['func'], $entry['params'], 2);
+    }
+
+    private function isAlreadyExistsError(string $error): bool
+    {
+        $error = strtolower($error);
+        return str_contains($error, 'already')
+            || str_contains($error, 'exists')
+            || str_contains($error, 'duplicate');
     }
 
     /** Request AutoSSL for addon domain (best-effort). */

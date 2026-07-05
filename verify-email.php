@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         );
         $loginResult = $auth->loginById((int)$user['id']);
         if ($loginResult['success']) {
+            Notify::welcome($user['username'], $user['email']);
             if (!empty($loginResult['needs_2fa'])) {
                 redirect(url('login-2fa.php'));
             }

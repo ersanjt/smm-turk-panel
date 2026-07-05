@@ -13,6 +13,7 @@ require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Logger.php';
 require_once __DIR__ . '/Mail.php';
 require_once __DIR__ . '/MailLocale.php';
+require_once __DIR__ . '/Notify.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Totp.php';
 require_once __DIR__ . '/SmmApi.php';

@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 }
 
 $diag = $mail->getDiagnostics();
+$incoming = $diag['incoming'] ?? $mail->getIncomingMailDiagnostics();
 $user = $auth->getCurrentUser();
 $defaultTestTo = $user['email'] ?? '';
 
@@ -45,9 +46,36 @@ require_once __DIR__ . '/../layouts/header.php';
   <div class="card" style="margin-bottom:18px;">
     <div class="card-title"><?= icon('message', 20, '', ['style' => 'vertical-align:-4px;margin-right:8px']) ?> Email diagnostics</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
-      <strong>Receiving</strong> email = create a mailbox in cPanel → Email Accounts (e.g. <code>contact@smm-turk.com</code>).<br>
+      <strong>Receiving</strong> email = fix MX in Cloudflare + create mailbox in cPanel → Email Accounts (e.g. <code>contact@smm-turk.com</code>, <code>info@smm-turk.com</code>).<br>
       <strong>Sending</strong> from the panel = configure below, then send a test.
     </p>
+
+    <?php if (!empty($incoming) && empty($incoming['ok'])): ?>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.65;">
+      <strong style="color:#b91c1c;">Incoming mail DNS broken</strong><br>
+      <?= h($incoming['hint'] ?? '') ?>
+      <?php if (!empty($incoming['mx'])): ?>
+      <ul style="margin:10px 0 0 18px;padding:0;">
+        <?php foreach ($incoming['mx'] as $mx): ?>
+        <li>MX <?= (int) ($mx['priority'] ?? 0) ?> → <code><?= h($mx['host'] ?? '') ?></code>
+          <?= !empty($mx['resolves']) ? '✓ ' . h($mx['ip'] ?? '') : '<strong style="color:#b91c1c;">✗ no A record</strong>' ?></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php endif; ?>
+      <p style="margin:12px 0 0;"><strong>Fix in Cloudflare → DNS:</strong></p>
+      <ol style="margin:8px 0 0 18px;padding:0;">
+        <li>Delete MX pointing to <code>mx.<?= h($incoming['domain'] ?? 'yourdomain.com') ?></code> (if broken).</li>
+        <li>Add MX: <code>@</code> → <code><?= h($incoming['recommended_mx'] ?? 'mail.yourdomain.com') ?></code> priority <code>0</code> or <code>10</code>.</li>
+        <li>Ensure A record: <code>mail</code> → <code><?= h($incoming['server_ip'] ?: $incoming['mail_a_ip'] ?: '92.205.182.143') ?></code> (DNS only).</li>
+        <li>In cPanel → Email Accounts, create <code>info@<?= h($incoming['domain'] ?? '') ?></code> or forward to contact@.</li>
+      </ol>
+    </div>
+    <?php elseif (!empty($incoming['ok'])): ?>
+    <p style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;font-size:13px;color:#166534;margin-bottom:16px;">
+      ✓ Incoming mail DNS OK — MX resolves to mail server.
+    </p>
+    <?php endif; ?>
+
     <table class="table" style="font-size:13px;">
       <tr><td>Mail From</td><td><code><?= h($diag['from']) ?></code></td></tr>
       <tr><td>Reply-To</td><td><code><?= h($diag['reply_to'] ?? '—') ?></code></td></tr>

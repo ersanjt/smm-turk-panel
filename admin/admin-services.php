@@ -1,11 +1,13 @@
 <?php
 require_once __DIR__ . '/_init.php';
+require_once __DIR__ . '/../app/PlatformIcons.php';
 $pageTitle = 'Services';
+$extraCssHref = asset_url('assets/css/admin-services.css');
 $db = Database::getInstance();
 
 $search = trim($_GET['q'] ?? '');
 $category = trim($_GET['cat'] ?? '');
-$page = max(1, (int)($_GET['p'] ?? 1));
+$page = max(1, (int) ($_GET['p'] ?? 1));
 $perPage = 50;
 $offset = ($page - 1) * $perPage;
 
@@ -23,80 +25,232 @@ if ($category !== '') {
 
 $total = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE $where", $params)['c'];
 $services = $db->fetchAll(
-    "SELECT * FROM services WHERE $where ORDER BY service_id ASC LIMIT $perPage OFFSET $offset",
+    "SELECT * FROM services WHERE $where ORDER BY category ASC, service_id ASC LIMIT $perPage OFFSET $offset",
     $params
 );
-$totalPages = $total ? (int)ceil($total / $perPage) : 1;
-$categories = $db->fetchAll("SELECT DISTINCT category FROM services WHERE status='active' ORDER BY category");
+$totalPages = $total ? (int) ceil($total / $perPage) : 1;
+
+$globalStats = $db->fetch(
+    "SELECT COUNT(*) AS total,
+            COUNT(DISTINCT category) AS categories,
+            COALESCE(AVG(markup), 0) AS avg_markup,
+            COALESCE(SUM(refill), 0) AS refill_count
+     FROM services WHERE status = 'active'"
+) ?: ['total' => 0, 'categories' => 0, 'avg_markup' => 0, 'refill_count' => 0];
+
+$categoryRows = $db->fetchAll(
+    "SELECT category, COUNT(*) AS cnt FROM services WHERE status = 'active' GROUP BY category ORDER BY category ASC"
+);
+
+$hasProviderCol = false;
+try {
+    $db->fetch("SELECT provider FROM services LIMIT 1");
+    $hasProviderCol = true;
+} catch (Throwable $e) {
+    /* column may not exist on older DB */
+}
+
+$svcUrl = static function (array $overrides = []) use ($search, $category, $page): string {
+    $q = array_filter([
+        'q' => $search !== '' ? $search : null,
+        'cat' => $category !== '' ? $category : null,
+        'p' => $page > 1 ? $page : null,
+    ], static fn ($v) => $v !== null && $v !== '');
+    $q = array_merge($q, array_filter($overrides, static fn ($v) => $v !== null && $v !== ''));
+    if (isset($overrides['p']) && (int) $overrides['p'] <= 1) {
+        unset($q['p']);
+    }
+    if (isset($overrides['cat']) && $overrides['cat'] === '') {
+        unset($q['cat']);
+    }
+    if (isset($overrides['q']) && $overrides['q'] === '') {
+        unset($q['q']);
+    }
+    $qs = http_build_query($q);
+    return '?' . $qs;
+};
 
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<div class="card" style="padding:0;overflow:hidden;">
-  <div style="padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <div class="card-title" style="margin:0">⭐ Services (<?= number_format($total) ?> active)</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <form method="GET" style="display:flex;gap:8px;">
-        <input type="hidden" name="cat" value="<?= h($category) ?>">
-        <input type="text" name="q" value="<?= h($search) ?>" class="form-control" style="width:200px;" placeholder="Search by name or ID…">
-        <button type="submit" class="btn btn-primary">Search</button>
-      </form>
-      <a href="<?= h(path('admin/admin-sync.php')) ?>" class="btn" style="background:var(--primary);color:#fff;">🔄 Sync from provider</a>
+<div class="admin-svc">
+  <header class="admin-svc-header">
+    <div>
+      <h1>Services catalog</h1>
+      <p>Active services synced from your provider. Search by ID or name, filter by category, or sync to refresh the list.</p>
     </div>
-  </div>
-  <div style="padding:0 20px 12px;">
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-      <a href="?<?= $search ? 'q=' . urlencode($search) . '&' : '' ?>cat=" class="badge <?= $category === '' ? 'badge-blue' : 'badge-gray' ?>" style="text-decoration:none;">All</a>
-      <?php foreach ($categories as $c): ?>
-      <a href="?cat=<?= urlencode($c['category']) ?><?= $search ? '&q=' . urlencode($search) : '' ?>" class="badge <?= $category === $c['category'] ? 'badge-blue' : 'badge-gray' ?>" style="text-decoration:none;"><?= h($c['category']) ?></a>
-      <?php endforeach; ?>
+    <div class="admin-svc-actions">
+      <a href="<?= h(path('admin/admin-sync.php')) ?>" class="btn btn-primary">Sync from provider</a>
+      <a href="<?= h(path('services.php')) ?>" class="btn" style="background:var(--bg);border:1px solid var(--border);color:var(--text);">View as user</a>
     </div>
-  </div>
-  <div style="overflow-x:auto;">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Rate</th>
-          <th>Min / Max</th>
-          <th>Markup %</th>
-          <th>Refill</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($services)): ?>
-        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No services found. <a href="<?= h(path('admin/admin-sync.php')) ?>">Sync from provider</a> first.</td></tr>
-        <?php else: ?>
-        <?php foreach ($services as $s): ?>
-        <tr>
-          <td><strong><?= (int)$s['service_id'] ?></strong></td>
-          <td style="max-width:320px;font-size:12px;"><?= h(mb_substr($s['name'], 0, 80)) ?><?= mb_strlen($s['name']) > 80 ? '…' : '' ?></td>
-          <td><?= h($s['category']) ?></td>
-          <td>$<?= number_format((float)$s['rate'], 5) ?></td>
-          <td><?= number_format($s['min']) ?> / <?= number_format($s['max']) ?></td>
-          <td><?= number_format((float)($s['markup'] ?? 0), 1) ?>%</td>
-          <td><?= !empty($s['refill']) ? 'Yes' : 'No' ?></td>
-        </tr>
-        <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
-  <?php if ($totalPages > 1): ?>
-  <div style="padding:16px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--border);">
-    <?php
-    $qs = http_build_query(array_filter(['q' => $search ?: null, 'cat' => $category ?: null]));
-    for ($i = 1; $i <= min($totalPages, 15); $i++):
-      $url = '?p=' . $i . ($qs ? '&' . $qs : '');
-    ?>
-    <a href="<?= $url ?>" class="badge <?= $i === $page ? 'badge-blue' : 'badge-gray' ?>" style="padding:5px 12px;text-decoration:none;"><?= $i ?></a>
-    <?php endfor; ?>
-  </div>
-  <?php endif; ?>
-</div>
+  </header>
 
-<p style="margin-top:16px;"><a href="<?= h(path('admin/index.php')) ?>" class="btn btn-primary" style="padding:8px 16px;">← Admin Panel</a></p>
+  <div class="admin-svc-stats">
+    <div class="admin-svc-stat">
+      <span class="admin-svc-stat-label">Active services</span>
+      <span class="admin-svc-stat-value accent"><?= number_format((int) $globalStats['total']) ?></span>
+    </div>
+    <div class="admin-svc-stat">
+      <span class="admin-svc-stat-label">Categories</span>
+      <span class="admin-svc-stat-value"><?= number_format((int) $globalStats['categories']) ?></span>
+    </div>
+    <div class="admin-svc-stat">
+      <span class="admin-svc-stat-label">Avg markup</span>
+      <span class="admin-svc-stat-value"><?= number_format((float) $globalStats['avg_markup'], 1) ?>%</span>
+    </div>
+    <div class="admin-svc-stat">
+      <span class="admin-svc-stat-label">With refill</span>
+      <span class="admin-svc-stat-value"><?= number_format((int) $globalStats['refill_count']) ?></span>
+    </div>
+  </div>
+
+  <div class="admin-svc-panel">
+    <div class="admin-svc-toolbar">
+      <form method="GET" class="admin-svc-search">
+        <?php if ($category !== ''): ?><input type="hidden" name="cat" value="<?= h($category) ?>"><?php endif; ?>
+        <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search by name or service ID…" autocomplete="off">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <?php if ($search !== '' || $category !== ''): ?>
+        <a href="?" class="btn" style="background:var(--bg);border:1px solid var(--border);color:var(--text-muted);">Clear</a>
+        <?php endif; ?>
+      </form>
+      <div class="admin-svc-meta">
+        <?php if ($search !== '' || $category !== ''): ?>
+          <?= number_format($total) ?> result<?= $total === 1 ? '' : 's' ?>
+        <?php else: ?>
+          Page <?= $page ?> of <?= $totalPages ?>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <?php if (!empty($categoryRows)): ?>
+    <div class="admin-svc-cats">
+      <div class="admin-svc-cats-scroll">
+        <a href="<?= h($svcUrl(['cat' => '', 'p' => 1])) ?>" class="admin-svc-cat <?= $category === '' ? 'active' : '' ?>">
+          All <span class="cat-count"><?= number_format((int) $globalStats['total']) ?></span>
+        </a>
+        <?php foreach ($categoryRows as $c):
+            $pKey = platformKeyFromCategory($c['category']);
+            $brandColor = platformBrandColor($pKey);
+        ?>
+        <a href="<?= h($svcUrl(['cat' => $c['category'], 'p' => 1])) ?>" class="admin-svc-cat <?= $category === $c['category'] ? 'active' : '' ?>">
+          <span class="admin-svc-cat-icon" style="color:<?= h($brandColor) ?>"><?= platformSvgBrand($pKey, 14) ?></span>
+          <?= h(ProviderRegistry::displayCategoryName($c['category'])) ?>
+          <span class="cat-count"><?= number_format((int) $c['cnt']) ?></span>
+        </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <div class="admin-svc-table-wrap">
+      <table class="admin-svc-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Service</th>
+            <th>Category</th>
+            <?php if ($hasProviderCol): ?><th>Provider</th><?php endif; ?>
+            <th>Rate / 1k</th>
+            <th>Retail / 1k</th>
+            <th>Min – Max</th>
+            <th>Markup</th>
+            <th>Refill</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php if (empty($services)): ?>
+          <tr>
+            <td colspan="<?= $hasProviderCol ? 9 : 8 ?>">
+              <div class="admin-svc-empty">
+                <div class="admin-svc-empty-icon">📭</div>
+                <h3>No services found</h3>
+                <p><?= $search !== '' || $category !== '' ? 'Try a different search or category.' : 'Sync from your provider to import services.' ?></p>
+                <a href="<?= h(path('admin/admin-sync.php')) ?>" class="btn btn-primary" style="margin-top:12px;">Sync now</a>
+              </div>
+            </td>
+          </tr>
+        <?php else: ?>
+          <?php foreach ($services as $s):
+              $markup = (float) ($s['markup'] ?? 0);
+              $rate = (float) $s['rate'];
+              $retail = round($rate * (1 + $markup / 100), 5);
+              $pKey = platformKeyFromCategory($s['category'] ?? '');
+              $brandColor = platformBrandColor($pKey);
+              $name = (string) ($s['name'] ?? '');
+          ?>
+          <tr>
+            <td><span class="admin-svc-id"><?= (int) $s['service_id'] ?></span></td>
+            <td>
+              <div class="admin-svc-name">
+                <span class="admin-svc-name-icon" style="--svc-color:<?= h($brandColor) ?>"><?= platformSvgBrand($pKey, 16) ?></span>
+                <span class="admin-svc-name-text" title="<?= h($name) ?>"><?= h(mb_strlen($name) > 72 ? mb_substr($name, 0, 72) . '…' : $name) ?></span>
+              </div>
+            </td>
+            <td class="admin-svc-cat-cell"><?= h(ProviderRegistry::displayCategoryName($s['category'] ?? '')) ?></td>
+            <?php if ($hasProviderCol): ?>
+            <td><span class="admin-svc-provider"><?= h($s['provider'] ?? 'smmfollows') ?></span></td>
+            <?php endif; ?>
+            <td><span class="admin-svc-rate">$<?= number_format($rate, 4) ?></span></td>
+            <td>
+              <span class="admin-svc-rate">$<?= number_format($retail, 4) ?>
+                <small>incl. markup</small>
+              </span>
+            </td>
+            <td class="admin-svc-range"><?= number_format((int) $s['min']) ?> – <?= number_format((int) $s['max']) ?></td>
+            <td><span class="admin-svc-markup <?= $markup <= 0 ? 'zero' : '' ?>"><?= number_format($markup, 1) ?>%</span></td>
+            <td>
+              <span class="admin-svc-pill <?= !empty($s['refill']) ? 'yes' : 'no' ?>">
+                <?= !empty($s['refill']) ? 'Yes' : 'No' ?>
+              </span>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+
+    <?php if ($totalPages > 1): ?>
+    <div class="admin-svc-pagination">
+      <div class="admin-svc-page-info">
+        Showing <?= number_format($offset + 1) ?>–<?= number_format(min($offset + $perPage, $total)) ?> of <?= number_format($total) ?>
+      </div>
+      <div class="admin-svc-page-links">
+        <?php if ($page > 1): ?>
+        <a href="<?= h($svcUrl(['p' => $page - 1])) ?>" class="admin-svc-page-btn">← Prev</a>
+        <?php else: ?>
+        <span class="admin-svc-page-btn disabled">← Prev</span>
+        <?php endif; ?>
+
+        <?php
+        $start = max(1, $page - 3);
+        $end = min($totalPages, $page + 3);
+        if ($start > 1): ?>
+        <a href="<?= h($svcUrl(['p' => 1])) ?>" class="admin-svc-page-btn">1</a>
+        <?php if ($start > 2): ?><span class="admin-svc-page-btn disabled">…</span><?php endif; ?>
+        <?php endif; ?>
+
+        <?php for ($i = $start; $i <= $end; $i++): ?>
+        <a href="<?= h($svcUrl(['p' => $i])) ?>" class="admin-svc-page-btn <?= $i === $page ? 'active' : '' ?>"><?= $i ?></a>
+        <?php endfor; ?>
+
+        <?php if ($end < $totalPages): ?>
+        <?php if ($end < $totalPages - 1): ?><span class="admin-svc-page-btn disabled">…</span><?php endif; ?>
+        <a href="<?= h($svcUrl(['p' => $totalPages])) ?>" class="admin-svc-page-btn"><?= $totalPages ?></a>
+        <?php endif; ?>
+
+        <?php if ($page < $totalPages): ?>
+        <a href="<?= h($svcUrl(['p' => $page + 1])) ?>" class="admin-svc-page-btn">Next →</a>
+        <?php else: ?>
+        <span class="admin-svc-page-btn disabled">Next →</span>
+        <?php endif; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+  </div>
+
+  <p class="admin-svc-back"><a href="<?= h(path('admin/index.php')) ?>" class="btn" style="background:var(--bg);border:1px solid var(--border);color:var(--text);">← Admin Panel</a></p>
+</div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

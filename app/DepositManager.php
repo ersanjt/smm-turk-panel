@@ -13,11 +13,34 @@ class DepositManager {
 
     /** Approve a pending crypto deposit transaction. */
     public function approvePendingDeposit(int $transactionId): array {
+        return $this->approveDeposit($transactionId, false);
+    }
+
+    /** Admin: approve a failed deposit that already has an on-chain TxHash. */
+    public function approveFailedDeposit(int $transactionId): array {
+        return $this->approveDeposit($transactionId, true);
+    }
+
+    private function approveDeposit(int $transactionId, bool $allowFailed): array {
         $tx = $this->db->fetch(
-            "SELECT id, user_id, amount, description, status FROM transactions WHERE id = ? AND type = 'deposit'",
+            "SELECT id, user_id, amount, description, reference, status FROM transactions WHERE id = ? AND type = 'deposit'",
             [$transactionId]
         );
-        if (!$tx || $tx['status'] !== 'pending') {
+        if (!$tx) {
+            return ['success' => false, 'error' => 'Deposit not found.'];
+        }
+        $status = (string) ($tx['status'] ?? '');
+        if ($status === 'completed') {
+            return ['success' => false, 'error' => 'Deposit already processed.'];
+        }
+        if ($status === 'failed') {
+            if (!$allowFailed) {
+                return ['success' => false, 'error' => 'Deposit not found or already processed.'];
+            }
+            if (trim((string) ($tx['reference'] ?? '')) === '') {
+                return ['success' => false, 'error' => 'Failed deposit has no TxHash — credit the user manually instead.'];
+            }
+        } elseif ($status !== 'pending') {
             return ['success' => false, 'error' => 'Deposit not found or already processed.'];
         }
 
@@ -46,7 +69,8 @@ class DepositManager {
                     "SELECT id, user_id, amount, status FROM transactions WHERE id = ? AND type = 'deposit' FOR UPDATE",
                     [$existingTransactionId]
                 );
-                if (!$tx || $tx['status'] !== 'pending' || (int) $tx['user_id'] !== $userId) {
+                $txStatus = (string) ($tx['status'] ?? '');
+                if (!$tx || (int) $tx['user_id'] !== $userId || !in_array($txStatus, ['pending', 'failed'], true)) {
                     $this->db->rollBack();
                     return ['success' => false, 'error' => 'Deposit not found or already processed.'];
                 }
@@ -69,7 +93,7 @@ class DepositManager {
 
             if ($existingTransactionId) {
                 $updated = $this->db->execute(
-                    "UPDATE transactions SET status = 'completed', balance_after = ? WHERE id = ? AND status = 'pending'",
+                    "UPDATE transactions SET status = 'completed', balance_after = ? WHERE id = ? AND status IN ('pending', 'failed')",
                     [$balanceAfter, $existingTransactionId]
                 );
                 if ($updated === 0) {
@@ -97,6 +121,16 @@ class DepositManager {
             $balanceAfter,
             $existingTransactionId
         );
+
+        if ($existingTransactionId) {
+            Notify::depositCredited(
+                $existingTransactionId,
+                $user['username'],
+                $user['email'],
+                $amount,
+                $balanceAfter
+            );
+        }
 
         return [
             'success' => true,

@@ -22,6 +22,11 @@ $pendingDeposit = $db->fetch(
 
 if (isset($_GET['new']) && $_GET['new'] === '1' && $_SERVER['REQUEST_METHOD'] !== 'POST' && $activeTab === 'add') {
     if ($pendingDeposit) {
+        $hasSubmittedTx = trim((string) ($pendingDeposit['reference'] ?? '')) !== '';
+        if ($hasSubmittedTx) {
+            flash('error', 'You already submitted a payment for this deposit. It cannot be cancelled — wait for confirmation or contact support with your TxHash.');
+            redirect(url('add-funds.php'));
+        }
         $db->execute(
             "UPDATE transactions SET status = 'failed' WHERE id = ? AND user_id = ? AND type = 'deposit' AND status = 'pending'",
             [$pendingDeposit['id'], $user['id']]
@@ -55,6 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_tx']) && csrf_
             if ($check['approved']) {
                 flash('success', 'Payment confirmed! Your balance has been credited.');
             } else {
+                $methodLabel = PaymentRegistry::label(PaymentRegistry::parseMethodFromDescription($fullTx['description'] ?? '') ?? '') ?: 'Crypto';
+                Notify::depositPending(
+                    (int) $fullTx['id'],
+                    $user['username'],
+                    (string) ($user['email'] ?? ''),
+                    (float) $fullTx['amount'],
+                    $methodLabel,
+                    substr($txId, 0, 100)
+                );
                 flash('success', 'Payment submitted. ' . ($check['message'] ?? 'Verifying on-chain…'));
             }
         }
@@ -108,6 +122,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_funds']) && csrf_
     }
 
     if (!empty($init['manual'])) {
+        $methodLabel = PaymentRegistry::label($method);
+        Notify::depositPending(
+            $depositId,
+            $user['username'],
+            (string) ($user['email'] ?? ''),
+            $amount,
+            $methodLabel
+        );
         if (!empty($init['heleket'])) {
             redirect(url('add-funds.php'));
         }
@@ -115,6 +137,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_funds']) && csrf_
     }
 
     if (!empty($init['redirect_url'])) {
+        $methodLabel = PaymentRegistry::label($method);
+        Notify::depositPending(
+            $depositId,
+            $user['username'],
+            (string) ($user['email'] ?? ''),
+            $amount,
+            $methodLabel
+        );
         redirect($init['redirect_url']);
     }
 

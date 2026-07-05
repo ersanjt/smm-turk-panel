@@ -108,6 +108,15 @@ class OrderManager {
                         $charge,
                         $link
                     );
+                    Notify::orderPlaced(
+                        (int) $orderId,
+                        $buyerRow['username'],
+                        $buyerRow['email'],
+                        $service['name'],
+                        $quantity,
+                        $charge,
+                        $link
+                    );
                 } catch (Throwable $e) {
                     Logger::log('Order placed email failed #' . $orderId . ': ' . $e->getMessage(), 'mail');
                 }

@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
 
     if ($action === 'provision' || ($action === 'activate' && ($panel['status'] ?? '') === 'pending')) {
         $adminPass = trim((string) ($_POST['admin_password'] ?? ''));
-        $result = $cpm->provision($id, $adminPass !== '' ? $adminPass : null);
+        $result = $cpm->provision($id, $adminPass !== '' ? $adminPass : null, true);
         if ($result['success']) {
             $msg = 'Panel provisioned for ' . $panel['domain'] . '.';
             if (!empty($result['admin_password_regenerated']) && !empty($result['admin_password'])) {

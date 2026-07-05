@@ -176,18 +176,32 @@ class ChildPanelManager
 
         $resolvedIp = $this->resolveHostIp($domain);
         $resolveOk = $serverIp !== '' && $resolvedIp === $serverIp;
+        $resolveAny = $resolvedIp !== '' && $resolvedIp !== $domain;
+        $cloudflareOk = $dnsMode === 'both' && ($aRecords !== [] || $resolveAny);
+        $serverOk = $this->domainHostedOnServer($domain);
 
         if ($dnsMode === 'ns') {
-            return $this->dnsReadyResult($nsOk, 'ns', $nsRecords, $aRecords, $resolvedIp);
+            return $this->dnsReadyResult($nsOk || $serverOk, $serverOk ? 'server' : 'ns', $nsRecords, $aRecords, $resolvedIp);
         }
         if ($dnsMode === 'a') {
-            $ready = $aOk || $resolveOk;
-            $method = $aOk ? 'a' : ($resolveOk ? 'resolve' : '');
+            $ready = $aOk || $resolveOk || $serverOk;
+            $method = $serverOk ? 'server' : ($aOk ? 'a' : ($resolveOk ? 'resolve' : ''));
             return $this->dnsReadyResult($ready, $method, $nsRecords, $aRecords, $resolvedIp);
         }
-        $ready = $nsOk || $aOk || $resolveOk;
-        $method = $nsOk ? 'ns' : ($aOk ? 'a' : ($resolveOk ? 'resolve' : ''));
+        $ready = $nsOk || $aOk || $resolveOk || $cloudflareOk || $serverOk;
+        $method = $serverOk ? 'server' : ($nsOk ? 'ns' : ($aOk ? 'a' : ($resolveOk ? 'resolve' : ($cloudflareOk ? 'cf' : ''))));
         return $this->dnsReadyResult($ready, $method, $nsRecords, $aRecords, $resolvedIp);
+    }
+
+    private function domainHostedOnServer(string $domain): bool
+    {
+        $deployer = new ChildPanelDeployer();
+        $docroot = $deployer->docrootForDomain($domain);
+        if ($docroot !== '' && is_dir($docroot)) {
+            return true;
+        }
+        $whm = new WhmProvisioner();
+        return $whm->isConfigured() && $whm->domainExistsOnAccount($domain);
     }
 
     /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string, expected_ns: list<string>, expected_ip: string, hint: string} */
@@ -267,8 +281,27 @@ class ChildPanelManager
             return array_values(array_unique($records));
         }
 
-        $url = 'https://dns.google/resolve?name=' . rawurlencode($domain) . '&type=' . rawurlencode($type);
-        $ctx = stream_context_create(['http' => ['timeout' => 5, 'user_agent' => 'SMM-Turk-ChildPanel/1.0']]);
+        $records = $this->fetchDnsOverHttps('https://dns.google/resolve', $domain, $type);
+        if ($records !== []) {
+            return $records;
+        }
+
+        return $this->fetchDnsOverHttps('https://cloudflare-dns.com/dns-query', $domain, $type);
+    }
+
+    /** @return list<string> */
+    private function fetchDnsOverHttps(string $baseUrl, string $domain, string $type): array
+    {
+        $records = [];
+        $url = $baseUrl . '?name=' . rawurlencode($domain) . '&type=' . rawurlencode($type);
+        $ctx = stream_context_create([
+            'http' => [
+                'timeout' => 5,
+                'user_agent' => 'SMM-Turk-ChildPanel/1.0',
+                'header' => "Accept: application/dns-json\r\n",
+            ],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
+        ]);
         $json = @file_get_contents($url, false, $ctx);
         if (!is_string($json) || $json === '') {
             return [];
@@ -533,7 +566,7 @@ class ChildPanelManager
     }
 
     /** @return array{success: bool, error?: string, pending_dns?: bool} */
-    public function provision(int $panelId, ?string $adminPlainPassword = null): array
+    public function provision(int $panelId, ?string $adminPlainPassword = null, bool $forceDeploy = false): array
     {
         $panel = $this->db->fetch(
             'SELECT cp.*, u.username, u.email FROM child_panels cp JOIN users u ON u.id = cp.user_id WHERE cp.id = ?',
@@ -553,16 +586,20 @@ class ChildPanelManager
         );
 
         $domain = self::normalizeDomain((string) $panel['domain']);
-        $dns = $this->checkDomainReady($domain);
-        if (!$dns['ready']) {
-            $this->appendLog($panelId, 'Waiting for DNS (' . ($dns['method'] ?: 'not detected') . ').');
-            $this->db->execute(
-                'UPDATE child_panels SET provision_status = ?, provision_error = NULL WHERE id = ?',
-                [self::PROVISION_DNS_WAIT, $panelId]
-            );
-            return ['success' => false, 'pending_dns' => true, 'error' => 'Domain DNS not ready yet. Point nameservers or A record, then retry.'];
+        if ($forceDeploy) {
+            $this->appendLog($panelId, 'DNS check skipped (admin force deploy).');
+        } else {
+            $dns = $this->checkDomainReady($domain);
+            if (!$dns['ready']) {
+                $this->appendLog($panelId, 'Waiting for DNS (' . ($dns['method'] ?: 'not detected') . ').');
+                $this->db->execute(
+                    'UPDATE child_panels SET provision_status = ?, provision_error = NULL WHERE id = ?',
+                    [self::PROVISION_DNS_WAIT, $panelId]
+                );
+                return ['success' => false, 'pending_dns' => true, 'error' => 'Domain DNS not ready yet. Point nameservers or A record, then retry.'];
+            }
+            $this->appendLog($panelId, 'DNS verified via ' . ($dns['method'] ?: 'check') . '.');
         }
-        $this->appendLog($panelId, 'DNS verified via ' . ($dns['method'] ?: 'check') . '.');
 
         $panelUrl = 'https://' . $domain;
         $documentRoot = trim((string) ($panel['document_root'] ?? ''));

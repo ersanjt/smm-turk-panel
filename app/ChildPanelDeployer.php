@@ -207,26 +207,11 @@ class ChildPanelDeployer
             $dbName = $created['db_name'] ?? $dbName;
             $dbUser = $created['db_user'] ?? $dbUser;
         } else {
-            if (defined('DB_NAME') && defined('DB_USER') && defined('DB_PASS')) {
-                $prefix = preg_replace('/[^a-z0-9_]/', '', strtolower(DB_NAME)) ?: 'smm';
-                $dbName = $prefix . '_' . $slug;
-                $dbUser = defined('DB_USER') ? DB_USER : DB_NAME;
-                $dbPass = DB_PASS;
-                try {
-                    $host = defined('DB_HOST') ? DB_HOST : 'localhost';
-                    $root = new PDO(
-                        'mysql:host=' . $host . ';charset=utf8mb4',
-                        DB_USER,
-                        DB_PASS,
-                        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-                    );
-                    $root->exec('CREATE DATABASE IF NOT EXISTS `' . str_replace('`', '``', $dbName) . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-                } catch (PDOException $e) {
-                    return ['success' => false, 'error' => 'Database create failed: ' . $e->getMessage()];
-                }
-            } else {
-                return ['success' => false, 'error' => 'WHM API or parent DB credentials required for child database.'];
-            }
+            return [
+                'success' => false,
+                'error' => 'WHM API not configured — set WHM host, username, and API token in Admin → Settings → Child Panel. '
+                    . 'On shared hosting you cannot create MySQL databases via SQL directly.',
+            ];
         }
 
         try {

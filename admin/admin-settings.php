@@ -5,7 +5,7 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $fields = ['site_name','site_url','api_key','api_url','api_key_smmfa','api_url_smmfa','provider_smmfa_enabled','markup_percent','min_deposit','referral_commission','referral_min_payout','registration_enabled','email_verification_required','maintenance_mode',
-        'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','mail_mode','smtp_encryption','mail_lang','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
+        'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from','contact_email','admin_notify_email','admin_notify_signup','admin_notify_orders','admin_notify_deposits','mail_mode','smtp_encryption','mail_lang','wallet_btc','wallet_eth','wallet_usdt_trc20','wallet_usdt_erc20','wallet_bnb','wallet_sol',
         'deposit_auto_confirm','deposit_min_confirmations','deposit_amount_tolerance','api_etherscan','api_trongrid','api_bscscan',
         'payment_smmpaygate_enabled','payment_smmpaygate_api_url','payment_smmpaygate_api_key','payment_smmpaygate_merchant_id','payment_smmpaygate_secret',
         'payment_heleket_enabled','payment_heleket_merchant_id','payment_heleket_api_key',
@@ -95,6 +95,7 @@ require_once __DIR__ . '/../layouts/header.php';
         Alternative: port <code>587</code> with encryption <strong>TLS</strong>.<br>
         Username = full email (<code>noreply@smm-turk.com</code>) · Password = mailbox password from cPanel → Email Accounts.<br>
         <strong>Mail From</strong> must match SMTP user. Use <code>contact@smm-turk.com</code> as Reply-To / contact if needed.<br>
+        <strong>Receiving mail</strong> (e.g. <code>info@smm-turk.com</code>): MX must point to <code>mail.smm-turk.com</code> with A → server IP (<code>92.205.182.143</code>). Broken MX like <code>mx.smm-turk.com</code> without A record blocks Gmail delivery.<br>
         <a href="<?= h(path('admin/admin-mail.php')) ?>" style="color:var(--primary);font-weight:700;">Send test email →</a>
       </p>
       <div class="grid2">
@@ -132,6 +133,37 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="form-group">
         <label class="form-label">Contact / Reply-To email</label>
         <input type="email" name="contact_email" class="form-control" value="<?= s($settings,'contact_email') ?>" placeholder="contact@smm-turk.com">
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <strong style="font-size:13px;">Admin notifications</strong>
+        <p style="font-size:12px;color:var(--text-muted);margin:8px 0 12px;">Get an email when users sign up, place orders, or request deposits. User emails are sent separately.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Admin notify email</label>
+        <input type="email" name="admin_notify_email" class="form-control" value="<?= s($settings,'admin_notify_email') ?>" placeholder="Leave empty = use Contact email above">
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Notify on signup</label>
+          <select name="admin_notify_signup" class="form-control">
+            <option value="1" <?= ($settings['admin_notify_signup']??'1')==='1'?'selected':'' ?>>On</option>
+            <option value="0" <?= ($settings['admin_notify_signup']??'')==='0'?'selected':'' ?>>Off</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notify on new order</label>
+          <select name="admin_notify_orders" class="form-control">
+            <option value="1" <?= ($settings['admin_notify_orders']??'1')==='1'?'selected':'' ?>>On</option>
+            <option value="0" <?= ($settings['admin_notify_orders']??'')==='0'?'selected':'' ?>>Off</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notify on deposits</label>
+          <select name="admin_notify_deposits" class="form-control">
+            <option value="1" <?= ($settings['admin_notify_deposits']??'1')==='1'?'selected':'' ?>>On</option>
+            <option value="0" <?= ($settings['admin_notify_deposits']??'')==='0'?'selected':'' ?>>Off</option>
+          </select>
+        </div>
       </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <strong style="font-size:13px;">SMTP (cPanel or Gmail/SendGrid)</strong>
@@ -469,7 +501,8 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="grid3" style="margin-top:8px;">
         <div class="form-group">
           <label class="form-label">cPanel user</label>
-          <input type="text" name="child_panel_cpanel_user" class="form-control" value="<?= s($settings,'child_panel_cpanel_user') ?: 'smmturk' ?>">
+          <input type="text" name="child_panel_cpanel_user" class="form-control" value="<?= s($settings,'child_panel_cpanel_user') ?: 'smmturk' ?>" placeholder="smmturk">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Must match WHM account username (e.g. <code>smmturk</code>, not the MySQL DB name).</p>
         </div>
         <div class="form-group">
           <label class="form-label">Home path</label>

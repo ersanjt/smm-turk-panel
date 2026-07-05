@@ -398,6 +398,132 @@ class Mail
         return '[' . $this->getSiteName() . '] ' . $text;
     }
 
+    /** Admin notification inbox (falls back to contact_email). */
+    public function adminNotifyEmail(): ?string
+    {
+        $notify = trim((string) ($this->db->getSetting('admin_notify_email') ?? ''));
+        if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
+            return $notify;
+        }
+        return $this->getReplyTo();
+    }
+
+    /** @param 'signup'|'orders'|'deposits' $event */
+    public function adminNotifyOn(string $event): bool
+    {
+        $key = 'admin_notify_' . $event;
+        $val = $this->db->getSetting($key);
+        return ($val ?? '1') !== '0';
+    }
+
+    public function sendWelcome(string $to, string $username, ?string $lang = null): bool
+    {
+        $lang = MailLocale::resolveLang($lang);
+        $subject = $this->subjectPrefix(MailLocale::t('welcome_subject', $lang), $lang);
+        $inner = '<p>' . MailLocale::t('welcome_hi', $lang, ['name' => $username]) . '</p>'
+            . '<p>' . MailLocale::t('welcome_body', $lang) . '</p>'
+            . $this->btn(page_url('add-funds.php'), MailLocale::t('btn_funds', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml(MailLocale::t('welcome_subject', $lang), $inner, $lang), $lang);
+    }
+
+    public function sendSignupToAdmin(string $to, string $username, string $userEmail, int $userId, bool $viaGoogle = false, ?string $lang = null): bool
+    {
+        $lang = MailLocale::resolveLang($lang ?? 'en');
+        $method = MailLocale::t($viaGoogle ? 'method_google' : 'method_register', $lang);
+        $subject = $this->subjectPrefix(MailLocale::t('admin_signup_subject', $lang, ['user' => $username]), $lang);
+        $inner = '<p>' . MailLocale::t('admin_signup_body', $lang, ['user' => $username, 'email' => $userEmail]) . '</p>'
+            . '<p>' . MailLocale::t('admin_signup_via', $lang, ['method' => $method]) . '</p>'
+            . '<p><strong>ID:</strong> #' . (int) $userId . '</p>'
+            . $this->btn(page_url('admin/admin-users.php'), MailLocale::t('btn_users', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Signup #' . $userId, $inner, $lang), $lang);
+    }
+
+    public function sendOrderToAdmin(
+        string $to,
+        string $username,
+        string $userEmail,
+        int $orderId,
+        string $serviceName,
+        int $quantity,
+        float $charge,
+        string $link,
+        ?string $lang = null
+    ): bool {
+        $lang = MailLocale::resolveLang($lang ?? 'en');
+        $chargeFmt = number_format($charge, 4);
+        $subject = $this->subjectPrefix(MailLocale::t('admin_order_subject', $lang, ['id' => $orderId, 'user' => $username]), $lang);
+        $inner = '<p>' . MailLocale::t('admin_order_body', $lang, ['user' => $username, 'email' => $userEmail]) . '</p>'
+            . '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">#' . (int) $orderId . '</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:bold;">' . htmlspecialchars($serviceName) . '</td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('order_qty', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;">' . number_format($quantity) . '</td></tr>'
+            . '<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;">' . MailLocale::t('order_charge', $lang) . '</td><td style="padding:8px;border-bottom:1px solid #eee;">$' . htmlspecialchars($chargeFmt) . '</td></tr>'
+            . '<tr><td style="padding:8px;color:#666;">' . MailLocale::t('order_link_label', $lang) . '</td><td style="padding:8px;word-break:break-all;font-size:12px;">' . htmlspecialchars($link) . '</td></tr>'
+            . '</table>'
+            . $this->btn(page_url('admin/admin-orders.php'), MailLocale::t('btn_admin', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Order #' . $orderId, $inner, $lang), $lang);
+    }
+
+    public function sendDepositPendingToUser(
+        string $to,
+        string $username,
+        int $depositId,
+        float $amount,
+        string $methodLabel,
+        string $txHash = '',
+        ?string $lang = null
+    ): bool {
+        $lang = MailLocale::resolveLang($lang);
+        $amountFmt = number_format($amount, 2);
+        $ref = $txHash !== '' ? MailLocale::t('deposit_pending_tx', $lang) : '';
+        $subject = $this->subjectPrefix(MailLocale::t('deposit_pending_subject', $lang, ['amount' => $amountFmt]), $lang);
+        $inner = '<p>' . MailLocale::t('deposit_pending_hi', $lang, ['name' => $username]) . '</p>'
+            . '<p>' . MailLocale::t('deposit_pending_body', $lang, ['amount' => $amountFmt, 'ref' => $ref]) . '</p>'
+            . '<p><strong>' . htmlspecialchars($methodLabel) . '</strong> · #' . (int) $depositId . '</p>'
+            . $this->btn(page_url('add-funds.php'), MailLocale::t('btn_funds', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml(MailLocale::t('deposit_pending_subject', $lang, ['amount' => $amountFmt]), $inner, $lang), $lang);
+    }
+
+    public function sendDepositPendingToAdmin(
+        string $to,
+        string $username,
+        string $userEmail,
+        int $depositId,
+        float $amount,
+        string $methodLabel,
+        string $txHash = '',
+        ?string $lang = null
+    ): bool {
+        $lang = MailLocale::resolveLang($lang ?? 'en');
+        $amountFmt = number_format($amount, 2);
+        $subject = $this->subjectPrefix(MailLocale::t('admin_deposit_pending_subject', $lang, ['id' => $depositId, 'amount' => $amountFmt]), $lang);
+        $inner = '<p>' . MailLocale::t('admin_deposit_pending_body', $lang, ['user' => $username, 'email' => $userEmail, 'amount' => $amountFmt]) . '</p>'
+            . '<p><strong>' . htmlspecialchars($methodLabel) . '</strong></p>';
+        if ($txHash !== '') {
+            $inner .= '<p><strong>' . MailLocale::t('admin_deposit_tx', $lang) . '</strong><br><code style="word-break:break-all;">' . htmlspecialchars($txHash) . '</code></p>';
+        }
+        $inner .= $this->btn(page_url('admin/admin-deposits.php'), MailLocale::t('btn_admin', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Deposit #' . $depositId, $inner, $lang), $lang);
+    }
+
+    public function sendDepositCreditedToAdmin(
+        string $to,
+        string $username,
+        string $userEmail,
+        int $depositId,
+        float $amount,
+        float $balanceAfter,
+        ?string $lang = null
+    ): bool {
+        $lang = MailLocale::resolveLang($lang ?? 'en');
+        $amountFmt = number_format($amount, 2);
+        $balanceFmt = number_format($balanceAfter, 2);
+        $subject = $this->subjectPrefix(MailLocale::t('admin_deposit_credited_subject', $lang, ['id' => $depositId, 'amount' => $amountFmt]), $lang);
+        $inner = '<p>' . MailLocale::t('admin_deposit_credited_body', $lang, ['user' => $username, 'amount' => $amountFmt, 'balance' => $balanceFmt]) . '</p>'
+            . '<p style="font-size:13px;color:#666;">' . htmlspecialchars($userEmail) . '</p>'
+            . $this->btn(page_url('admin/admin-deposits.php'), MailLocale::t('btn_admin', $lang));
+        return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml('Deposit #' . $depositId, $inner, $lang), $lang);
+    }
+
     public function sendTest(string $to, ?string $lang = null): bool
     {
         $lang = MailLocale::resolveLang($lang);
@@ -529,9 +655,140 @@ class Mail
         return $this->send($to, $subject, strip_tags($inner), $this->wrapHtml($domain, $inner, $lang), $lang);
     }
 
+    /** @return array{domain: string, ok: bool, mx: list<array{priority: int, host: string, resolves: bool, ip: string}>, hint: string, recommended_mx: string, mail_a_ip: string} */
+    public function getIncomingMailDiagnostics(): array
+    {
+        $domain = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: '';
+        $recommendedMx = $domain !== '' ? 'mail.' . $domain : '';
+        $mailA = $recommendedMx !== '' ? $this->resolveMailHostIp($recommendedMx) : '';
+        $serverIp = trim((string) ($this->db->getSetting('child_panel_server_ip') ?? ''));
+        if ($serverIp === '' && $mailA !== '') {
+            $serverIp = $mailA;
+        }
+
+        $mxRows = $this->fetchMxRecords($domain);
+        $mx = [];
+        $ok = $domain !== '' && $mxRows !== [];
+        foreach ($mxRows as $row) {
+            $mxHost = strtolower(rtrim((string) ($row['host'] ?? ''), '.'));
+            $ip = $mxHost !== '' ? $this->resolveMailHostIp($mxHost) : '';
+            $resolves = $ip !== '' && $ip !== $mxHost;
+            $mx[] = [
+                'priority' => (int) ($row['priority'] ?? 0),
+                'host' => $mxHost,
+                'resolves' => $resolves,
+                'ip' => $ip,
+            ];
+            if (!$resolves) {
+                $ok = false;
+            }
+        }
+        if ($mxRows === []) {
+            $ok = false;
+        }
+
+        $hint = '';
+        if ($domain === '') {
+            $hint = 'SITE_URL is not set.';
+        } elseif ($mxRows === []) {
+            $hint = 'No MX record found for ' . $domain . '. Add MX → ' . $recommendedMx . ' in Cloudflare / cPanel Zone Editor.';
+        } elseif (!$ok) {
+            $broken = implode(', ', array_map(
+                static fn(array $r): string => $r['host'] . ($r['resolves'] ? '' : ' (no A record)'),
+                $mx
+            ));
+            $hint = 'MX host does not resolve: ' . $broken . '. Change MX to ' . $recommendedMx
+                . ($serverIp !== '' ? ' (A → ' . $serverIp . ')' : '') . ' or add an A record for the broken MX hostname.';
+        } else {
+            $hint = 'Incoming mail DNS looks OK.';
+        }
+
+        return [
+            'domain' => $domain,
+            'ok' => $ok,
+            'mx' => $mx,
+            'hint' => $hint,
+            'recommended_mx' => $recommendedMx,
+            'mail_a_ip' => $mailA,
+            'server_ip' => $serverIp,
+        ];
+    }
+
+    /** @return list<array{priority: int, host: string}> */
+    private function fetchMxRecords(string $domain): array
+    {
+        if ($domain === '') {
+            return [];
+        }
+        $rows = [];
+        $raw = @dns_get_record($domain, DNS_MX);
+        if (is_array($raw)) {
+            foreach ($raw as $rec) {
+                $host = strtolower(rtrim((string) ($rec['target'] ?? ''), '.'));
+                if ($host !== '') {
+                    $rows[] = ['priority' => (int) ($rec['pri'] ?? 0), 'host' => $host];
+                }
+            }
+        }
+        if ($rows !== []) {
+            usort($rows, static fn(array $a, array $b): int => $a['priority'] <=> $b['priority']);
+            return $rows;
+        }
+
+        $url = 'https://dns.google/resolve?name=' . rawurlencode($domain) . '&type=MX';
+        $ctx = stream_context_create(['http' => ['timeout' => 5, 'user_agent' => 'SMM-Turk-Mail/1.0']]);
+        $json = @file_get_contents($url, false, $ctx);
+        if (!is_string($json) || $json === '') {
+            return [];
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data)) {
+            return [];
+        }
+        foreach ($data['Answer'] ?? [] as $answer) {
+            if (!is_array($answer)) {
+                continue;
+            }
+            $value = (string) ($answer['data'] ?? '');
+            if ($value === '' || !str_contains($value, ' ')) {
+                continue;
+            }
+            [$priority, $host] = explode(' ', $value, 2);
+            $host = strtolower(rtrim($host, '.'));
+            if ($host !== '') {
+                $rows[] = ['priority' => (int) $priority, 'host' => $host];
+            }
+        }
+        usort($rows, static fn(array $a, array $b): int => $a['priority'] <=> $b['priority']);
+        return $rows;
+    }
+
+    private function resolveMailHostIp(string $host): string
+    {
+        $host = strtolower(rtrim($host, '.'));
+        if ($host === '') {
+            return '';
+        }
+        $records = @dns_get_record($host, DNS_A);
+        if (is_array($records)) {
+            foreach ($records as $rec) {
+                $ip = (string) ($rec['ip'] ?? '');
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+        $resolved = @gethostbyname($host);
+        if (is_string($resolved) && $resolved !== $host && filter_var($resolved, FILTER_VALIDATE_IP)) {
+            return $resolved;
+        }
+        return '';
+    }
+
     public function getDiagnostics(): array
     {
         $host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'yourdomain.com';
+        $incoming = $this->getIncomingMailDiagnostics();
         return [
             'from' => $this->getFrom(),
             'reply_to' => $this->getReplyTo(),
@@ -546,6 +803,7 @@ class Mail
             'cpanel_hint_host' => $host,
             'cpanel_hint_alt' => 'mail.' . $host,
             'last_error' => $this->lastError,
+            'incoming' => $incoming,
         ];
     }
 }
