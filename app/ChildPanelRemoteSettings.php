@@ -4,66 +4,80 @@
  */
 class ChildPanelRemoteSettings
 {
-    /** @var list<string> */
-    public const BRANDING_KEYS = ['site_name', 'site_url', 'site_logo', 'site_favicon'];
+    /** @return list<string> */
+    private static function brandingKeys(): array
+    {
+        return ['site_name', 'site_url', 'site_logo', 'site_favicon'];
+    }
 
-    /** @var list<string> */
-    public const GENERAL_KEYS = [
-        'registration_enabled', 'email_verification_required', 'maintenance_mode',
-        'markup_percent', 'min_deposit', 'referral_commission', 'contact_email',
-    ];
+    /** @return list<string> */
+    private static function generalKeys(): array
+    {
+        return [
+            'registration_enabled', 'email_verification_required', 'maintenance_mode',
+            'markup_percent', 'min_deposit', 'referral_commission', 'contact_email',
+        ];
+    }
 
-    /** @var list<string> */
-    public const WALLET_KEYS = [
-        'wallet_btc', 'wallet_eth', 'wallet_usdt_trc20', 'wallet_usdt_erc20', 'wallet_bnb', 'wallet_sol',
-    ];
+    /** @return list<string> */
+    private static function walletKeys(): array
+    {
+        return [
+            'wallet_btc', 'wallet_eth', 'wallet_usdt_trc20', 'wallet_usdt_erc20', 'wallet_bnb', 'wallet_sol',
+        ];
+    }
 
-    /** @var list<string> */
-    public const DEPOSIT_KEYS = [
-        'deposit_auto_confirm', 'deposit_min_confirmations', 'deposit_amount_tolerance',
-        'api_etherscan', 'api_trongrid', 'api_bscscan',
-    ];
+    /** @return list<string> */
+    private static function depositKeys(): array
+    {
+        return [
+            'deposit_auto_confirm', 'deposit_min_confirmations', 'deposit_amount_tolerance',
+            'api_etherscan', 'api_trongrid', 'api_bscscan',
+        ];
+    }
 
-    /** @var list<string> */
-    public const PAYMENT_KEYS = [
-        'payment_smmpaygate_enabled', 'payment_smmpaygate_api_url', 'payment_smmpaygate_api_key',
-        'payment_smmpaygate_merchant_id', 'payment_smmpaygate_secret',
-        'payment_heleket_enabled', 'payment_heleket_merchant_id', 'payment_heleket_api_key',
-        'payment_heleket_mode', 'payment_heleket_currency', 'payment_heleket_network',
-        'payment_usdt_trc20_enabled',
-        'payment_binance_pay_enabled', 'payment_binance_pay_api_key', 'payment_binance_pay_secret',
-        'payment_zarinpal_enabled', 'payment_zarinpal_merchant_id', 'payment_zarinpal_usd_rate', 'payment_zarinpal_sandbox',
-        'payment_cryptocloud_enabled', 'payment_cryptocloud_shop_id', 'payment_cryptocloud_api_key',
-    ];
+    /** @return list<string> */
+    private static function paymentKeys(): array
+    {
+        return [
+            'payment_smmpaygate_enabled', 'payment_smmpaygate_api_url', 'payment_smmpaygate_api_key',
+            'payment_smmpaygate_merchant_id', 'payment_smmpaygate_secret',
+            'payment_heleket_enabled', 'payment_heleket_merchant_id', 'payment_heleket_api_key',
+            'payment_heleket_mode', 'payment_heleket_currency', 'payment_heleket_network',
+            'payment_usdt_trc20_enabled',
+            'payment_binance_pay_enabled', 'payment_binance_pay_api_key', 'payment_binance_pay_secret',
+            'payment_zarinpal_enabled', 'payment_zarinpal_merchant_id', 'payment_zarinpal_usd_rate', 'payment_zarinpal_sandbox',
+            'payment_cryptocloud_enabled', 'payment_cryptocloud_shop_id', 'payment_cryptocloud_api_key',
+        ];
+    }
 
-    /** @var list<string> */
-    public const EMAIL_KEYS = [
-        'mail_mode', 'smtp_encryption', 'mail_lang', 'smtp_from', 'contact_email',
-        'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass',
-    ];
+    /** @return list<string> */
+    private static function emailKeys(): array
+    {
+        return [
+            'mail_mode', 'smtp_encryption', 'mail_lang', 'smtp_from', 'contact_email',
+            'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass',
+        ];
+    }
 
-    /** @var list<string> */
-    public const CHECKBOX_KEYS = [
-        'payment_smmpaygate_enabled', 'payment_heleket_enabled', 'payment_usdt_trc20_enabled',
-        'payment_binance_pay_enabled', 'payment_zarinpal_enabled', 'payment_cryptocloud_enabled',
-    ];
-
-    /** @var list<string> */
-    public const WALLET_SECTION_KEYS = [
-        'wallet_btc', 'wallet_eth', 'wallet_usdt_trc20', 'wallet_usdt_erc20', 'wallet_bnb', 'wallet_sol',
-        'deposit_auto_confirm', 'deposit_min_confirmations', 'deposit_amount_tolerance',
-        'api_etherscan', 'api_trongrid', 'api_bscscan',
-    ];
+    /** @return list<string> */
+    private static function checkboxKeys(): array
+    {
+        return [
+            'payment_smmpaygate_enabled', 'payment_heleket_enabled', 'payment_usdt_trc20_enabled',
+            'payment_binance_pay_enabled', 'payment_zarinpal_enabled', 'payment_cryptocloud_enabled',
+        ];
+    }
 
     /** @return array<string, list<string>> */
     private static function sectionKeys(): array
     {
         return [
-            'branding' => self::BRANDING_KEYS,
-            'general'  => self::GENERAL_KEYS,
-            'wallets'  => self::WALLET_SECTION_KEYS,
-            'payments' => self::PAYMENT_KEYS,
-            'email'    => self::EMAIL_KEYS,
+            'branding' => self::brandingKeys(),
+            'general'  => self::generalKeys(),
+            'wallets'  => array_merge(self::walletKeys(), self::depositKeys()),
+            'payments' => self::paymentKeys(),
+            'email'    => self::emailKeys(),
         ];
     }
 
@@ -105,12 +119,12 @@ class ChildPanelRemoteSettings
             return [];
         }
         $allKeys = array_merge(
-            self::BRANDING_KEYS,
-            self::GENERAL_KEYS,
-            self::WALLET_KEYS,
-            self::DEPOSIT_KEYS,
-            self::PAYMENT_KEYS,
-            self::EMAIL_KEYS
+            self::brandingKeys(),
+            self::generalKeys(),
+            self::walletKeys(),
+            self::depositKeys(),
+            self::paymentKeys(),
+            self::emailKeys()
         );
         $placeholders = implode(',', array_fill(0, count($allKeys), '?'));
         $stmt = $pdo->prepare("SELECT `key`, `value` FROM settings WHERE `key` IN ($placeholders)");
@@ -161,7 +175,7 @@ class ChildPanelRemoteSettings
             if ($key === 'smtp_pass' && trim((string) ($post[$key] ?? '')) === '') {
                 continue;
             }
-            if (in_array($key, self::CHECKBOX_KEYS, true)) {
+            if (in_array($key, self::checkboxKeys(), true)) {
                 $values[$key] = isset($post[$key]) && (string) $post[$key] === '1' ? '1' : '0';
                 continue;
             }
@@ -170,7 +184,7 @@ class ChildPanelRemoteSettings
             }
         }
 
-        foreach (self::CHECKBOX_KEYS as $cb) {
+        foreach (self::checkboxKeys() as $cb) {
             if (in_array($cb, $keys, true) && !array_key_exists($cb, $values)) {
                 $values[$cb] = '0';
             }
