@@ -245,19 +245,21 @@ class WhmProvisioner
         $baseName = preg_replace('/[^a-z0-9_]/', '', strtolower($baseName)) ?: 'cpdb';
         $baseUser = preg_replace('/[^a-z0-9_]/', '', strtolower($baseUser)) ?: $baseName;
         $prefix = $this->cpanelUser() . '_';
+        $fullDbName = $this->cpanelPrefixedName($baseName);
+        $fullUserName = $this->cpanelPrefixedName($baseUser);
 
-        $dbRes = $this->mysqlUapi('create_database', ['name' => $baseName]);
+        $dbRes = $this->mysqlUapi('create_database', ['name' => $fullDbName]);
         if (!$dbRes['success'] && !$this->isAlreadyExistsError($dbRes['error'] ?? '')) {
             return ['success' => false, 'error' => 'MySQL create_database: ' . ($dbRes['error'] ?? 'failed')];
         }
 
         $userRes = $this->mysqlUapi('create_user', [
-            'name' => $baseUser,
+            'name' => $fullUserName,
             'password' => $password,
         ]);
         if (!$userRes['success'] && $this->isAlreadyExistsError($userRes['error'] ?? '')) {
             $userRes = $this->mysqlUapi('set_password', [
-                'name' => $baseUser,
+                'name' => $fullUserName,
                 'password' => $password,
             ]);
         }
@@ -266,21 +268,21 @@ class WhmProvisioner
         }
 
         $privRes = $this->mysqlUapi('set_privileges_on_database', [
-            'user' => $baseUser,
-            'database' => $baseName,
+            'user' => $fullUserName,
+            'database' => $fullDbName,
             'privileges' => 'ALL',
         ]);
         if (!$privRes['success']) {
             $privRes = $this->mysqlUapi('set_privileges_on_database', [
-                'user' => $baseUser,
-                'database' => $baseName,
+                'user' => $fullUserName,
+                'database' => $fullDbName,
                 'privileges' => 'ALL PRIVILEGES',
             ]);
         }
         if (!$privRes['success']) {
             $privRes = $this->mysqlUapi('set_all_privileges_on_database', [
-                'user' => $baseUser,
-                'database' => $baseName,
+                'user' => $fullUserName,
+                'database' => $fullDbName,
             ]);
         }
         if (!$privRes['success']) {
@@ -289,10 +291,29 @@ class WhmProvisioner
 
         return [
             'success' => true,
-            'db_name' => $prefix . $baseName,
-            'db_user' => $prefix . $baseUser,
+            'db_name' => $fullDbName,
+            'db_user' => $fullUserName,
             'db_pass' => $password,
         ];
+    }
+
+    private function cpanelPrefixedName(string $name): string
+    {
+        $prefix = $this->cpanelUser() . '_';
+        $name = preg_replace('/[^a-z0-9_]/', '', strtolower($name)) ?: 'cpdb';
+        if (str_starts_with($name, $prefix)) {
+            return $name;
+        }
+        return $prefix . $name;
+    }
+
+    private function cpanelUnprefixedName(string $name): string
+    {
+        $prefix = $this->cpanelUser() . '_';
+        if (str_starts_with($name, $prefix)) {
+            return substr($name, strlen($prefix));
+        }
+        return $name;
     }
 
     /** @return array{success: bool, data?: mixed, error?: string, http_code?: int} */
@@ -316,24 +337,24 @@ class WhmProvisioner
     private function mysqlFeLegacy(string $func, array $params): array
     {
         $map = [
-            'create_database' => ['func' => 'createdb', 'params' => ['db' => $params['name'] ?? '']],
+            'create_database' => ['func' => 'createdb', 'params' => ['db' => $this->cpanelUnprefixedName($params['name'] ?? '')]],
             'create_user' => ['func' => 'createdbuser', 'params' => [
-                'dbuser' => $params['name'] ?? '',
+                'dbuser' => $this->cpanelUnprefixedName($params['name'] ?? ''),
                 'password' => $params['password'] ?? '',
             ]],
             'set_password' => ['func' => 'passwduser', 'params' => [
-                'dbuser' => $params['name'] ?? '',
+                'dbuser' => $this->cpanelUnprefixedName($params['name'] ?? ''),
                 'password' => $params['password'] ?? '',
             ]],
             'set_privileges_on_database' => ['func' => 'setdbuserprivileges', 'params' => [
                 'privileges' => $params['privileges'] ?? 'ALL',
-                'dbuser' => $params['user'] ?? '',
-                'database' => $params['database'] ?? '',
+                'dbuser' => $this->cpanelUnprefixedName($params['user'] ?? ''),
+                'database' => $this->cpanelUnprefixedName($params['database'] ?? ''),
             ]],
             'set_all_privileges_on_database' => ['func' => 'setdbuserprivileges', 'params' => [
                 'privileges' => 'ALL',
-                'dbuser' => $params['user'] ?? '',
-                'database' => $params['database'] ?? '',
+                'dbuser' => $this->cpanelUnprefixedName($params['user'] ?? ''),
+                'database' => $this->cpanelUnprefixedName($params['database'] ?? ''),
             ]],
         ];
         $entry = $map[$func] ?? null;
