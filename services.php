@@ -14,14 +14,14 @@ if (!in_array($tier, ['', 'one', 'pro'], true)) {
     $tier = '';
 }
 $providerFilter = ProviderRegistry::providerFromTier($tier);
+[$providerSql, $providerParams] = ProviderRegistry::providerFilter($providerFilter);
 $sort     = $_GET['sort'] ?? 'id';
 $dir      = strtolower($_GET['dir'] ?? 'asc');
 if (!in_array($dir, ['asc', 'desc'])) $dir = 'asc';
 
 $cat = $cat !== '' ? trim($cat) : '';
-$where  = "WHERE status='active'";
-$params = [];
-if ($providerFilter) { $where .= " AND provider = ?"; $params[] = $providerFilter; }
+$where  = "WHERE status='active'" . $providerSql;
+$params = $providerParams;
 if ($search)   { $where .= " AND name LIKE ?"; $params[] = "%$search%"; }
 if ($platform) { $where .= " AND category LIKE ?"; $params[] = "%$platform%"; }
 if ($cat)      { $where .= " AND TRIM(COALESCE(category,'')) = ?"; $params[] = $cat; }
@@ -45,8 +45,8 @@ $listFrom = $totalServices > 0 ? $offset + 1 : 0;
 $listTo = min($offset + count($services), $totalServices);
 
 $categoriesRaw = $db->fetchAll(
-    "SELECT DISTINCT category FROM services WHERE status='active'" . ($providerFilter ? " AND provider = ?" : "") . " ORDER BY category",
-    $providerFilter ? [$providerFilter] : []
+    "SELECT DISTINCT category FROM services WHERE status='active'" . $providerSql . " ORDER BY category",
+    $providerParams
 );
 $seen = [];
 $categories = [];

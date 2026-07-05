@@ -339,28 +339,46 @@ class OrderManager {
         }
     }
 
-    public static function ensureProviderSchema(): void {
-        static $done = false;
-        if ($done) {
-            return;
+    public static function ensureProviderSchema(): bool {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
         }
-        $done = true;
+
         $db = Database::getInstance();
+        if ($db->columnExists('services', 'provider')) {
+            $ready = true;
+            return true;
+        }
+
         $pdo = $db->getConnection();
-        try {
-            $pdo->exec("ALTER TABLE services ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
-        } catch (Throwable $e) { /* exists */ }
-        try {
-            $pdo->exec('ALTER TABLE services ADD COLUMN provider_service_id INT UNSIGNED NOT NULL DEFAULT 0');
-        } catch (Throwable $e) { /* exists */ }
-        try {
-            $pdo->exec("ALTER TABLE orders ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'");
-        } catch (Throwable $e) { /* exists */ }
+        foreach ([
+            "ALTER TABLE services ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'",
+            'ALTER TABLE services ADD COLUMN provider_service_id INT UNSIGNED NOT NULL DEFAULT 0',
+            "ALTER TABLE orders ADD COLUMN provider VARCHAR(32) NOT NULL DEFAULT 'smmfollows'",
+        ] as $sql) {
+            try {
+                $pdo->exec($sql);
+            } catch (Throwable $e) {
+                $msg = $e->getMessage();
+                if (!str_contains($msg, 'Duplicate column') && !str_contains($msg, 'already exists')) {
+                    Logger::log('ensureProviderSchema: ' . $msg, 'schema');
+                }
+            }
+        }
         try {
             $db->execute(
                 "UPDATE services SET provider = 'smmfollows', provider_service_id = service_id
                  WHERE provider_service_id = 0 OR provider = ''"
             );
-        } catch (Throwable $e) { /* ok */ }
+        } catch (Throwable $e) {
+            Logger::log('ensureProviderSchema backfill: ' . $e->getMessage(), 'schema');
+        }
+
+        $ready = $db->columnExists('services', 'provider');
+        if (!$ready) {
+            Logger::log('services.provider still missing — run: php public_html/migrate-db.php', 'schema');
+        }
+        return $ready;
     }
 }

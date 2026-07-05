@@ -55,6 +55,21 @@ class ProviderRegistry
         return $provider === self::SMMFA ? 'pro' : 'one';
     }
 
+    /** True when services.provider exists (attempts auto-migrate once per request). */
+    public static function providerSchemaReady(): bool
+    {
+        return OrderManager::ensureProviderSchema();
+    }
+
+    /** SQL suffix + bound params for optional provider filter. */
+    public static function providerFilter(?string $slug): array
+    {
+        if ($slug === null || $slug === '' || !self::providerSchemaReady()) {
+            return ['', []];
+        }
+        return [' AND provider = ?', [$slug]];
+    }
+
     /** Strip legacy prefixes before re-branding on sync. */
     public static function stripBrandPrefix(string $category): string
     {
@@ -81,8 +96,12 @@ class ProviderRegistry
     {
         $db = Database::getInstance();
         $counts = [];
-        foreach ($db->fetchAll("SELECT provider, COUNT(*) c FROM services WHERE status='active' GROUP BY provider") as $row) {
-            $counts[$row['provider'] ?? ''] = (int) $row['c'];
+        if (self::providerSchemaReady()) {
+            foreach ($db->fetchAll("SELECT provider, COUNT(*) c FROM services WHERE status='active' GROUP BY provider") as $row) {
+                $counts[$row['provider'] ?? ''] = (int) $row['c'];
+            }
+        } else {
+            $counts[self::PRIMARY] = (int) ($db->fetch("SELECT COUNT(*) c FROM services WHERE status='active'")['c'] ?? 0);
         }
         $oneCount = $counts[self::PRIMARY] ?? 0;
         $proCount = $counts[self::SMMFA] ?? 0;

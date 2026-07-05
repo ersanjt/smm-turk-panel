@@ -80,3 +80,8 @@ if [ "$git_updated" -eq 0 ]; then
 fi
 
 echo "Deploy done: $(date -Iseconds)"
+
+if [ -f "$WEB_DIR/migrate-db.php" ]; then
+  echo "Running DB migration..."
+  php "$WEB_DIR/migrate-db.php" || echo "WARN: migrate-db.php failed (run manually: php $WEB_DIR/migrate-db.php)"
+fi

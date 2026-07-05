@@ -51,18 +51,14 @@ if (!in_array($tier, ['', 'one', 'pro'], true)) {
     $tier = '';
 }
 $providerFilter = ProviderRegistry::providerFromTier($tier);
+[$providerSql, $providerParams] = ProviderRegistry::providerFilter($providerFilter);
 $catParam = isset($_GET['cat']) ? trim((string)$_GET['cat']) : null;
 $platform = trim($_GET['platform'] ?? '');
 $preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
 $searchQ = trim($_GET['q'] ?? '');
 
-$catSql = "SELECT DISTINCT category FROM services WHERE status='active'";
-$catParams = [];
-if ($providerFilter) {
-    $catSql .= ' AND provider = ?';
-    $catParams[] = $providerFilter;
-}
-$catSql .= ' ORDER BY category';
+$catSql = "SELECT DISTINCT category FROM services WHERE status='active'" . $providerSql . ' ORDER BY category';
+$catParams = $providerParams;
 $categoriesRaw = $db->fetchAll($catSql, $catParams);
 $seen = [];
 $categories = [];
@@ -77,25 +73,16 @@ foreach ($categoriesRaw as $row) {
     }
 }
 
-$countSql = "SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active'";
-$countParams = [];
-if ($providerFilter) {
-    $countSql .= ' AND provider = ?';
-    $countParams[] = $providerFilter;
-}
-$countSql .= ' GROUP BY TRIM(COALESCE(category,\'\'))';
+$countSql = "SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active'" . $providerSql . " GROUP BY TRIM(COALESCE(category,''))";
+$countParams = $providerParams;
 $categoryCounts = $db->fetchAll($countSql, $countParams);
 $countByCategory = [];
 foreach ($categoryCounts as $r) {
     $countByCategory[trim($r['category'] ?? '')] = (int) $r['cnt'];
 }
 
-$totalSql = "SELECT COUNT(*) c FROM services WHERE status='active'";
-$totalParams = [];
-if ($providerFilter) {
-    $totalSql .= ' AND provider = ?';
-    $totalParams[] = $providerFilter;
-}
+$totalSql = "SELECT COUNT(*) c FROM services WHERE status='active'" . $providerSql;
+$totalParams = $providerParams;
 $totalServicesCount = (int) $db->fetch($totalSql, $totalParams)['c'];
 
 if ($preselectServiceId) {
@@ -108,8 +95,8 @@ $selectedCat = ($catParam !== null && $catParam !== '') ? $catParam : '';
 $requireCategory = false;
 $showAllLimitHint = false;
 
-$svcProviderClause = $providerFilter ? ' AND provider = ?' : '';
-$svcProviderParam = $providerFilter ? [$providerFilter] : [];
+$svcProviderClause = $providerSql;
+$svcProviderParam = $providerParams;
 
 if ($searchQ !== '') {
     $like = '%' . $searchQ . '%';
@@ -125,10 +112,8 @@ if ($searchQ !== '') {
             $sql .= " AND category LIKE ?";
             $params[] = '%' . $platform . '%';
         }
-        if ($providerFilter) {
-            $sql .= ' AND provider = ?';
-            $params[] = $providerFilter;
-        }
+        $sql .= $providerSql;
+        $params = array_merge($params, $providerParams);
         $services = $db->fetchAll($sql . " ORDER BY service_id LIMIT 500", $params);
     }
 } elseif ($selectedCat !== '') {

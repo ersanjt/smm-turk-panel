@@ -83,4 +83,14 @@ class Database {
             [$key, $value, $value]
         );
     }
+
+    public function columnExists(string $table, string $column): bool
+    {
+        $row = $this->fetch(
+            'SELECT COUNT(*) AS c FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+            [$table, $column]
+        );
+        return (int) ($row['c'] ?? 0) > 0;
+    }
 }
