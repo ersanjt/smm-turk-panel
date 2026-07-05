@@ -301,6 +301,45 @@ body.panel-follows .topbar-right .icon-btn {
   height: 38px;
   background: #f8fafc;
   border-color: var(--pf-sidebar-border);
+  color: #64748b;
+}
+
+body.panel-follows .topbar-right .theme-toggle-btn {
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  background: #f8fafc;
+  border-color: var(--pf-sidebar-border);
+  color: #64748b;
+}
+
+body.panel-follows .topbar-right .icon-btn:hover,
+body.panel-follows .topbar-right .icon-btn.active,
+body.panel-follows .topbar-right .theme-toggle-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(227, 10, 23, 0.25);
+}
+
+body.panel-follows .topbar-right .icon-btn.active svg,
+body.panel-follows .topbar-right .icon-btn:hover svg,
+body.panel-follows .topbar-right .theme-toggle-btn:hover svg {
+  color: #fff;
+}
+
+body.panel-follows.theme-dark .topbar-right .icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--pf-sidebar-border);
+  color: var(--pf-sidebar-text);
+}
+
+body.panel-follows.theme-dark .topbar-right .icon-btn:hover,
+body.panel-follows.theme-dark .topbar-right .icon-btn.active,
+body.panel-follows.theme-dark .topbar-right .theme-toggle-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
 }
 
 body.panel-follows .content {
