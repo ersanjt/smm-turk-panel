@@ -20,9 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     }
 
     if ($action === 'provision' || ($action === 'activate' && ($panel['status'] ?? '') === 'pending')) {
-        $result = $cpm->provision($id);
+        $adminPass = trim((string) ($_POST['admin_password'] ?? ''));
+        $result = $cpm->provision($id, $adminPass !== '' ? $adminPass : null);
         if ($result['success']) {
-            flash('success', 'Panel provisioned for ' . $panel['domain'] . '.');
+            $msg = 'Panel provisioned for ' . $panel['domain'] . '.';
+            if (!empty($result['admin_password_regenerated']) && !empty($result['admin_password'])) {
+                $msg .= ' New admin password: ' . $result['admin_password'];
+            }
+            flash('success', $msg);
         } else {
             flash('error', $result['error'] ?? 'Provisioning failed.');
         }

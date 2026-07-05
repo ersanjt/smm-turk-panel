@@ -125,6 +125,43 @@ class ChildPanelManager
         return $plain === false ? '' : $plain;
     }
 
+    public static function generateDeployPassword(): string
+    {
+        $chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $out = '';
+        for ($i = 0; $i < 14; $i++) {
+            $out .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+        return $out;
+    }
+
+    public function storeAdminPassword(int $panelId, string $plainPassword): void
+    {
+        $this->db->execute(
+            'UPDATE child_panels SET admin_password = ?, admin_password_enc = ? WHERE id = ?',
+            [password_hash($plainPassword, PASSWORD_DEFAULT), self::encryptSecret($plainPassword), $panelId]
+        );
+    }
+
+    /** @return array{password: string, regenerated: bool} */
+    private function resolveDeployPassword(int $panelId, array $panel, ?string $provided = null): array
+    {
+        if ($provided !== null && $provided !== '') {
+            $this->storeAdminPassword($panelId, $provided);
+            return ['password' => $provided, 'regenerated' => false];
+        }
+
+        $plain = self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
+        if ($plain !== '') {
+            return ['password' => $plain, 'regenerated' => false];
+        }
+
+        $plain = self::generateDeployPassword();
+        $this->storeAdminPassword($panelId, $plain);
+        $this->appendLog($panelId, 'Generated new admin password for deploy.');
+        return ['password' => $plain, 'regenerated' => true];
+    }
+
     /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string} */
     public function checkDomainReady(string $domain): array
     {
@@ -531,9 +568,8 @@ class ChildPanelManager
         $documentRoot = trim((string) ($panel['document_root'] ?? ''));
         $deployError = null;
 
-        if ($adminPlainPassword === null || $adminPlainPassword === '') {
-            $adminPlainPassword = self::decryptSecret((string) ($panel['admin_password_enc'] ?? ''));
-        }
+        $passwordMeta = $this->resolveDeployPassword($panelId, $panel, $adminPlainPassword);
+        $adminPlainPassword = $passwordMeta['password'];
 
         if ($this->provisioningEnabled()) {
             $whm = new WhmProvisioner();
@@ -571,7 +607,7 @@ class ChildPanelManager
                     $this->appendLog($panelId, 'Files deployed to ' . $documentRoot);
                 }
             } elseif ($deployError === null && $adminPlainPassword === '') {
-                $deployError = 'Admin password unavailable for provisioning retry.';
+                $deployError = 'Could not resolve admin password for deploy.';
             }
         } else {
             $this->appendLog($panelId, 'Auto-deploy disabled — metadata only.');
@@ -643,7 +679,11 @@ class ChildPanelManager
             }
         }
 
-        return ['success' => true];
+        return [
+            'success' => true,
+            'admin_password_regenerated' => $passwordMeta['regenerated'],
+            'admin_password' => $passwordMeta['regenerated'] ? $adminPlainPassword : null,
+        ];
     }
 
     /** Process DNS-waiting panels. Returns number provisioned. */
