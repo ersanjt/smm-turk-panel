@@ -330,16 +330,16 @@ function cp_s(array $settings, string $key): string {
       <button type="submit" class="btn" style="font-size:12px;padding:8px 14px;">Import existing customers from panel</button>
     </form>
     <?php else: ?>
-    <div class="table-wrap" style="margin-bottom:12px;max-height:280px;overflow:auto;">
-      <table class="table" style="font-size:12px;">
+    <div class="table-wrap" style="margin-bottom:12px;max-height:280px;">
+      <table class="table table-mobile-cards" style="font-size:12px;">
         <thead><tr><th>User</th><th>Email</th><th>Status</th><th>Joined</th></tr></thead>
         <tbody>
         <?php foreach ($panelCustomers as $cu): ?>
         <tr>
-          <td><?= h($cu['username']) ?></td>
-          <td><?= h($cu['email']) ?></td>
-          <td><?= h($cu['status']) ?></td>
-          <td><?= h(date('Y-m-d', strtotime($cu['registered_at'] ?? 'now'))) ?></td>
+          <td data-label="User"><?= h($cu['username']) ?></td>
+          <td data-label="Email"><?= h($cu['email']) ?></td>
+          <td data-label="Status"><?= h($cu['status']) ?></td>
+          <td data-label="Joined"><?= h(date('Y-m-d', strtotime($cu['registered_at'] ?? 'now'))) ?></td>
         </tr>
         <?php endforeach; ?>
         </tbody>

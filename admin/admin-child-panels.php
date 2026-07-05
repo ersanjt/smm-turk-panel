@@ -100,7 +100,7 @@ require_once __DIR__ . '/../layouts/header.php';
     <p style="color:var(--text-muted);">No child panel orders yet.</p>
     <?php else: ?>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table-wide table-mobile-cards">
         <thead>
           <tr>
             <th>ID</th>
@@ -131,22 +131,22 @@ require_once __DIR__ . '/../layouts/header.php';
             };
         ?>
           <tr>
-            <td>#<?= (int) $p['id'] ?></td>
-            <td><?= h($p['username']) ?><br><span style="font-size:11px;color:var(--text-muted);"><?= h($p['email']) ?></span></td>
-            <td>
+            <td data-label="ID">#<?= (int) $p['id'] ?></td>
+            <td data-label="User"><?= h($p['username']) ?><br><span style="font-size:11px;color:var(--text-muted);"><?= h($p['email']) ?></span></td>
+            <td data-label="Domain">
               <strong><?= h($p['domain']) ?></strong>
               <?php if (!empty($p['panel_url'])): ?><br><a href="<?= h($p['panel_url']) ?>" target="_blank" rel="noopener" style="font-size:11px;"><?= h($p['panel_url']) ?></a><?php endif; ?>
               <br><span style="font-size:11px;color:var(--text-muted);"><?= h($p['admin_username']) ?> · <?= h($p['currency']) ?></span>
             </td>
-            <td>
+            <td data-label="Provision">
               <span class="badge <?= $psBadge ?>"><?= h($ps) ?></span>
               <?php if (!empty($p['ns_verified'])): ?><br><span style="font-size:10px;color:#16a34a;">NS ok</span><?php endif; ?>
               <?php if (!empty($p['provision_error'])): ?><br><span style="font-size:10px;color:var(--primary);" title="<?= h($p['provision_error']) ?>">⚠ WHM</span><?php endif; ?>
             </td>
-            <td>$<?= number_format((float) $p['price'], 2) ?></td>
-            <td><span class="badge <?= $badge ?>"><?= h($st) ?></span></td>
-            <td style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($p['created_at'] ?? 'now'))) ?></td>
-            <td style="white-space:nowrap;">
+            <td data-label="Price">$<?= number_format((float) $p['price'], 2) ?></td>
+            <td data-label="Status"><span class="badge <?= $badge ?>"><?= h($st) ?></span></td>
+            <td data-label="Date" style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($p['created_at'] ?? 'now'))) ?></td>
+            <td data-label="Actions" class="td-actions">
               <?php
               $needsDeploy = $ps !== 'ready' || (empty($p['document_root']) && $st === 'active');
               $canRepair = $st === 'active' && $ps === 'ready';
@@ -202,7 +202,7 @@ require_once __DIR__ . '/../layouts/header.php';
           </tr>
           <?php if (!empty($p['provision_log'])): ?>
           <tr>
-            <td colspan="8" style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:8px 12px;">
+            <td colspan="8" data-label="Log" style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:8px 12px;">
               <pre style="margin:0;white-space:pre-wrap;font-family:ui-monospace,monospace;max-height:80px;overflow:auto;"><?= h($p['provision_log']) ?></pre>
             </td>
           </tr>

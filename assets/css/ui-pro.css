@@ -106,7 +106,7 @@
 .stat-pill-icon svg{width:14px;height:14px}
 
 /* ─── Tables — refined ────────────────────────────────────────────────────── */
-.table-wrap{border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(26,10,14,.04)}
+.table-wrap{border-radius:14px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;box-shadow:0 2px 12px rgba(26,10,14,.04)}
 .table th{font-size:10px;letter-spacing:1px;padding:13px 16px}
 .table td{padding:14px 16px}
 .table tr:last-child td{border-bottom:none}

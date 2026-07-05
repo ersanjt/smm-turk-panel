@@ -313,6 +313,18 @@ body.theme-dark .cp-manage, body.panel-follows.theme-dark .cp-manage { backgroun
 .cp-brand-preview img { max-width:100%; max-height:64px; display:block; }
 .cp-brand-preview-sm img { max-height:32px; }
 .cp-open-panel { margin-top:10px; }
+@media (max-width: 768px) {
+  .cp-hero { flex-direction: column; gap: 10px; }
+  .cp-stat { min-width: 0; width: 100%; }
+  .cp-manage-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .cp-manage-tab { flex-shrink: 0; white-space: nowrap; }
+  .cp-manage-pane { padding: 12px; }
+  .cp-panel-actions { flex-direction: column; align-items: stretch; }
+  .cp-panel-actions form, .cp-panel-actions .btn { width: 100%; }
+  .cp-panel-actions .btn { justify-content: center; }
+  .cp-connect dd { font-size: 12px; }
+  .cp-faq-q { padding: 12px 14px; font-size: 13px; }
+}
 </style>
 
 <div class="cp-hero">
