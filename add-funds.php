@@ -261,7 +261,7 @@ require_once __DIR__ . '/layouts/header.php';
     <?php endif; ?>
     <div class="pay-panel">
       <div class="pay-qr-wrap">
-        <canvas id="walletQr" width="180" height="180" aria-label="Heleket QR"></canvas>
+        <div id="walletQr" class="pay-qr-canvas" aria-label="Heleket QR"></div>
         <span class="pay-qr-label">Scan with your wallet app</span>
       </div>
       <div class="pay-address-block">
@@ -308,7 +308,7 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
     <div class="pay-panel">
       <div class="pay-qr-wrap">
-        <canvas id="walletQr" width="180" height="180" aria-label="QR code"></canvas>
+        <div id="walletQr" class="pay-qr-canvas" aria-label="QR code"></div>
         <span class="pay-qr-label">Scan with wallet app</span>
       </div>
       <div class="pay-address-block">
@@ -392,7 +392,7 @@ require_once __DIR__ . '/layouts/header.php';
 
 <div class="add-funds-toast" id="copyToast" role="status">Address copied!</div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
 <script>
 (function(){
   document.querySelectorAll('.preset-btn').forEach(function(btn){
@@ -414,9 +414,20 @@ require_once __DIR__ . '/layouts/header.php';
       });
     });
   }
-  var qrCanvas = document.getElementById('walletQr');
-  if (qrCanvas && walletAddr && typeof QRCode !== 'undefined') {
-    QRCode.toCanvas(qrCanvas, walletAddr.textContent.trim(), { width: 180, margin: 2 });
+  var qrEl = document.getElementById('walletQr');
+  if (qrEl && walletAddr && typeof QRCode !== 'undefined') {
+    var addr = walletAddr.textContent.trim();
+    if (addr) {
+      qrEl.innerHTML = '';
+      new QRCode(qrEl, {
+        text: addr,
+        width: 180,
+        height: 180,
+        colorDark: '#0f172a',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
   }
   var depositPoll = document.getElementById('depositLiveStatus');
   if (depositPoll) {
