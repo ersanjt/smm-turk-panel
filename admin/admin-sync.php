@@ -7,6 +7,13 @@ $db = Database::getInstance();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     $provider = trim($_POST['provider'] ?? 'all');
+    if (isset($_POST['dedupe_only'])) {
+        $dedupeProvider = $provider === 'all' ? null : $provider;
+        $stats = (new ServiceDeduper())->run($dedupeProvider);
+        $removed = $stats['by_upstream_id'] + $stats['by_name'];
+        flash('success', "Removed {$removed} duplicate services. {$stats['remaining']} active remain in catalog.");
+        redirect(url('admin/admin-sync.php'));
+    }
     if ($provider === 'all') {
         $result = $om->syncServices();
     } else {
@@ -16,6 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         $msg = "Synced {$result['synced']} services.";
         if (!empty($result['failed'])) {
             $msg .= " ({$result['failed']} skipped — see sync log)";
+        }
+        if (!empty($result['deduped'])) {
+            $msg .= " Removed {$result['deduped']} duplicates.";
         }
         if (!empty($result['errors'])) {
             $msg .= ' Warnings: ' . implode('; ', $result['errors']);
@@ -45,7 +55,7 @@ foreach (ProviderRegistry::definitions() as $slug => $def) {
     } else {
         $error = 'Disabled';
     }
-    $count = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE provider = ?", [$slug])['c'];
+    $count = (int) $db->fetch("SELECT COUNT(*) c FROM services WHERE provider = ? AND status='active'", [$slug])['c'];
     $providerStatus[$slug] = [
         'name' => $def['name'],
         'enabled' => $enabled,
@@ -78,22 +88,26 @@ require_once __DIR__ . '/../layouts/header.php';
         </div>
       </div>
       <?php if ($st['enabled']): ?>
-      <form method="POST" style="margin:0;">
+      <form method="POST" style="margin:0;display:flex;gap:8px;flex-wrap:wrap;">
         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
         <input type="hidden" name="provider" value="<?= h($slug) ?>">
         <button type="submit" class="btn btn-primary btn-sm">Sync <?= h($st['name']) ?></button>
+        <button type="submit" name="dedupe_only" value="1" class="btn btn-sm" title="Deactivate duplicate names / upstream IDs">Dedupe <?= h(ProviderRegistry::brandLabel($slug)) ?></button>
       </form>
       <?php endif; ?>
     </div>
   </div>
   <?php endforeach; ?>
 
-  <form method="POST" style="margin-top:16px;">
+  <form method="POST" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
     <input type="hidden" name="provider" value="all">
-    <button type="submit" class="btn btn-primary btn-block">🔄 Sync All Providers</button>
+    <button type="submit" class="btn btn-primary">🔄 Sync All Providers</button>
+    <button type="submit" name="dedupe_only" value="1" class="btn">🧹 Dedupe All Catalogs</button>
   </form>
-  <p style="margin-top:14px;font-size:12px;color:var(--text-muted);">
+  <p style="margin-top:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+    <strong>Dedupe</strong> keeps the lowest service ID per duplicate name (within SMM Turk One / Pro) and deactivates the rest. Safe for orders — inactive services are hidden from customers.
+    <br>
     <a href="<?= h(path('admin/admin-settings.php')) ?>">Edit API keys →</a>
     · <a href="<?= h(path('admin/admin-services.php')) ?>">View services →</a>
   </p>

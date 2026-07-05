@@ -26,6 +26,11 @@ require_once __DIR__ . '/CryptoVerifier.php';
 require_once __DIR__ . '/DepositAutoConfirm.php';
 require_once __DIR__ . '/PaymentRegistry.php';
 require_once __DIR__ . '/PaymentProcessor.php';
+require_once __DIR__ . '/ServiceDeduper.php';
+require_once __DIR__ . '/MassOrderHelper.php';
+require_once __DIR__ . '/ChildPanelManager.php';
+require_once __DIR__ . '/ChildPanelDeployer.php';
+require_once __DIR__ . '/WhmProvisioner.php';
 
 // In production, log PHP errors to file (tmp/logs/php_errors.log)
 if (php_sapi_name() !== 'cli' && defined('SMM_PRODUCTION') && SMM_PRODUCTION) {
@@ -223,7 +228,7 @@ function getFlash(): ?array {
 function asset_url(string $path): string {
     $clean = ltrim($path, '/');
     $url = path($clean);
-    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=6';
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'v=7';
 }
 
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */

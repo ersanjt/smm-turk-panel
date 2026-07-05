@@ -97,8 +97,13 @@ if ($preselectServiceId) {
     }
 }
 $selectedCat = ($catParam !== null && $catParam !== '') ? $catParam : '';
-$requireCategory = false;
+if ($selectedCat !== '' && !isset($countByCategory[$selectedCat])) {
+    $selectedCat = '';
+}
+
 $showAllLimitHint = false;
+$tierLoadLimit = 1500;
+$allLoadLimit = 1500;
 
 $svcProviderClause = $providerSql;
 $svcProviderParam = $providerParams;
@@ -131,11 +136,17 @@ if ($searchQ !== '') {
     );
     $showAllLimitHint = count($services) >= 500;
 } else {
-    $services = [];
-    $requireCategory = true;
+    $limit = $tier !== '' ? $tierLoadLimit : $allLoadLimit;
+    $services = $db->fetchAll(
+        "SELECT * FROM services WHERE status='active'" . $platformSql . $svcProviderClause . " ORDER BY service_id LIMIT " . (int) $limit,
+        array_merge($platformParams, $svcProviderParam)
+    );
+    if ($totalServicesCount > count($services)) {
+        $showAllLimitHint = true;
+    }
 }
 $hasServices = count($services) > 0;
-$showEmptyFilterWarning = !$hasServices && !$requireCategory && !$searchQ;
+$showEmptyFilterWarning = !$hasServices && !$searchQ;
 
 require_once __DIR__ . '/app/PlatformIcons.php';
 require_once __DIR__ . '/layouts/header.php';
@@ -186,8 +197,9 @@ require_once __DIR__ . '/layouts/header.php';
 </div>
 
 <?php
+$tierStripParams = array_filter(['platform' => $platform ?: null, 'q' => $searchQ ?: null]);
 $tierExtra = array_filter(['cat' => $selectedCat ?: null, 'tier' => $tier ?: null]);
-echo ProviderRegistry::serviceTierStrip('index.php', $tier, $searchQ, $tierExtra);
+echo ProviderRegistry::serviceTierStrip('index.php', $tier, $searchQ, $tierStripParams);
 echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
 ?>
 
@@ -241,11 +253,11 @@ echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
   <?php endif; ?>
 </div>
 <?php endif; ?>
-<?php if ($requireCategory && !$searchQ): ?>
-<div class="alert alert-info">Pick a <strong>category</strong> below to load services<?= $totalServicesCount > 0 ? ' (' . (int) $totalServicesCount . ' available)' : '' ?>.</div>
-<?php endif; ?>
-<?php if ($showAllLimitHint): ?>
-<div class="alert alert-info" style="margin-bottom:12px;">Showing first 500 services. Pick a category above to narrow the list.</div>
+<?php if ($showAllLimitHint && !$searchQ): ?>
+<div class="alert alert-info" style="margin-bottom:12px;">
+  Showing <?= number_format(count($services)) ?> of <?= number_format($totalServicesCount) ?> services<?= $tier === 'one' ? ' (' . ProviderRegistry::BRAND_ONE . ')' : ($tier === 'pro' ? ' (' . ProviderRegistry::BRAND_PRO . ')' : '') ?>.
+  Pick a <strong>category</strong> above to narrow the list, or use search.
+</div>
 <?php endif; ?>
 <?php if ($showEmptyFilterWarning): ?>
 <div class="alert alert-warning">No services match your filter. Try another category or <a href="<?= h(path('index.php')) ?>">clear filters</a>.</div>
@@ -274,7 +286,11 @@ echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
             data-refill="<?= $s['refill'] ? 'Yes' : 'No' ?>"
             data-markup="<?= $s['markup'] ?>"
             data-updated="<?= $updatedAt ?>"
-            data-category="<?= h($s['category']) ?>">
+            data-category="<?= h($s['category']) ?>"
+            data-tier="<?= h(ProviderRegistry::tierFromProvider(ProviderRegistry::providerForService($s))) ?>">
+            <?php if ($tier === ''): ?>
+            [<?= ProviderRegistry::tierFromProvider(ProviderRegistry::providerForService($s)) === 'pro' ? 'Pro' : 'One' ?>]
+            <?php endif; ?>
             ID-<?= $s['service_id'] ?> | <?= h(mb_substr($s['name'], 0, 90)) ?>
           </option>
           <?php endforeach; ?>

@@ -234,6 +234,8 @@ db_apply_sql_file($pdo, __DIR__ . '/migrations/012_service_tier_brands.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/013_payment_gateways.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/014_heleket_panel_mode.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/015_mail_lang.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/016_child_panel_automation.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/017_child_panel_full_auto.sql');
 
 // ─── Analyze tables (refresh optimizer stats) ────────────────────────────────
 echo "\n--- Analyze ---\n";

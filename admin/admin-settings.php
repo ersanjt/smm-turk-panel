@@ -14,7 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         'payment_usdt_trc20_enabled','payment_binance_pay_enabled','payment_binance_pay_api_key','payment_binance_pay_secret',
         'payment_zarinpal_enabled','payment_zarinpal_merchant_id','payment_zarinpal_usd_rate','payment_zarinpal_sandbox',
         'payment_cryptocloud_enabled','payment_cryptocloud_shop_id','payment_cryptocloud_api_key',
-        'child_panel_price','child_panel_ns1','child_panel_ns2'];
+        'child_panel_price','child_panel_ns1','child_panel_ns2',
+        'child_panel_auto_mode','child_panel_parent_api_url',
+        'child_panel_whm_host','child_panel_whm_username','child_panel_whm_api_token',
+        'child_panel_cpanel_user','child_panel_server_ip','child_panel_home_path',
+        'child_panel_whm_port','child_panel_primary_domain','child_panel_dns_mode',
+        'child_panel_template_path'];
     foreach ($fields as $f) {
         if (isset($_POST[$f])) {
             $db->setSetting($f, trim($_POST[$f]));
@@ -82,9 +87,10 @@ require_once __DIR__ . '/../layouts/header.php';
     <div class="card" style="margin-bottom:18px;">
       <div class="card-title">📧 Email</div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.65;">
-        <strong>cPanel setup (recommended):</strong> Email Accounts → create <code>noreply@smm-turk.com</code> → use SMTP below.<br>
-        Host: <code>mail.smm-turk.com</code> · Port: <code>465</code> (SSL) or <code>587</code> (TLS) · User: full email · Password: mailbox password.<br>
-        <strong>Mail From</strong> must match the mailbox address. <a href="<?= h(path('admin/admin-mail.php')) ?>" style="color:var(--primary);font-weight:700;">Test email →</a>
+        <strong>cPanel (smm-turk.com):</strong> use mailbox <code>contact@smm-turk.com</code> or create <code>noreply@smm-turk.com</code> for automated mail.<br>
+        Host <code>mail.smm-turk.com</code> · Port <code>465</code> + encryption <strong>SSL</strong> (recommended) or port <code>587</code> + <strong>TLS</strong>.<br>
+        Username = full email address · Password = cPanel mailbox password · <strong>Mail From</strong> must match the SMTP user.<br>
+        <a href="<?= h(path('admin/admin-mail.php')) ?>" style="color:var(--primary);font-weight:700;">Send test email →</a>
       </p>
       <div class="grid2">
         <div class="form-group">
@@ -116,7 +122,7 @@ require_once __DIR__ . '/../layouts/header.php';
       </div>
       <div class="form-group">
         <label class="form-label">Mail From (sender — must exist in cPanel)</label>
-        <input type="email" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="noreply@smm-turk.com">
+        <input type="email" name="smtp_from" class="form-control" value="<?= s($settings,'smtp_from') ?>" placeholder="contact@smm-turk.com">
       </div>
       <div class="form-group">
         <label class="form-label">Contact / Reply-To email</label>
@@ -138,7 +144,7 @@ require_once __DIR__ . '/../layouts/header.php';
       <div class="grid2">
         <div class="form-group">
           <label class="form-label">SMTP User (full email)</label>
-          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="noreply@smm-turk.com">
+          <input type="text" name="smtp_user" class="form-control" value="<?= s($settings,'smtp_user') ?>" placeholder="contact@smm-turk.com">
         </div>
         <div class="form-group">
           <label class="form-label">SMTP Password</label>
@@ -383,21 +389,92 @@ require_once __DIR__ . '/../layouts/header.php';
 
     <div class="card" style="margin-bottom:18px;">
       <div class="card-title">👥 Child Panel</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Monthly price for child panel and nameservers shown to users after order.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+        Full automation: WHM creates addon domain, copies panel files, creates MySQL DB + admin user.
+        Customer sets DNS → cron or “Check DNS” deploys the panel.
+      </p>
       <div class="grid3">
         <div class="form-group">
           <label class="form-label">Price per month ($)</label>
           <input type="number" name="child_panel_price" class="form-control" value="<?= s($settings,'child_panel_price') ?: '5' ?>" min="0" step="0.01">
         </div>
         <div class="form-group">
+          <label class="form-label">Automation mode</label>
+          <select name="child_panel_auto_mode" class="form-control">
+            <?php
+            $autoMode = s($settings, 'child_panel_auto_mode') ?: 'instant';
+            foreach ([
+                'instant' => 'Full auto when DNS ready',
+                'dns' => 'Wait for DNS then deploy',
+                'manual' => 'Manual (admin only)',
+            ] as $val => $label):
+            ?>
+            <option value="<?= h($val) ?>" <?= $autoMode === $val ? 'selected' : '' ?>><?= h($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">DNS check</label>
+          <select name="child_panel_dns_mode" class="form-control">
+            <?php $dnsMode = s($settings, 'child_panel_dns_mode') ?: 'both'; ?>
+            <option value="both" <?= $dnsMode === 'both' ? 'selected' : '' ?>>NS or A (Cloudflare OK)</option>
+            <option value="ns" <?= $dnsMode === 'ns' ? 'selected' : '' ?>>Nameservers only</option>
+            <option value="a" <?= $dnsMode === 'a' ? 'selected' : '' ?>>A record only</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:8px;">
+        <div class="form-group">
+          <label class="form-label">Parent API URL</label>
+          <input type="url" name="child_panel_parent_api_url" class="form-control" value="<?= s($settings,'child_panel_parent_api_url') ?>" placeholder="https://smm-turk.com/api/v2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Server IP</label>
+          <input type="text" name="child_panel_server_ip" class="form-control" value="<?= s($settings,'child_panel_server_ip') ?: '92.205.182.143' ?>">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
           <label class="form-label">Nameserver 1</label>
-          <input type="text" name="child_panel_ns1" class="form-control" value="<?= s($settings,'child_panel_ns1') ?>" placeholder="ns1.yourdomain.com">
+          <input type="text" name="child_panel_ns1" class="form-control" value="<?= s($settings,'child_panel_ns1') ?>" placeholder="ns1.smm-turk.com">
         </div>
         <div class="form-group">
           <label class="form-label">Nameserver 2</label>
-          <input type="text" name="child_panel_ns2" class="form-control" value="<?= s($settings,'child_panel_ns2') ?>" placeholder="ns2.yourdomain.com">
+          <input type="text" name="child_panel_ns2" class="form-control" value="<?= s($settings,'child_panel_ns2') ?>" placeholder="ns2.smm-turk.com">
         </div>
       </div>
+      <p style="font-size:11px;color:var(--text-muted);margin:12px 0 8px;font-weight:600;">WHM API (root token)</p>
+      <div class="grid3">
+        <div class="form-group">
+          <label class="form-label">WHM host</label>
+          <input type="text" name="child_panel_whm_host" class="form-control" value="<?= s($settings,'child_panel_whm_host') ?>" placeholder="server.netinode.net">
+        </div>
+        <div class="form-group">
+          <label class="form-label">WHM user (root)</label>
+          <input type="text" name="child_panel_whm_username" class="form-control" value="<?= s($settings,'child_panel_whm_username') ?>" placeholder="root">
+        </div>
+        <div class="form-group">
+          <label class="form-label">WHM API token</label>
+          <input type="password" name="child_panel_whm_api_token" class="form-control" value="<?= s($settings,'child_panel_whm_api_token') ?>" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="grid3" style="margin-top:8px;">
+        <div class="form-group">
+          <label class="form-label">cPanel user</label>
+          <input type="text" name="child_panel_cpanel_user" class="form-control" value="<?= s($settings,'child_panel_cpanel_user') ?: 'smmturk' ?>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Home path</label>
+          <input type="text" name="child_panel_home_path" class="form-control" value="<?= s($settings,'child_panel_home_path') ?: '/home/smmturk' ?>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">WHM port</label>
+          <input type="number" name="child_panel_whm_port" class="form-control" value="<?= s($settings,'child_panel_whm_port') ?: '2087' ?>">
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+        Cron: <code>*/5 * * * * php /home/smmturk/public_html/cron-child-panels.php</code>
+      </p>
     </div>
 
     <button type="submit" class="btn btn-primary">💾 Save Settings</button>

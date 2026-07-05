@@ -117,20 +117,22 @@ require_once __DIR__ . '/layouts/header.php';
 .ticket-card-title-wrap svg { width: 22px; height: 22px; color: var(--primary); flex-shrink: 0; }
 .ticket-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .ticket-cats input { display: none; }
-.ticket-cats label { display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .2s, background .2s, color .2s; background: #fff; }
-.ticket-cats label:hover { border-color: var(--primary-light); background: #fffafb; }
-.ticket-cats input:checked + label { border-color: var(--primary); background: linear-gradient(180deg, #fff8f9 0%, #ffeff1 100%); color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.ticket-cats label { display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .2s, background .2s, color .2s; background: var(--white); color: var(--text); }
+.ticket-cats label:hover { border-color: var(--primary-light); background: rgba(227,10,23,.06); color: var(--text); }
+.ticket-cats input:checked + label { border-color: var(--primary); background: linear-gradient(180deg, rgba(227,10,23,.12) 0%, rgba(227,10,23,.06) 100%); color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 .ticket-subcats { display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .ticket-subcats.visible { display: flex; }
-.ticket-history-card { background: #fff; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.ticket-history-card { background: var(--white); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.ticket-history-card > .card-title { color: var(--text); }
 .ticket-search-wrap { display: flex; gap: 10px; padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
-.ticket-search-wrap input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; }
-.ticket-search-wrap input:focus { border-color: var(--primary); outline: none; }
+.ticket-search-wrap input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--white); color: var(--text); }
+.ticket-search-wrap input::placeholder { color: var(--text-muted); opacity: .85; }
+.ticket-search-wrap input:focus { border-color: var(--primary); outline: none; background: var(--white); }
 .ticket-search-wrap button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 13px; transition: transform .2s, box-shadow .2s; }
 .ticket-search-wrap button:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(227,10,23,.25); }
 .ticket-search-wrap button svg { width: 16px; height: 16px; flex-shrink: 0; }
-.ticket-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; transition: background .15s; }
-.ticket-item:hover { background: #fff8f9; }
+.ticket-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; transition: background .15s; }
+.ticket-item:hover { background: rgba(227,10,23,.06); }
 .ticket-item:last-child { border-bottom: 0; }
 .ticket-item-id { font-weight: 700; color: var(--text); flex: 1 1 100%; }
 .ticket-item-meta { font-size: 12px; color: var(--text-muted); }
@@ -139,10 +141,56 @@ require_once __DIR__ . '/layouts/header.php';
 .ticket-item-status.answered { background: #dcfce7; color: #166534; }
 .ticket-item-status.closed { background: #f3f4f6; color: #6b7280; }
 .ticket-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; flex-wrap: wrap; }
-.ticket-pagination a, .ticket-pagination span { padding: 8px 14px; border-radius: 10px; font-size: 13px; text-decoration: none; color: var(--text); border: 1.5px solid var(--border); transition: all .2s; }
+.ticket-pagination a, .ticket-pagination span { padding: 8px 14px; border-radius: 10px; font-size: 13px; text-decoration: none; color: var(--text); border: 1.5px solid var(--border); transition: all .2s; background: var(--bg); }
 .ticket-pagination a:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .ticket-pagination .current { background: var(--primary); color: #fff; border-color: var(--primary); }
 .attach-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.ticket-file-input { padding: 8px; border: 1px solid var(--border); border-radius: 10px; width: 100%; background: var(--white); color: var(--text); }
+
+/* Dark mode */
+body.theme-dark .ticket-banner {
+  background: linear-gradient(135deg, rgba(245,158,11,.18) 0%, rgba(245,158,11,.08) 100%);
+  border-color: rgba(251,191,36,.35);
+  color: #fcd34d;
+}
+body.theme-dark .ticket-banner-icon { color: #fbbf24; }
+body.theme-dark .ticket-cats label:hover {
+  background: rgba(227,10,23,.14);
+}
+body.theme-dark .ticket-cats input:checked + label {
+  background: linear-gradient(180deg, rgba(227,10,23,.22) 0%, rgba(227,10,23,.1) 100%);
+  color: var(--primary-light);
+}
+body.theme-dark .ticket-history-card {
+  box-shadow: 0 2px 16px rgba(0,0,0,.28);
+}
+body.theme-dark .ticket-item:hover {
+  background: rgba(227,10,23,.1);
+}
+body.theme-dark .ticket-item-status.new,
+body.theme-dark .ticket-item-status.open {
+  background: rgba(56,189,248,.18);
+  color: #7dd3fc;
+}
+body.theme-dark .ticket-item-status.answered {
+  background: rgba(34,197,94,.18);
+  color: #86efac;
+}
+body.theme-dark .ticket-item-status.closed {
+  background: rgba(255,255,255,.08);
+  color: var(--text-muted);
+}
+body.theme-dark .ticket-pagination a,
+body.theme-dark .ticket-pagination span {
+  background: var(--white);
+  border-color: rgba(255,255,255,.1);
+}
+body.theme-dark .ticket-file-input {
+  border-color: rgba(255,255,255,.12);
+}
+body.theme-dark .card .form-label {
+  color: #c9b4b9;
+}
 </style>
 
 <div class="ticket-banner">
@@ -191,7 +239,7 @@ require_once __DIR__ . '/layouts/header.php';
 
       <div class="form-group">
         <label class="form-label">Attach files</label>
-        <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.txt,.doc,.docx" style="padding:8px;border:1px solid var(--border);border-radius:10px;width:100%;">
+        <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.txt,.doc,.docx" class="ticket-file-input">
         <div class="attach-hint">Max 5MB per file. Allowed: images, PDF, TXT, DOC.</div>
       </div>
 

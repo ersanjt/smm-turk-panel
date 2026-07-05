@@ -316,11 +316,16 @@ class OrderManager {
             return ['success' => false, 'error' => implode('; ', $errors)];
         }
 
+        $dedupe = new ServiceDeduper();
+        $dedupeStats = $dedupe->run($onlyProvider);
+
         return [
             'success' => true,
             'synced' => $totalSynced,
             'failed' => $totalFailed,
             'errors' => $errors,
+            'deduped' => $dedupeStats['by_upstream_id'] + $dedupeStats['by_name'],
+            'dedupe_stats' => $dedupeStats,
         ];
     }
 

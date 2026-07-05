@@ -13,7 +13,7 @@
 .checkbox-hint{font-weight:500;font-size:11px;opacity:.85}
 .order-cat-pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;align-items:center;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .order-cat-pills::-webkit-scrollbar{height:6px}
-.order-cat-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:2px solid var(--border);background:#fff;white-space:nowrap;text-decoration:none;color:var(--text);font-size:13px;font-weight:600;transition:border-color .2s,background .2s,color .2s;flex-shrink:0}
+.order-cat-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:2px solid var(--border);background:var(--white);white-space:nowrap;text-decoration:none;color:var(--text);font-size:13px;font-weight:600;transition:border-color .2s,background .2s,color .2s;flex-shrink:0}
 .order-cat-pill svg{width:18px;height:18px;flex-shrink:0}
 .order-cat-pill .order-cat-name{max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .order-cat-pill .order-cat-count{min-width:22px;padding:2px 6px;border-radius:10px;background:var(--border);color:var(--text-muted);font-size:11px;font-weight:700;text-align:center}
@@ -43,4 +43,37 @@
 .order-toolbar .form-control,.order-toolbar-search{min-width:0;width:100%;max-width:none}
 .order-form-row{flex-direction:column;align-items:stretch}
 .order-grid{grid-template-columns:1fr}
+.mass-order-grid{grid-template-columns:1fr}
 }
+
+/* Mass Order */
+.mass-order-grid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+.mass-order-format{font-size:13px;color:var(--text-muted);margin-bottom:14px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;line-height:1.6}
+.mass-order-format code{font-size:12px;background:var(--white);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.mass-order-format-alt{display:block;font-size:12px;margin-top:4px;opacity:.85}
+.mass-order-textarea{font-family:ui-monospace,'Cascadia Code','Consolas',monospace;font-size:13px;line-height:1.55;min-height:220px;resize:vertical}
+.mass-order-meta{font-size:12px;color:var(--text-muted);margin-top:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mass-order-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.mass-order-actions .btn-primary{flex:1;min-width:180px}
+.mass-order-summary-bar{display:flex;flex-wrap:wrap;gap:10px 16px;padding:12px 14px;border-radius:10px;font-size:12px;font-weight:700;margin-bottom:14px}
+.mass-order-summary-bar.is-preview{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:#1d4ed8}
+.mass-order-summary-bar.is-success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#15803d}
+.mass-order-summary-bar.is-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#b91c1c}
+.mass-order-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.mass-order-table th,.mass-order-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+.mass-order-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);font-weight:700}
+.mass-order-table tr.row-ok td:first-child{border-left:3px solid #22c55e}
+.mass-order-table tr.row-fail td:first-child{border-left:3px solid #ef4444}
+.mass-order-service-cell{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mass-order-line-code{display:block;margin-top:4px;font-size:11px;word-break:break-all;opacity:.9}
+.mass-order-muted{display:block;color:var(--text-muted);margin-top:2px}
+.mass-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.mass-badge-ok{background:rgba(34,197,94,.15);color:#15803d}
+.mass-badge-fail{background:rgba(239,68,68,.12);color:#b91c1c}
+.mass-badge-warn{background:rgba(245,158,11,.15);color:#b45309;margin-left:4px}
+.mass-order-balance-hint{font-size:13px;margin:0 0 14px;color:var(--text-muted)}
+.mass-order-after-actions{margin:0 0 16px}
+.mass-order-steps{margin:0 0 16px 18px;padding:0;font-size:13px;color:var(--text-muted);line-height:1.7}
+.mass-order-steps a{font-weight:600}
+.mass-order-tips .desc-item{margin-bottom:10px}
+.mass-order-preview,.mass-order-results{overflow-x:auto;-webkit-overflow-scrolling:touch}

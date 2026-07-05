@@ -266,6 +266,63 @@ class PaymentRegistry
         ];
     }
 
+    public static function coinColor(string $slug): string
+    {
+        return match ($slug) {
+            self::USDT_TRC20, 'wallet_usdt_trc20', 'wallet_usdt_erc20' => '#26a17b',
+            'wallet_btc' => '#f7931a',
+            'wallet_eth' => '#627eea',
+            'wallet_bnb' => '#f3ba2f',
+            'wallet_sol' => '#9945ff',
+            self::HELEKET => '#e30a17',
+            self::BINANCE_PAY => '#f0b90b',
+            self::ZARINPAL => '#0d9488',
+            self::CRYPTOCLOUD => '#3b82f6',
+            self::SMMPAYGATE => '#6366f1',
+            default => '#64748b',
+        };
+    }
+
+    public static function isRecommended(string $slug): bool
+    {
+        return $slug === self::USDT_TRC20;
+    }
+
+    public static function methodBadge(string $slug, array $meta): string
+    {
+        $type = $meta['type'] ?? '';
+        if ($type === 'manual') {
+            return 'Direct wallet';
+        }
+        if ($slug === self::HELEKET) {
+            return 'Auto confirm';
+        }
+        if ($type === 'redirect') {
+            return 'Redirect checkout';
+        }
+        return 'Payment';
+    }
+
+    /** @param array<string, array> $methods */
+    public static function groupedMethods(array $methods): array
+    {
+        $crypto = [];
+        $gateways = [];
+        foreach ($methods as $slug => $meta) {
+            if (($meta['type'] ?? '') === 'manual' || $slug === self::USDT_TRC20 || $slug === self::HELEKET) {
+                $crypto[$slug] = $meta;
+            } else {
+                $gateways[$slug] = $meta;
+            }
+        }
+        if (isset($crypto[self::USDT_TRC20])) {
+            $trc = [self::USDT_TRC20 => $crypto[self::USDT_TRC20]];
+            unset($crypto[self::USDT_TRC20]);
+            $crypto = $trc + $crypto;
+        }
+        return ['crypto' => $crypto, 'gateways' => $gateways];
+    }
+
     public static function callbackUrl(string $gateway): string
     {
         return url('payment-callback.php') . '?gateway=' . rawurlencode($gateway);

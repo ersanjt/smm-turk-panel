@@ -184,14 +184,82 @@ if ($activeTab === 'history') {
 }
 
 $currentBalance = (float) ($user['balance'] ?? 0);
-$balanceRow = $db->fetch("SELECT balance FROM users WHERE id = ?", [(int) $user['id']]);
+$balanceRow = $db->fetch("SELECT balance, spent FROM users WHERE id = ?", [(int) $user['id']]);
 if ($balanceRow !== null) {
     $currentBalance = (float) $balanceRow['balance'];
 }
+$totalSpent = (float) ($balanceRow['spent'] ?? $user['spent'] ?? 0);
+
+$depositStats = ['total_deposited' => 0.0, 'completed_count' => 0, 'pending_count' => 0];
+try {
+    $depositStats = $db->fetch(
+        "SELECT COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) AS total_deposited,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count
+         FROM transactions WHERE user_id = ? AND type = 'deposit'",
+        [$user['id']]
+    ) ?: $depositStats;
+} catch (Throwable $e) {
+    /* ignore */
+}
+
+$zarinRate = (float) ($db->getSetting('payment_zarinpal_usd_rate') ?: 0);
+$methodGroups = PaymentRegistry::groupedMethods($paymentMethods);
 
 $defaultMethod = $selectedMethod && isset($paymentMethods[$selectedMethod])
     ? $selectedMethod
     : (array_key_first($paymentMethods) ?: '');
+
+$defaultAmount = max($minDeposit, 25);
+
+function af_render_steps(string $current): void
+{
+    $steps = [
+        'method'  => ['n' => 1, 'label' => 'Choose method'],
+        'amount'  => ['n' => 2, 'label' => 'Enter amount'],
+        'pay'     => ['n' => 3, 'label' => 'Send payment'],
+        'confirm' => ['n' => 4, 'label' => 'Confirmed'],
+    ];
+    $order = array_keys($steps);
+    $currentIdx = array_search($current, $order, true);
+    if ($currentIdx === false) {
+        $currentIdx = 0;
+    }
+    echo '<div class="add-funds-steps">';
+    foreach ($steps as $key => $step) {
+        $idx = array_search($key, $order, true);
+        $cls = 'add-funds-step';
+        if ($idx < $currentIdx) {
+            $cls .= ' done';
+        } elseif ($idx === $currentIdx) {
+            $cls .= ' active';
+        }
+        echo '<div class="' . $cls . '"><span>Step ' . (int) $step['n'] . '</span>' . h($step['label']) . '</div>';
+    }
+    echo '</div>';
+}
+
+function af_render_method_cards(array $methods, string $defaultMethod): void
+{
+    foreach ($methods as $slug => $meta) {
+        $color = PaymentRegistry::coinColor($slug);
+        $selected = $slug === $defaultMethod;
+        $badge = PaymentRegistry::methodBadge($slug, $meta);
+        $rec = PaymentRegistry::isRecommended($slug);
+        ?>
+        <label class="coin-card<?= $selected ? ' selected' : '' ?>" data-method="<?= h($slug) ?>"
+               data-label="<?= h($meta['label']) ?>" data-badge="<?= h($badge) ?>" data-type="<?= h($meta['type'] ?? '') ?>"
+               style="--coin-color:<?= h($color) ?>">
+          <input type="radio" name="method" value="<?= h($slug) ?>" <?= $selected ? 'checked' : '' ?> required hidden>
+          <?php if ($rec): ?><span class="coin-rec">Recommended</span><?php endif; ?>
+          <span class="coin-badge"><?= h($meta['icon']) ?></span>
+          <span class="coin-name"><?= h($meta['label']) ?></span>
+          <span class="coin-network"><?= h($meta['desc']) ?></span>
+          <span class="coin-hint"><?= h($badge) ?></span>
+        </label>
+        <?php
+    }
+}
 
 $pageTitle = 'Add Funds';
 $pageDescription = 'Add funds via SmmPayGate, Heleket, USDT TRC20, Binance Pay, ZarinPal, or CryptoCloud.';
@@ -199,25 +267,67 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 <link rel="stylesheet" href="<?= h(asset_url('assets/css/add-funds.css')) ?>">
 
-<div class="add-funds-balance-box">
-  <span class="balance-label">Your current balance</span>
-  <span class="balance-value">$<span><?= number_format($currentBalance, 3) ?></span></span>
+<div class="add-funds-hero">
+  <div class="add-funds-hero-main">
+    <div class="af-hero-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/><path d="M6 16h4"/></svg>
+    </div>
+    <div>
+      <h1 class="af-hero-title">Add Funds</h1>
+      <p class="af-hero-sub">Top up your balance with crypto or payment gateways. Funds are credited in USD.</p>
+    </div>
+  </div>
+  <div class="add-funds-stats">
+    <div class="af-stat">
+      <span class="af-stat-label">Balance</span>
+      <span class="af-stat-value af-stat-balance">$<?= number_format($currentBalance, 3) ?></span>
+    </div>
+    <div class="af-stat">
+      <span class="af-stat-label">Total deposited</span>
+      <span class="af-stat-value">$<?= number_format((float) ($depositStats['total_deposited'] ?? 0), 2) ?></span>
+    </div>
+    <div class="af-stat">
+      <span class="af-stat-label">Spent</span>
+      <span class="af-stat-value">$<?= number_format($totalSpent, 3) ?></span>
+    </div>
+  </div>
 </div>
 
 <div class="add-funds-tabs">
-  <a href="<?= h(path('add-funds.php')) ?>" class="<?= $activeTab === 'add' ? 'active' : '' ?>">Add Funds</a>
-  <a href="<?= h(path('add-funds.php')) ?>?tab=history" class="<?= $activeTab === 'history' ? 'active' : '' ?>">Fund History</a>
+  <a href="<?= h(path('add-funds.php')) ?>" class="<?= $activeTab === 'add' ? 'active' : '' ?>">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+    Add Funds
+  </a>
+  <a href="<?= h(path('add-funds.php')) ?>?tab=history" class="<?= $activeTab === 'history' ? 'active' : '' ?>">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Fund History
+    <?php if ((int) ($depositStats['pending_count'] ?? 0) > 0): ?>
+    <span class="af-tab-badge"><?= (int) $depositStats['pending_count'] ?></span>
+    <?php endif; ?>
+  </a>
 </div>
 
 <?php if ($activeTab === 'history'): ?>
   <div class="card add-funds-card">
     <div class="card-title">Fund History</div>
     <?php if (empty($fundHistory)): ?>
-    <p class="text-muted">No deposits yet.</p>
+    <div class="af-empty-state">
+      <div class="af-empty-icon">💳</div>
+      <h3>No deposits yet</h3>
+      <p>Add funds to start placing orders on SMM Turk.</p>
+      <a href="<?= h(path('add-funds.php')) ?>" class="btn btn-primary">+ Add Funds</a>
+    </div>
     <?php else: ?>
+    <div class="af-history-summary">
+      <div><strong><?= (int) ($depositStats['completed_count'] ?? 0) ?></strong> completed</div>
+      <div><strong>$<?= number_format((float) ($depositStats['total_deposited'] ?? 0), 2) ?></strong> total added</div>
+      <?php if ((int) ($depositStats['pending_count'] ?? 0) > 0): ?>
+      <div class="af-pending-pill"><strong><?= (int) $depositStats['pending_count'] ?></strong> pending</div>
+      <?php endif; ?>
+    </div>
     <div class="table-wrap">
       <table class="table add-funds-table">
-        <thead><tr><th>ID</th><th>Date</th><th>Method</th><th>Status</th><th>Amount</th></tr></thead>
+        <thead><tr><th>ID</th><th>Date</th><th>Method</th><th>Status</th><th>Amount</th><th>Reference</th></tr></thead>
         <tbody>
         <?php foreach ($fundHistory as $t):
             $st = strtolower($t['status'] ?? 'pending');
@@ -227,13 +337,16 @@ require_once __DIR__ . '/layouts/header.php';
             if (preg_match('/—\s*(.+)$/', $t['description'] ?? '', $m)) {
                 $methodLabel = trim($m[1]);
             }
+            $ref = trim((string) ($t['reference'] ?? ''));
+            $refShort = $ref !== '' ? (strlen($ref) > 18 ? substr($ref, 0, 10) . '…' . substr($ref, -6) : $ref) : '—';
         ?>
         <tr>
-          <td>#<?= (int) $t['id'] ?></td>
-          <td><?= h(date('Y-m-d H:i', strtotime($t['created_at']))) ?></td>
-          <td><?= h($methodLabel) ?></td>
-          <td><span class="<?= h($stClass) ?>"><?= h(ucfirst($st)) ?></span></td>
-          <td><strong>$<?= number_format((float) $t['amount'], 2) ?></strong></td>
+          <td><span class="af-tx-id">#<?= (int) $t['id'] ?></span></td>
+          <td><?= h(date('M j, Y · H:i', strtotime($t['created_at']))) ?></td>
+          <td><span class="af-method-pill" style="--coin-color:<?= h(PaymentRegistry::coinColor($method ?? '')) ?>"><?= h($methodLabel) ?></span></td>
+          <td><span class="af-status-dot <?= h($stClass) ?>"></span><span class="<?= h($stClass) ?>"><?= h(ucfirst($st)) ?></span></td>
+          <td><strong class="af-amount-cell">$<?= number_format((float) $t['amount'], 2) ?></strong></td>
+          <td><code class="af-ref" title="<?= h($ref) ?>"><?= h($refShort) ?></code></td>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -244,6 +357,7 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
 <?php elseif ($step === 'heleket_pay' && $heleketPay): ?>
+  <?php af_render_steps('pay'); ?>
   <div class="card add-funds-card">
     <div class="pay-summary">
       <div class="pay-amount">
@@ -296,12 +410,14 @@ require_once __DIR__ . '/layouts/header.php';
         <div><strong>Status:</strong> <span id="depositLiveStatus">Pending</span></div>
       </div>
     </div>
-    <div id="depositConfirmedActions" style="display:none;margin-top:12px;">
+    <div id="depositConfirmedActions" class="af-confirmed-actions" style="display:none;">
       <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place an order →</a>
+      <a href="<?= h(path('child-panel.php')) ?>" class="btn">Child Panel</a>
     </div>
   </div>
 
 <?php elseif ($step === 'manual_pay' && $manualPay): ?>
+  <?php af_render_steps('pay'); ?>
   <div class="card add-funds-card">
     <div class="pay-summary">
       <div class="pay-amount">$<?= number_format($amount, 2) ?><small>Send <?= h($manualPay['label']) ?> (<?= h($manualPay['network']) ?>)</small></div>
@@ -322,7 +438,10 @@ require_once __DIR__ . '/layouts/header.php';
         </div>
       </div>
     </div>
-    <form method="POST">
+    <div class="add-funds-next-box">
+      <strong>After sending:</strong> Paste your blockchain TxHash below. We verify on-chain and credit your balance automatically.
+    </div>
+    <form method="POST" class="af-tx-form">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="deposit_id" value="<?= $depositId ?>">
       <input type="hidden" name="submit_tx" value="1">
@@ -335,8 +454,12 @@ require_once __DIR__ . '/layouts/header.php';
   </div>
 
 <?php elseif ($step === 'awaiting'): ?>
+  <?php af_render_steps('confirm'); ?>
   <div class="card add-funds-card">
     <div class="deposit-status-card" id="depositStatusCard">
+      <div class="status-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </div>
       <h3 id="depositStatusTitle">Verifying payment…</h3>
       <p id="depositStatusMsg">Checking your <?= h($manualPay['label'] ?? 'crypto') ?> <?= h($manualPay['network'] ?? '') ?> transaction.</p>
       <div class="deposit-status-meta">
@@ -346,15 +469,15 @@ require_once __DIR__ . '/layouts/header.php';
         <div><strong>Status:</strong> <span id="depositLiveStatus">Checking…</span></div>
       </div>
     </div>
-    <div id="depositConfirmedActions" style="display:none;">
+    <div id="depositConfirmedActions" class="af-confirmed-actions" style="display:none;">
       <a href="<?= h(path('index.php')) ?>" class="btn btn-primary">Place an order →</a>
     </div>
     <p class="text-muted-sm"><a href="<?= h(path('add-funds.php')) ?>?new=1">Start a new deposit</a></p>
   </div>
 
 <?php else: ?>
+  <?php af_render_steps('method'); ?>
   <div class="card add-funds-card">
-    <div class="card-title">Add Funds</div>
     <?php if (!$methodsAvailable): ?>
     <p class="text-muted">No payment methods are active yet.</p>
     <ul class="text-muted" style="font-size:13px;line-height:1.7;margin:12px 0 16px;padding-left:20px;">
@@ -367,33 +490,79 @@ require_once __DIR__ . '/layouts/header.php';
     <p><a href="<?= h(path('tickets.php')) ?>" class="btn">Contact support</a></p>
     <?php endif; ?>
     <?php else: ?>
-    <form method="POST" class="add-funds-form">
+    <form method="POST" class="add-funds-form" id="addFundsForm"
+          data-min-deposit="<?= h((string) $minDeposit) ?>"
+          data-current-balance="<?= h((string) $currentBalance) ?>"
+          data-zarin-rate="<?= h((string) $zarinRate) ?>">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="add_funds" value="1">
-      <div class="form-group">
-        <label class="form-label" for="payMethod">Method</label>
-        <select name="method" id="payMethod" class="form-control add-funds-method-select" required>
-          <?php foreach ($paymentMethods as $slug => $meta): ?>
-          <option value="<?= h($slug) ?>" <?= $slug === $defaultMethod ? 'selected' : '' ?>><?= h($meta['icon'] . ' ' . $meta['label']) ?> — <?= h($meta['desc']) ?></option>
-          <?php endforeach; ?>
-        </select>
+
+      <?php if (!empty($methodGroups['crypto'])): ?>
+      <div class="af-method-section">
+        <h3 class="af-section-title">
+          <span class="af-section-icon">₿</span> Crypto wallets
+          <small>Direct transfer — paste TxHash after sending</small>
+        </h3>
+        <div class="coin-grid">
+          <?php af_render_method_cards($methodGroups['crypto'], $defaultMethod); ?>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label" for="amountInput">Amount (USD)</label>
+      <?php endif; ?>
+
+      <?php if (!empty($methodGroups['gateways'])): ?>
+      <div class="af-method-section">
+        <h3 class="af-section-title">
+          <span class="af-section-icon">⚡</span> Payment gateways
+          <small>Redirect checkout — auto credit</small>
+        </h3>
+        <div class="coin-grid">
+          <?php af_render_method_cards($methodGroups['gateways'], $defaultMethod); ?>
+        </div>
+      </div>
+      <?php endif; ?>
+
+      <div id="methodDetail" class="af-method-detail" hidden></div>
+
+      <div class="af-amount-section">
+        <h3 class="af-section-title">
+          <span class="af-section-icon">$</span> Deposit amount
+          <small>Minimum $<?= (int) $minDeposit ?></small>
+        </h3>
+        <div class="af-amount-input-wrap">
+          <span class="af-currency">$</span>
+          <input type="number" name="amount" id="amountInput" class="af-amount-input" min="<?= $minDeposit ?>" step="0.01" required value="<?= number_format($defaultAmount, 2, '.', '') ?>" placeholder="<?= (int) $minDeposit ?>">
+          <span class="af-amount-usd">USD</span>
+        </div>
         <div class="add-funds-presets">
           <?php
-          $presets = [10, 25, 50, 100, 200, 500];
-          $defaultAmount = max($minDeposit, 25);
+          $presets = [10, 25, 50, 100, 200, 500, 1000];
           foreach ($presets as $preset):
               if ($preset >= $minDeposit):
           ?>
-          <button type="button" class="preset-btn" data-amount="<?= $preset ?>">$<?= $preset ?></button>
+          <button type="button" class="preset-btn<?= $preset === $defaultAmount ? ' active' : '' ?>" data-amount="<?= $preset ?>">$<?= $preset ?></button>
           <?php endif; endforeach; ?>
         </div>
-        <input type="number" name="amount" id="amountInput" class="form-control" min="<?= $minDeposit ?>" step="0.01" required value="<?= number_format($defaultAmount, 2, '.', '') ?>" placeholder="Min $<?= (int) $minDeposit ?>">
+        <div class="af-balance-preview">
+          <div class="af-preview-row">
+            <span>Current balance</span>
+            <strong>$<?= number_format($currentBalance, 3) ?></strong>
+          </div>
+          <div class="af-preview-row af-preview-after">
+            <span>After deposit</span>
+            <strong id="afterBalance">$<?= number_format($currentBalance + $defaultAmount, 3) ?></strong>
+          </div>
+        </div>
       </div>
-      <button type="submit" class="btn btn-primary btn-block add-funds-submit">Continue to payment</button>
-      <p class="add-funds-hint">Minimum deposit: <strong>$<?= (int) $minDeposit ?></strong>. Crypto wallets and redirect gateways (Heleket, Binance Pay, ZarinPal, etc.) appear when configured in Admin → Settings.</p>
+
+      <button type="submit" class="btn btn-primary btn-block add-funds-submit" id="addFundsSubmit">
+        Continue to payment →
+      </button>
+      <div class="af-trust-row">
+        <span>🔒 Secure</span>
+        <span>⚡ Auto-verify</span>
+        <span>📧 Email on credit</span>
+      </div>
+      <p class="add-funds-hint">Minimum <strong>$<?= (int) $minDeposit ?></strong>. Wrong network or coin may result in lost funds — always match the method shown.</p>
     </form>
     <?php endif; ?>
   </div>
@@ -401,62 +570,8 @@ require_once __DIR__ . '/layouts/header.php';
 
 <div class="add-funds-toast" id="copyToast" role="status">Address copied!</div>
 
+<script>window.ADD_FUNDS_STATUS_URL = <?= json_encode(path('api/deposit-status.php')) ?>;</script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
-<script>
-(function(){
-  document.querySelectorAll('.preset-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var inp = document.getElementById('amountInput');
-      if (inp) inp.value = this.dataset.amount;
-      document.querySelectorAll('.preset-btn').forEach(function(b){ b.classList.remove('active'); });
-      this.classList.add('active');
-    });
-  });
-  var copyBtn = document.getElementById('copyAddressBtn');
-  var walletAddr = document.getElementById('walletAddress');
-  var toast = document.getElementById('copyToast');
-  if (copyBtn && walletAddr) {
-    copyBtn.addEventListener('click', function(){
-      var text = walletAddr.textContent.trim();
-      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function(){
-        if (toast) { toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 2000); }
-      });
-    });
-  }
-  var qrEl = document.getElementById('walletQr');
-  if (qrEl && walletAddr && typeof QRCode !== 'undefined') {
-    var addr = walletAddr.textContent.trim();
-    if (addr) {
-      qrEl.innerHTML = '';
-      new QRCode(qrEl, {
-        text: addr,
-        width: 180,
-        height: 180,
-        colorDark: '#0f172a',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-  }
-  var depositPoll = document.getElementById('depositLiveStatus');
-  if (depositPoll) {
-    var statusUrl = <?= json_encode(path('api/deposit-status.php')) ?>;
-    function pollDeposit() {
-      fetch(statusUrl, { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(data){
-        if (!data.ok) return;
-        var live = document.getElementById('depositLiveStatus');
-        if (live) live.textContent = data.status || 'pending';
-        if (data.approved || data.status === 'confirmed') {
-          var confirmed = document.getElementById('depositConfirmedActions');
-          if (confirmed) confirmed.style.display = 'block';
-          return;
-        }
-        setTimeout(pollDeposit, 8000);
-      }).catch(function(){ setTimeout(pollDeposit, 12000); });
-    }
-    setTimeout(pollDeposit, 3000);
-  }
-})();
-</script>
+<script src="<?= h(asset_url('assets/js/add-funds.js')) ?>"></script>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

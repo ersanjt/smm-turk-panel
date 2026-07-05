@@ -42,7 +42,7 @@ require_once __DIR__ . '/layouts/header.php';
 
 <div class="card" style="margin-bottom:20px;">
   <?php foreach ($replies as $r): ?>
-  <div style="padding:14px 0;border-bottom:1px solid var(--border);<?= $r['is_staff'] ? ' background:#f0fdf4; margin:0 -22px; padding:14px 22px;' : '' ?>">
+  <div class="ticket-reply<?= $r['is_staff'] ? ' ticket-reply-staff' : '' ?>">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">
       <?= $r['is_staff'] ? '🏷 Support' : '👤 You' ?> — <?= h(date('Y-m-d H:i', strtotime($r['created_at'] ?? 'now'))) ?>
     </div>
@@ -74,5 +74,11 @@ require_once __DIR__ . '/layouts/header.php';
 <?php endif; ?>
 
 <p style="margin-top:16px;"><a href="<?= h(path('tickets.php')) ?>">← Back to Tickets</a></p>
+
+<style>
+.ticket-reply { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.ticket-reply-staff { background: rgba(34,197,94,.1); margin: 0 -22px; padding: 14px 22px; border-bottom-color: rgba(34,197,94,.2); }
+body.theme-dark .ticket-reply-staff { background: rgba(34,197,94,.14); }
+</style>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

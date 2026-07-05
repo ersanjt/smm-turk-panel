@@ -3,7 +3,7 @@ require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
 $db = Database::getInstance();
 ensure_account_settings_schema($db);
-$pageTitle = 'Account Settings';
+$pageTitle = 'Settings';
 $forcePasswordChange = !empty($_SESSION['must_change_password']) || isset($_GET['change_password']);
 
 $errors = [];
@@ -109,6 +109,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if (isset($_POST['action']) && $_POST['action'] === 'save_language') {
+        $lang = strtolower(trim($_POST['lang'] ?? 'en'));
+        if (in_array($lang, ['en', 'tr', 'de', 'fr'], true)) {
+            $_SESSION['lang'] = $lang;
+            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (defined('SITE_URL') && str_starts_with((string) SITE_URL, 'https://'));
+            setcookie('lang', $lang, ['expires' => time() + 31536000, 'path' => '/', 'secure' => $secure, 'httponly' => true, 'samesite' => 'Lax']);
+            flash('success', 'Language preference saved.');
+            redirect(url('account-settings.php'));
+        }
+    }
+
     if (isset($_POST['action']) && $_POST['action'] === 'generate_api_key') {
         $newKey = bin2hex(random_bytes(20));
         if ($hasApiKeyCreatedAt) {
@@ -189,54 +201,163 @@ $timezones = [
 
 $apiKeyMasked = substr($user['api_key'] ?? '', 0, 8) . '•••••••••••••';
 $apiKeyFull = $user['api_key'] ?? '';
+$isAdmin = $auth->isAdmin();
+$dashLang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? 'en');
+if (!in_array($dashLang, ['en', 'tr', 'de', 'fr'], true)) {
+    $dashLang = 'en';
+}
+$userBalance = number_format((float) ($user['balance'] ?? 0), 3);
+$userSpent = number_format((float) ($user['spent'] ?? 0), 3);
+$memberSince = !empty($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : '—';
+
+$adminLinks = [
+    ['url' => 'admin/index.php', 'icon' => 'grid', 'title' => 'Admin Dashboard', 'desc' => 'Stats, charts, quick actions'],
+    ['url' => 'admin/admin-settings.php', 'icon' => 'settings', 'title' => 'Site & Payments', 'desc' => 'API keys, gateways, crypto wallets, mail'],
+    ['url' => 'admin/admin-sync.php', 'icon' => 'sync', 'title' => 'Sync Services', 'desc' => 'SMM Turk One / Pro catalog & dedupe'],
+    ['url' => 'admin/admin-services.php', 'icon' => 'services', 'title' => 'Services', 'desc' => 'Edit markup, enable/disable services'],
+    ['url' => 'admin/admin-orders.php', 'icon' => 'orders', 'title' => 'Orders', 'desc' => 'All customer orders'],
+    ['url' => 'admin/admin-deposits.php', 'icon' => 'deposit', 'title' => 'Deposits', 'desc' => 'Pending crypto top-ups'],
+    ['url' => 'admin/admin-users.php', 'icon' => 'users', 'title' => 'Users', 'desc' => 'Ban, balance, roles'],
+    ['url' => 'admin/admin-tickets.php', 'icon' => 'tickets', 'title' => 'Support Tickets', 'desc' => 'Reply to customer tickets'],
+    ['url' => 'admin/admin-child-panels.php', 'icon' => 'server', 'title' => 'Child Panels', 'desc' => 'Activate reseller panels'],
+    ['url' => 'admin/admin-mail.php', 'icon' => 'message', 'title' => 'Mail', 'desc' => 'SMTP test & templates'],
+    ['url' => 'admin/admin-blog.php', 'icon' => 'clipboard', 'title' => 'Blog', 'desc' => 'SEO posts & content'],
+];
 
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-.account-settings-page { max-width: 640px; }
-.account-settings-page .as-hero { margin-bottom: 24px; }
-.account-settings-page .as-hero-title { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 700; color: var(--text); }
-.account-settings-page .as-hero-title svg { width: 24px; height: 24px; color: var(--primary); flex-shrink: 0; }
-.account-settings-page .as-card { background: var(--white); border-radius: 16px; padding: 22px; margin-bottom: 20px; border: 1px solid var(--border); }
-.account-settings-page .as-card h2 { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
-.account-settings-page .as-card h2 svg { width: 20px; height: 20px; color: var(--primary); opacity: .9; }
-.account-settings-page .as-profile-summary { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: linear-gradient(135deg, rgba(227,10,23,.06) 0%, rgba(227,10,23,.02) 100%); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }
+.settings-hub { max-width: 980px; }
+.settings-hub .as-hero { margin-bottom: 22px; }
+.settings-hub .as-hero-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.settings-hub .as-hero-title { display: flex; align-items: center; gap: 10px; font-size: 1.35rem; font-weight: 800; color: var(--text); margin: 0; }
+.settings-hub .as-hero-title svg { width: 26px; height: 26px; color: var(--primary); flex-shrink: 0; }
+.settings-hub .as-hero-sub { font-size: 13px; color: var(--text-muted); line-height: 1.55; max-width: 560px; margin: 0; }
+.settings-hub .as-role-badge { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; background: rgba(227,10,23,.12); color: var(--primary); border: 1px solid rgba(227,10,23,.25); }
+.settings-hub .as-role-badge.is-admin { background: rgba(139,92,246,.14); color: #7c3aed; border-color: rgba(139,92,246,.3); }
+body.theme-dark .settings-hub .as-role-badge.is-admin { color: #c4b5fd; }
+.settings-hub .as-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 22px; }
+.settings-hub .as-stat { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.settings-hub .as-stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 4px; }
+.settings-hub .as-stat-value { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text); }
+.settings-hub .as-admin-panel { background: linear-gradient(135deg, rgba(139,92,246,.1) 0%, rgba(227,10,23,.06) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 22px; }
+body.theme-dark .settings-hub .as-admin-panel { background: linear-gradient(135deg, rgba(139,92,246,.16) 0%, rgba(227,10,23,.1) 100%); border-color: rgba(255,255,255,.1); }
+.settings-hub .as-admin-panel h2 { font-size: 15px; font-weight: 800; color: var(--text); margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+.settings-hub .as-admin-panel p { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.5; }
+.settings-hub .as-admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.settings-hub .as-admin-link { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 12px; background: var(--white); border: 1px solid var(--border); text-decoration: none; color: inherit; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.settings-hub .as-admin-link:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227,10,23,.1); }
+.settings-hub .as-admin-link strong { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.settings-hub .as-admin-link span { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.settings-hub .as-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 22px; }
+.settings-hub .as-quick-link { display: inline-flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--white); border: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: 13px; font-weight: 600; transition: border-color .2s, color .2s; }
+.settings-hub .as-quick-link:hover { border-color: var(--primary); color: var(--primary); }
+.settings-hub .settings-layout { display: grid; grid-template-columns: 200px 1fr; gap: 22px; align-items: start; }
+.settings-hub .settings-nav { position: sticky; top: 88px; display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; }
+.settings-hub .settings-nav a { padding: 10px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-decoration: none; transition: background .15s, color .15s; }
+.settings-hub .settings-nav a:hover { background: rgba(227,10,23,.08); color: var(--primary); }
+.settings-hub .as-card { background: var(--white); border-radius: 16px; padding: 22px; margin-bottom: 20px; border: 1px solid var(--border); scroll-margin-top: 88px; }
+.settings-hub .as-card h2 { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.settings-hub .as-card h2 svg { width: 20px; height: 20px; color: var(--primary); opacity: .9; }
+.settings-hub .as-profile-summary { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: linear-gradient(135deg, rgba(227,10,23,.06) 0%, rgba(227,10,23,.02) 100%); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px; }
 a.as-profile-summary-link { text-decoration: none; color: inherit; transition: border-color .2s, box-shadow .2s; }
 a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow: 0 4px 16px rgba(227,10,23,.08); }
-.account-settings-page .as-change-photo { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--primary); }
-.account-settings-page .as-file-input { cursor: pointer; }
-.account-settings-page .as-profile-summary .as-avatar { width: 56px; height: 56px; min-width: 56px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 22px; font-weight: 700; }
-.account-settings-page .as-profile-summary .as-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.account-settings-page .as-profile-summary .as-info { min-width: 0; }
-.account-settings-page .as-profile-summary .as-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-.account-settings-page .as-profile-summary .as-email { font-size: 13px; color: var(--text-muted); }
-.account-settings-page .as-section-divider { height: 1px; background: var(--border); margin: 20px 0; border: 0; }
-.account-settings-page .form-group { margin-bottom: 14px; }
-.account-settings-page .form-group:last-of-type { margin-bottom: 18px; }
-.account-settings-page .as-api-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
-.account-settings-page .as-api-row input { flex: 1; min-width: 180px; font-family: monospace; font-size: 13px; }
-.account-settings-page .as-api-copy { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
-.account-settings-page .as-avatar-block { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px; }
-.account-settings-page .as-avatar-preview { flex-shrink: 0; }
-.account-settings-page .as-avatar-preview img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); display: block; }
-.account-settings-page .as-avatar-placeholder { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 700; }
-.account-settings-page .as-avatar-actions { flex: 1; min-width: 200px; }
-.account-settings-page .as-avatar-actions .btn { margin-right: 8px; margin-bottom: 8px; }
-.account-settings-page .as-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 12px; }
-.account-settings-page .alert { margin-bottom: 14px; }
-#profile-photo { scroll-margin-top: 72px; }
+.settings-hub .as-change-photo { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--primary); }
+.settings-hub .as-file-input { cursor: pointer; }
+.settings-hub .as-profile-summary .as-avatar { width: 56px; height: 56px; min-width: 56px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 22px; font-weight: 700; }
+.settings-hub .as-profile-summary .as-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.settings-hub .as-profile-summary .as-info { min-width: 0; }
+.settings-hub .as-profile-summary .as-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.settings-hub .as-profile-summary .as-email { font-size: 13px; color: var(--text-muted); }
+.settings-hub .as-section-divider { height: 1px; background: var(--border); margin: 20px 0; border: 0; }
+.settings-hub .form-group { margin-bottom: 14px; }
+.settings-hub .form-group:last-of-type { margin-bottom: 18px; }
+.settings-hub .as-api-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+.settings-hub .as-api-row input { flex: 1; min-width: 180px; font-family: monospace; font-size: 13px; }
+.settings-hub .as-api-copy { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
+.settings-hub .as-avatar-block { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px; }
+.settings-hub .as-avatar-preview { flex-shrink: 0; }
+.settings-hub .as-avatar-preview img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); display: block; }
+.settings-hub .as-avatar-placeholder { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 700; }
+.settings-hub .as-avatar-actions { flex: 1; min-width: 200px; }
+.settings-hub .as-avatar-btn-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+.settings-hub .as-avatar-btn-row form { margin: 0; display: inline-flex; }
+.settings-hub .as-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 12px; line-height: 1.5; }
+.settings-hub .alert { margin-bottom: 14px; }
+.settings-hub .as-pref-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.settings-hub .as-pref-row .form-group { flex: 1; min-width: 180px; margin-bottom: 0; }
+body.theme-dark .settings-hub .as-card,
+body.theme-dark .settings-hub .as-stat,
+body.theme-dark .settings-hub .settings-nav,
+body.theme-dark .settings-hub .as-admin-link,
+body.theme-dark .settings-hub .as-quick-link { box-shadow: 0 2px 12px rgba(0,0,0,.2); }
+body.theme-dark .settings-hub .card .form-label { color: #c9b4b9; }
+@media (max-width: 860px) {
+  .settings-hub .settings-layout { grid-template-columns: 1fr; }
+  .settings-hub .settings-nav { position: static; flex-direction: row; flex-wrap: wrap; }
+}
 </style>
 
-<div class="account-settings-page">
+<div class="settings-hub">
   <div class="as-hero">
-    <h1 class="as-hero-title">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      Account Settings
-    </h1>
+    <div class="as-hero-top">
+      <h1 class="as-hero-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </h1>
+      <span class="as-role-badge <?= $isAdmin ? 'is-admin' : '' ?>"><?= $isAdmin ? 'Administrator' : 'Customer' ?></span>
+    </div>
+    <p class="as-hero-sub">Manage your account, security, API access<?= $isAdmin ? ', and panel administration' : '' ?>. Site-wide payment and provider settings are in <strong>Admin → Site &amp; Payments</strong><?= $isAdmin ? '' : ' (admin only)' ?>.</p>
   </div>
 
-  <!-- Profile summary -->
+  <div class="as-stats-row">
+    <div class="as-stat"><div class="as-stat-label">Balance</div><div class="as-stat-value">$<?= h($userBalance) ?></div></div>
+    <div class="as-stat"><div class="as-stat-label">Spent</div><div class="as-stat-value">$<?= h($userSpent) ?></div></div>
+    <div class="as-stat"><div class="as-stat-label">Member since</div><div class="as-stat-value" style="font-size:14px;"><?= h($memberSince) ?></div></div>
+    <div class="as-stat"><div class="as-stat-label">Referral code</div><div class="as-stat-value" style="font-size:14px;"><?= h($user['referral_code'] ?? '—') ?></div></div>
+  </div>
+
+  <?php if ($isAdmin): ?>
+  <section class="as-admin-panel" id="panel-admin">
+    <h2><?= icon('shield', 18) ?> Panel administration</h2>
+    <p>Configure the website, payment gateways, service catalogs, users, and support from here.</p>
+    <div class="as-admin-grid">
+      <?php foreach ($adminLinks as $link): ?>
+      <a class="as-admin-link" href="<?= h(path($link['url'])) ?>">
+        <strong><?= icon($link['icon'], 16) ?> <?= h($link['title']) ?></strong>
+        <span><?= h($link['desc']) ?></span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php else: ?>
+  <div class="alert alert-info" style="margin-bottom:22px;">
+    <strong>Panel configuration</strong> (payment gateways, SMM provider API, mail, maintenance) is managed by administrators.
+    Need changes? <a href="<?= h(path('tickets.php')) ?>">Open a support ticket</a>.
+  </div>
+  <?php endif; ?>
+
+  <div class="as-quick-grid">
+    <a class="as-quick-link" href="<?= h(path('api-page.php')) ?>"><?= icon('api', 16) ?> API docs</a>
+    <a class="as-quick-link" href="<?= h(path('orders.php')) ?>"><?= icon('orders', 16) ?> My orders</a>
+    <a class="as-quick-link" href="<?= h(path('affiliates.php')) ?>"><?= icon('users', 16) ?> Affiliates</a>
+    <a class="as-quick-link" href="<?= h(path('tickets.php')) ?>"><?= icon('tickets', 16) ?> Support</a>
+    <a class="as-quick-link" href="<?= h(path('add-funds.php')) ?>"><?= icon('wallet', 16) ?> Add funds</a>
+  </div>
+
+  <div class="settings-layout">
+    <nav class="settings-nav" aria-label="Settings sections">
+      <a href="#profile-photo">Profile</a>
+      <a href="#preferences">Preferences</a>
+      <a href="#email-settings">Email</a>
+      <a href="#password-settings">Password</a>
+      <?php if ($hasTwoFactor): ?><a href="#security-2fa">2FA</a><?php endif; ?>
+      <a href="#api-settings">API key</a>
+      <?php if ($isAdmin): ?><a href="#panel-admin">Admin panel</a><?php endif; ?>
+    </nav>
+
+    <div class="settings-content">
   <a href="#profile-photo" class="as-profile-summary as-profile-summary-link">
     <div class="as-avatar">
       <?php if ($avatarPath): ?>
@@ -287,35 +408,39 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
             <input type="file" name="avatar" id="avatarFile" accept="image/jpeg,image/png,image/gif,image/webp" class="form-control as-file-input" required>
           </div>
           <p class="as-hint">JPEG, PNG, GIF or WebP — max 2 MB. Shown in sidebar after upload.</p>
-          <button type="submit" class="btn btn-primary"><?= icon('plus', 16) ?> Upload photo</button>
         </form>
-        <?php if ($avatarPath): ?>
-        <form method="post" style="display:inline;margin-top:8px;">
-          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-          <input type="hidden" name="action" value="remove_avatar">
-          <button type="submit" class="btn btn-danger">Remove photo</button>
-        </form>
-        <?php endif; ?>
+        <div class="as-avatar-btn-row">
+          <button type="submit" form="avatarUploadForm" class="btn btn-primary"><?= icon('plus', 16) ?> Upload photo</button>
+          <?php if ($avatarPath): ?>
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+            <input type="hidden" name="action" value="remove_avatar">
+            <button type="submit" class="btn btn-danger">Remove photo</button>
+          </form>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Email -->
-  <div class="as-card">
+  <div class="as-card" id="email-settings">
     <h2>
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
       Email address
     </h2>
-    <div class="form-group">
-      <label class="form-label">Username</label>
-      <input type="text" class="form-control" value="<?= h($user['username'] ?? '') ?>" readonly disabled>
-    </div>
     <form method="post">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="action" value="change_email">
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" name="new_email" class="form-control" value="<?= h($user['email'] ?? '') ?>" required>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-control" value="<?= h($user['username'] ?? '') ?>" readonly disabled>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="new_email" class="form-control" value="<?= h($user['email'] ?? '') ?>" required>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Current password</label>
@@ -329,7 +454,7 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
   </div>
 
   <!-- Password -->
-  <div class="as-card">
+  <div class="as-card" id="password-settings">
     <h2>
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       Password
@@ -357,7 +482,7 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
   </div>
 
   <?php if ($hasTwoFactor): ?>
-  <div class="as-card">
+  <div class="as-card" id="security-2fa">
     <h2>
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       Two-factor authentication
@@ -407,16 +532,29 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
   </div>
   <?php endif; ?>
 
-  <?php if ($hasTimezone): ?>
-  <div class="as-card">
-    <h2>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      Timezone
-    </h2>
-    <form method="post" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+  <div class="as-card" id="preferences">
+    <h2><?= icon('globe', 20) ?> Preferences</h2>
+    <form method="post" class="as-pref-row" style="margin-bottom:16px;">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+      <input type="hidden" name="action" value="save_language">
+      <div class="form-group">
+        <label class="form-label">Dashboard language</label>
+        <select name="lang" class="form-control">
+          <option value="en" <?= $dashLang === 'en' ? 'selected' : '' ?>>English</option>
+          <option value="tr" <?= $dashLang === 'tr' ? 'selected' : '' ?>>Türkçe</option>
+          <option value="de" <?= $dashLang === 'de' ? 'selected' : '' ?>>Deutsch</option>
+          <option value="fr" <?= $dashLang === 'fr' ? 'selected' : '' ?>>Français</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Save language</button>
+    </form>
+    <p class="as-hint" style="margin-bottom:14px;">Theme: use the <strong>sun/moon</strong> icon in the top bar to switch light / dark mode.</p>
+    <?php if ($hasTimezone): ?>
+    <hr class="as-section-divider">
+    <form method="post" class="as-pref-row">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="action" value="save_timezone">
-      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
+      <div class="form-group">
         <label class="form-label">Timezone</label>
         <select name="timezone" class="form-control">
           <?php foreach ($timezones as $tz => $label): ?>
@@ -424,13 +562,13 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
           <?php endforeach; ?>
         </select>
       </div>
-      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="submit" class="btn btn-primary">Save timezone</button>
     </form>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 
   <!-- API Key -->
-  <div class="as-card">
+  <div class="as-card" id="api-settings">
     <h2>
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
       API Key
@@ -450,9 +588,11 @@ a.as-profile-summary-link:hover { border-color: rgba(227,10,23,.25); box-shadow:
       <input type="hidden" name="action" value="generate_api_key">
       <button type="submit" class="btn btn-primary">Generate new API key</button>
     </form>
-    <p class="as-hint" style="margin-top:10px;">Regenerating will invalidate the current key. Update your apps with the new key.</p>
+    <p class="as-hint" style="margin-top:10px;">Regenerating will invalidate the current key. Update your apps with the new key. API endpoint: <code><?= h(defined('SITE_URL') ? rtrim(SITE_URL, '/') . '/api/v2' : '/api/v2') ?></code></p>
   </div>
-</div>
+    </div><!-- .settings-content -->
+  </div><!-- .settings-layout -->
+</div><!-- .settings-hub -->
 
 <script>
 (function(){

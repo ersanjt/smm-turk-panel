@@ -423,10 +423,10 @@ body.panel-follows .card {
   min-width: 56px;
   padding: 8px 10px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--white);
   border: 1.5px solid var(--pf-sidebar-border, #e2e8f0);
   text-decoration: none;
-  color: #64748b;
+  color: var(--text-muted);
   flex-shrink: 0;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -440,7 +440,7 @@ body.panel-follows .card {
 
 .platform-chip.active {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--white);
   box-shadow: 0 0 0 2px rgba(227, 10, 23, 0.15);
 }
 
@@ -491,7 +491,7 @@ body.panel-follows .card {
   padding: 16px 18px;
   border-radius: 14px;
   border: 2px solid var(--pf-sidebar-border, #e2e8f0);
-  background: #fff;
+  background: var(--white);
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -522,12 +522,12 @@ body.panel-follows .card {
   font-family: 'Syne', sans-serif;
   font-size: 15px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .service-tier-desc {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -579,7 +579,7 @@ body.panel-follows .card {
 }
 
 .svc-platform-btn.active {
-  background: #fff;
+  background: var(--white);
   border-color: var(--primary);
   color: inherit;
   box-shadow: 0 0 0 2px rgba(227, 10, 23, 0.2);
@@ -638,7 +638,7 @@ body.panel-follows .footer-or {
 body.panel-follows .order-tabs {
   border-bottom: none;
   gap: 6px;
-  background: #fff;
+  background: var(--white);
   padding: 6px;
   border-radius: 12px;
   border: 1px solid var(--pf-sidebar-border);
@@ -654,6 +654,55 @@ body.panel-follows .order-tab {
 
 body.panel-follows .order-tab.active {
   box-shadow: 0 2px 8px rgba(227, 10, 23, 0.25);
+}
+
+/* ─── Dark mode: services cards & filters ───────────────────────────────── */
+body.panel-follows.theme-dark .platform-chip,
+body.panel-follows.theme-dark .service-tier-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+}
+
+body.panel-follows.theme-dark .platform-chip.active {
+  background: rgba(227, 10, 23, 0.12);
+}
+
+body.panel-follows.theme-dark .service-tier-card.tier-one .service-tier-count {
+  color: #60a5fa;
+}
+
+body.panel-follows.theme-dark .service-tier-card.tier-pro .service-tier-count {
+  color: #a78bfa;
+}
+
+body.panel-follows.theme-dark .svc-card-tier-one {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+body.panel-follows.theme-dark .svc-card-tier-pro {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+}
+
+body.panel-follows.theme-dark .svc-platform-btn.active {
+  background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(227, 10, 23, 0.35);
+}
+
+body.panel-follows.theme-dark .order-tabs {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.panel-follows.theme-dark .order-tab {
+  color: var(--text-muted);
+}
+
+body.panel-follows.theme-dark .order-tab:hover {
+  color: var(--primary-light);
+  background: rgba(227, 10, 23, 0.1);
 }
 
 /* ─── Mobile ────────────────────────────────────────────────────────────── */

@@ -4,10 +4,18 @@ $auth->requireLogin();
 $pageTitle = 'Child Panel';
 $db   = Database::getInstance();
 $user = $auth->getCurrentUser();
+$cpm  = new ChildPanelManager();
 
-$price   = (float)($db->getSetting('child_panel_price') ?: 5);
-$ns1     = trim($db->getSetting('child_panel_ns1') ?: '');
-$ns2     = trim($db->getSetting('child_panel_ns2') ?: '');
+$price    = $cpm->monthlyPrice();
+$autoMode = $cpm->autoMode();
+$ns1      = trim($db->getSetting('child_panel_ns1') ?: '');
+$ns2      = trim($db->getSetting('child_panel_ns2') ?: '');
+$serverIp = trim($db->getSetting('child_panel_server_ip') ?: '92.205.182.143');
+$parentApi = trim($db->getSetting('child_panel_parent_api_url') ?: '');
+if ($parentApi === '') {
+    $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
+    $parentApi = $siteUrl !== '' ? $siteUrl . '/api/v2' : '/api/v2';
+}
 
 $currencies = [
     'USD' => 'United States Dollars, USD',
@@ -16,180 +24,315 @@ $currencies = [
     'TRY' => 'Turkish Lira, TRY',
 ];
 
-// Submit order
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_child']) && csrf_verify()) {
-    $domain   = trim($_POST['domain'] ?? '');
-    $currency = trim($_POST['currency'] ?? 'USD');
-    $adminUser = trim($_POST['admin_username'] ?? '');
-    $adminPass = $_POST['admin_password'] ?? '';
-    $adminPass2 = $_POST['admin_password_confirm'] ?? '';
-
-    $err = [];
-    if ($domain === '') $err[] = 'Domain name is required.';
-    if (strlen($domain) > 255) $err[] = 'Domain too long.';
-    if (!in_array($currency, array_keys($currencies))) $currency = 'USD';
-    if (strlen($adminUser) < 3) $err[] = 'Admin username must be at least 3 characters.';
-    if (strlen($adminPass) < 6) $err[] = 'Admin password must be at least 6 characters.';
-    if ($adminPass !== $adminPass2) $err[] = 'Passwords do not match.';
-
-    if (empty($err)) {
-        $balance = (float) $user['balance'];
-        if ($balance < $price) {
-            flash('error', 'Insufficient balance. You need $' . number_format($price, 2) . '. Add crypto funds first.');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
+    if (isset($_POST['check_dns'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $cfg = $cpm->getConfigForPanel($panelId, (int) $user['id']);
+        if (!$cfg) {
+            flash('error', 'Panel not found.');
         } else {
-            $db->execute("UPDATE users SET balance = balance - ?, spent = spent + ? WHERE id = ?", [$price, $price, $user['id']]);
-            $hashed = password_hash($adminPass, PASSWORD_DEFAULT);
-            try {
-                $db->insert(
-                    "INSERT INTO child_panels (user_id, domain, currency, admin_username, admin_password, price, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')",
-                    [$user['id'], $domain, $currency, $adminUser, $hashed, $price]
-                );
-                flash('success', 'Child panel order submitted. We will activate it soon. Please set your domain nameservers as indicated below.');
-            } catch (Throwable $e) {
-                $db->execute("UPDATE users SET balance = balance + ?, spent = spent - ? WHERE id = ?", [$price, $price, $user['id']]);
-                Logger::log('Child panel order failed: ' . $e->getMessage(), 'child_panel');
-                $msg = (stripos($e->getMessage(), "doesn't exist") !== false)
-                    ? 'Child panel feature is not set up. Administrator must run: php migrate-child-panel.php'
-                    : 'Order failed. Please try again or contact support.';
-                flash('error', $msg);
+            $domain = ChildPanelManager::normalizeDomain((string) ($cfg['panel']['domain'] ?? ''));
+            $dns = $cpm->checkDomainReady($domain);
+            if ($dns['ready']) {
+                $result = $cpm->provision($panelId);
+                if ($result['success']) {
+                    flash('success', 'DNS verified — your child panel is now live!');
+                } else {
+                    flash('error', $result['error'] ?? 'Provisioning failed. Contact support.');
+                }
+            } else {
+                flash('error', 'DNS not ready yet. Set nameservers OR add A record pointing to our server, then try again.');
             }
+        }
+        redirect(url('child-panel.php'));
+    }
+
+    if (isset($_POST['submit_child'])) {
+        $domain    = trim($_POST['domain'] ?? '');
+        $currency  = trim($_POST['currency'] ?? 'USD');
+        $adminUser = trim($_POST['admin_username'] ?? '');
+        $adminPass = $_POST['admin_password'] ?? '';
+        $adminPass2 = $_POST['admin_password_confirm'] ?? '';
+        $adminEmail = trim($_POST['admin_email'] ?? '');
+
+        $err = [];
+        if (!in_array($currency, array_keys($currencies), true)) {
+            $currency = 'USD';
+        }
+        if (strlen($adminUser) < 3) {
+            $err[] = 'Admin username must be at least 3 characters.';
+        }
+        if (strlen($adminPass) < 6) {
+            $err[] = 'Admin password must be at least 6 characters.';
+        }
+        if ($adminPass !== $adminPass2) {
+            $err[] = 'Passwords do not match.';
+        }
+
+        if (!empty($err)) {
+            flash('error', implode(' ', $err));
             redirect(url('child-panel.php'));
         }
-    } else {
-        flash('error', implode(' ', $err));
+
+        $result = $cpm->placeOrder(
+            (int) $user['id'],
+            $domain,
+            $currency,
+            $adminUser,
+            $adminPass,
+            $adminEmail !== '' ? $adminEmail : null
+        );
+
+        if (!$result['success']) {
+            flash('error', $result['error'] ?? 'Order failed.');
+            redirect(url('child-panel.php'));
+        }
+
+        if (!empty($result['instant'])) {
+            flash('success', 'Payment received — your child panel is live! Connection details are below.');
+        } elseif ($autoMode === 'dns') {
+            flash('success', 'Order paid. Set your domain nameservers, then click “Check DNS” on your order.');
+        } elseif ($autoMode === 'manual') {
+            flash('success', 'Order submitted. Our team will activate your panel after reviewing your domain.');
+        } else {
+            flash('success', 'Order paid. Your panel is being set up — refresh in a moment.');
+        }
         redirect(url('child-panel.php'));
     }
 }
 
 $myPanels = [];
 try {
-    $myPanels = $db->fetchAll("SELECT id, domain, currency, status, price, created_at FROM child_panels WHERE user_id = ? ORDER BY created_at DESC", [$user['id']]);
-} catch (Throwable $e) { }
+    $myPanels = $db->fetchAll(
+        "SELECT * FROM child_panels WHERE user_id = ? ORDER BY created_at DESC",
+        [$user['id']]
+    );
+} catch (Throwable $e) {
+    /* table may be missing */
+}
+
+$balance = (float) ($user['balance'] ?? 0);
+$canOrder = $balance >= $price;
 
 require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <style>
-.cp-intro { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 20px; }
-.cp-status-hint { font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px; max-width: 140px; line-height: 1.4; }
-.cp-nsbox { background: #fff3e0; border: 1px solid #fcd34d; color: #b45309; padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; font-size: 13px; }
-.cp-nsbox strong { display: block; margin-bottom: 6px; }
-.cp-faq { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.cp-faq-item { border-bottom: 1px solid var(--border); }
-.cp-faq-item:last-child { border-bottom: 0; }
-.cp-faq-q { padding: 14px 18px; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: background .15s; }
-.cp-faq-q:hover { background: var(--bg); }
-.cp-faq-q span { font-size: 18px; color: var(--primary); transition: transform .2s; }
-.cp-faq-item.open .cp-faq-q span { transform: rotate(45deg); }
-.cp-faq-a { padding: 0 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; max-height: 0; overflow: hidden; transition: max-height .3s; }
-.cp-faq-item.open .cp-faq-a { padding: 14px 18px; max-height: 400px; }
+.cp-hero { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:22px; }
+.cp-stat { flex:1; min-width:140px; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:14px 18px; }
+.cp-stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.cp-stat-value { font-size:20px; font-weight:700; color:var(--text); }
+.cp-stat-value.ok { color:#16a34a; }
+.cp-stat-value.warn { color:#d97706; }
+.cp-intro { font-size:14px; line-height:1.7; color:var(--text); margin-bottom:20px; }
+.cp-auto-badge { display:inline-block; font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; background:rgba(22,163,74,.12); color:#16a34a; margin-left:8px; vertical-align:middle; }
+body.theme-dark .cp-auto-badge { background:rgba(34,197,94,.15); color:#4ade80; }
+.cp-nsbox { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:#b45309; padding:14px 18px; border-radius:10px; margin-bottom:24px; font-size:13px; }
+.cp-nsbox strong { display:block; margin-bottom:6px; }
+body.theme-dark .cp-nsbox { background:rgba(245,158,11,.14); border-color:rgba(251,191,36,.35); color:#fcd34d; }
+.cp-steps { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px; }
+.cp-step { font-size:11px; padding:4px 10px; border-radius:20px; background:var(--bg); color:var(--text-muted); border:1px solid var(--border); }
+.cp-step.done { background:rgba(22,163,74,.12); color:#16a34a; border-color:rgba(22,163,74,.3); }
+.cp-step.current { background:rgba(227,10,23,.1); color:var(--primary); border-color:rgba(227,10,23,.3); font-weight:600; }
+body.theme-dark .cp-step.done { background:rgba(34,197,94,.15); color:#4ade80; }
+.cp-connect { margin-top:12px; padding:14px; background:var(--bg); border:1px solid var(--border); border-radius:10px; font-size:12px; }
+.cp-connect dt { color:var(--text-muted); margin-top:8px; }
+.cp-connect dt:first-child { margin-top:0; }
+.cp-connect dd { margin:4px 0 0; font-family:ui-monospace,monospace; word-break:break-all; color:var(--text); }
+.cp-connect a { color:var(--primary); font-weight:600; }
+.cp-status-hint { font-size:11px; color:var(--text-muted); display:block; margin-top:4px; line-height:1.4; }
+.cp-faq { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--bg); }
+.cp-faq-item { border-bottom:1px solid var(--border); }
+.cp-faq-item:last-child { border-bottom:0; }
+.cp-faq-q { padding:14px 18px; cursor:pointer; font-weight:600; font-size:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; background:transparent; color:var(--text); transition:background .15s,color .15s; }
+.cp-faq-q:hover { background:rgba(227,10,23,.06); }
+.cp-faq-item.open .cp-faq-q { background:rgba(227,10,23,.1); color:var(--primary); }
+body.theme-dark .cp-faq-q:hover { background:rgba(227,10,23,.12); }
+body.theme-dark .cp-faq-item.open .cp-faq-q { background:rgba(227,10,23,.18); color:var(--primary-light); }
+.cp-faq-q span { font-size:18px; color:var(--primary); flex-shrink:0; transition:transform .2s; }
+.cp-faq-item.open .cp-faq-q span { transform:rotate(45deg); }
+.cp-faq-a { padding:0 18px; font-size:13px; color:var(--text-muted); line-height:1.6; max-height:0; overflow:hidden; transition:max-height .3s; }
+.cp-faq-item.open .cp-faq-a { padding:14px 18px; max-height:400px; }
+.cp-faq-a a { color:var(--primary); font-weight:600; text-decoration:none; }
+.cp-faq-a a:hover { text-decoration:underline; }
+body.theme-dark .cp-faq-a a { color:var(--primary-light); }
+.cp-panel-card { border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; background:var(--white); }
+.cp-panel-card h4 { margin:0 0 8px; font-size:15px; }
 </style>
 
-<div class="grid2" style="align-items: start; gap: 28px;">
+<div class="cp-hero">
+  <div class="cp-stat">
+    <div class="cp-stat-label">Your balance</div>
+    <div class="cp-stat-value <?= $canOrder ? 'ok' : 'warn' ?>">$<?= number_format($balance, 2) ?></div>
+  </div>
+  <div class="cp-stat">
+    <div class="cp-stat-label">Monthly price</div>
+    <div class="cp-stat-value">$<?= number_format($price, 2) ?></div>
+  </div>
+  <div class="cp-stat">
+    <div class="cp-stat-label">Activation</div>
+    <div class="cp-stat-value" style="font-size:14px;">
+      <?= match ($autoMode) {
+          'instant' => 'Automatic',
+          'dns' => 'After DNS',
+          'whm' => 'WHM auto',
+          default => 'Manual review',
+      } ?>
+    </div>
+  </div>
+</div>
+
+<div class="grid2" style="align-items:start;gap:28px;">
   <div>
     <p class="cp-intro">
-      You can now buy a child panel for $<?= number_format($price, 0) ?> per month (Unlimited Order). (Fund will be deducted from your balance). Child panel is your own website to sell SMM services. You will simply connect it to us, and we will deliver directly to your clients.
+      Launch your own white-label SMM website for <strong>$<?= number_format($price, 0) ?>/month</strong> (deducted from balance).
+      After payment, your panel is <?= $autoMode === 'instant' || $autoMode === 'whm' ? '<span class="cp-auto-badge">activated automatically</span>' : ($autoMode === 'dns' ? 'activated once nameservers are verified' : 'reviewed by our team') ?> and connected to SMM Turk — orders flow to us automatically.
     </p>
 
-    <?php if ($ns1 !== '' || $ns2 !== ''): ?>
+    <?php if (!$canOrder): ?>
+    <div class="cp-nsbox" style="background:rgba(227,10,23,.08);border-color:rgba(227,10,23,.25);color:var(--primary);">
+      <strong>Insufficient balance</strong>
+      Add at least $<?= number_format($price, 2) ?> via <a href="<?= h(path('add-funds.php')) ?>" style="color:inherit;font-weight:700;">Add Funds</a> before ordering.
+    </div>
+    <?php endif; ?>
+
+    <?php if ($ns1 !== '' || $ns2 !== '' || $serverIp !== ''): ?>
     <div class="cp-nsbox">
-      <strong>Please visit your domain’s nameserver settings and change nameservers to:</strong>
+      <strong>Connect your domain (choose one):</strong>
+      <?php if ($ns1 !== '' || $ns2 !== ''): ?>
+      <br><strong>Option A — Nameservers</strong> (at your domain registrar):<br>
       <?php if ($ns1 !== '') echo '- ' . h($ns1) . '<br>'; ?>
-      <?php if ($ns2 !== '') echo '- ' . h($ns2); ?>
+      <?php if ($ns2 !== '') echo '- ' . h($ns2) . '<br>'; ?>
+      <?php endif; ?>
+      <?php if ($serverIp !== ''): ?>
+      <br><strong>Option B — Cloudflare / A record</strong>:<br>
+      - <code>@</code> and <code>www</code> → A → <?= h($serverIp) ?> (DNS only)
+      <?php endif; ?>
+      <br><small style="opacity:.9;">After DNS propagates, click <strong>Check DNS &amp; activate</strong> on your order — panel deploys automatically.</small>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($myPanels)): ?>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Your child panels</div>
+      <?php foreach ($myPanels as $p):
+          $st = $p['status'] ?? 'pending';
+          $ps = $p['provision_status'] ?? 'pending';
+          $steps = ChildPanelManager::provisionSteps($p);
+          $badge = $st === 'active' ? 'badge-green' : ($st === 'cancelled' ? 'badge-red' : 'badge-orange');
+          $isActive = $st === 'active' && $ps === ChildPanelManager::PROVISION_READY;
+          $hint = match (true) {
+              $isActive => 'Live — use connection details below',
+              $ps === ChildPanelManager::PROVISION_DNS_WAIT => 'Set nameservers, then click Check DNS',
+              $ps === ChildPanelManager::PROVISION_PROVISIONING, $ps === ChildPanelManager::PROVISION_QUEUED => 'Setting up your panel…',
+              $ps === ChildPanelManager::PROVISION_FAILED => 'Setup failed — contact support or retry',
+              $st === 'pending' => 'Waiting for activation',
+              $st === 'suspended' => 'Suspended — contact support',
+              default => '',
+          };
+      ?>
+      <div class="cp-panel-card">
+        <h4><?= h($p['domain']) ?> <span class="badge <?= $badge ?>" style="font-size:10px;vertical-align:middle;"><?= h($st) ?></span></h4>
+        <div class="cp-steps">
+          <?php
+          $allSteps = ['paid' => 'Paid', 'dns_wait' => 'DNS', 'dns_ok' => 'DNS OK', 'deployed' => 'Deployed', 'provisioning' => 'Deploying', 'active' => 'Live', 'failed' => 'Failed', 'pending' => 'Pending'];
+          $last = end($steps) ?: 'paid';
+          foreach ($steps as $i => $stepKey):
+              $cls = ($stepKey === $last && $last !== 'failed') ? 'current' : 'done';
+              if ($stepKey === 'failed') $cls = 'current';
+          ?>
+          <span class="cp-step <?= $cls ?>"><?= h($allSteps[$stepKey] ?? $stepKey) ?></span>
+          <?php endforeach; ?>
+        </div>
+        <?php if ($hint !== ''): ?><span class="cp-status-hint"><?= h($hint) ?></span><?php endif; ?>
+
+        <?php if ($isActive): ?>
+        <dl class="cp-connect">
+          <dt>Panel URL</dt>
+          <dd><a href="<?= h($p['panel_url'] ?: 'https://' . $p['domain']) ?>" target="_blank" rel="noopener"><?= h($p['panel_url'] ?: 'https://' . $p['domain']) ?></a></dd>
+          <dt>Admin username</dt>
+          <dd><?= h($p['admin_username']) ?></dd>
+          <dt>Parent API URL</dt>
+          <dd><?= h($parentApi) ?></dd>
+          <dt>API key</dt>
+          <dd><?= h($p['panel_api_key'] ?? '') ?></dd>
+        </dl>
+        <?php endif; ?>
+
+        <?php if ($ps === ChildPanelManager::PROVISION_DNS_WAIT && $st !== 'cancelled'): ?>
+        <form method="POST" style="margin-top:12px;">
+          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+          <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
+          <input type="hidden" name="check_dns" value="1">
+          <button type="submit" class="btn btn-primary" style="font-size:12px;padding:8px 14px;">Check DNS &amp; deploy panel</button>
+        </form>
+        <?php endif; ?>
+        <?php if ($isActive && !empty($p['document_root'])): ?>
+        <span class="cp-status-hint">Deployed: <?= h($p['document_root']) ?></span>
+        <?php endif; ?>
+      </div>
+      <?php endforeach; ?>
     </div>
     <?php endif; ?>
 
     <div class="card">
       <div class="card-title">Order child panel</div>
-      <form method="POST">
+      <form method="POST" <?= $canOrder ? '' : 'onsubmit="return false;"' ?>>
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="submit_child" value="1">
 
         <div class="form-group">
           <label class="form-label">Domain name</label>
-          <input type="text" name="domain" class="form-control" placeholder="yourpanel.com" value="<?= h($_POST['domain'] ?? '') ?>" required>
+          <input type="text" name="domain" class="form-control" placeholder="yourpanel.com" value="<?= h($_POST['domain'] ?? '') ?>" required <?= $canOrder ? '' : 'disabled' ?>>
         </div>
         <div class="grid2">
           <div class="form-group">
             <label class="form-label">Currency</label>
-            <select name="currency" class="form-control">
+            <select name="currency" class="form-control" <?= $canOrder ? '' : 'disabled' ?>>
               <?php foreach ($currencies as $code => $label): ?>
               <option value="<?= h($code) ?>" <?= ($_POST['currency'] ?? 'USD') === $code ? 'selected' : '' ?>><?= h($label) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Admin email</label>
+            <input type="email" name="admin_email" class="form-control" value="<?= h($_POST['admin_email'] ?? $user['email'] ?? '') ?>" <?= $canOrder ? '' : 'disabled' ?>>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="form-group">
             <label class="form-label">Admin username</label>
-            <input type="text" name="admin_username" class="form-control" value="<?= h($_POST['admin_username'] ?? '') ?>" minlength="3" required>
+            <input type="text" name="admin_username" class="form-control" value="<?= h($_POST['admin_username'] ?? '') ?>" minlength="3" required <?= $canOrder ? '' : 'disabled' ?>>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Admin password</label>
+            <input type="password" name="admin_password" class="form-control" minlength="6" required <?= $canOrder ? '' : 'disabled' ?>>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Admin password</label>
-          <input type="password" name="admin_password" class="form-control" minlength="6" required>
-        </div>
-        <div class="form-group">
           <label class="form-label">Confirm password</label>
-          <input type="password" name="admin_password_confirm" class="form-control" minlength="6" required>
+          <input type="password" name="admin_password_confirm" class="form-control" minlength="6" required <?= $canOrder ? '' : 'disabled' ?>>
         </div>
         <div class="form-group">
-          <label class="form-label">Price per month</label>
-          <input type="text" class="form-control" value="$<?= number_format($price, 2) ?>" readonly style="background:var(--bg);">
+          <label class="form-label">Price (charged now)</label>
+          <input type="text" class="form-control" value="$<?= number_format($price, 2) ?> — first month" readonly style="background:var(--bg);">
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Submit order</button>
+        <button type="submit" class="btn btn-primary btn-block" <?= $canOrder ? '' : 'disabled' ?>>
+          <?= $canOrder ? 'Pay &amp; create panel' : 'Add funds to continue' ?>
+        </button>
       </form>
     </div>
-
-    <?php if (!empty($myPanels)): ?>
-    <div class="card" style="margin-top:20px;">
-      <div class="card-title">Your child panel orders</div>
-      <table class="table">
-        <thead><tr><th>Domain</th><th>Currency</th><th>Status</th><th>Date</th></tr></thead>
-        <tbody>
-        <?php foreach ($myPanels as $p):
-            $st = $p['status'] ?? 'pending';
-            $badge = $st === 'active' ? 'badge-green' : ($st === 'cancelled' ? 'badge-red' : 'badge-orange');
-            $hint = match ($st) {
-                'pending' => 'Waiting for admin activation (24–48h after NS setup)',
-                'active' => 'Your panel is live',
-                'suspended' => 'Contact support',
-                'cancelled' => 'Order cancelled',
-                default => '',
-            };
-        ?>
-        <tr>
-          <td><?= h($p['domain']) ?></td>
-          <td><?= h($p['currency']) ?></td>
-          <td>
-            <span class="badge <?= $badge ?>"><?= h($st) ?></span>
-            <?php if ($hint !== ''): ?><span class="cp-status-hint"><?= h($hint) ?></span><?php endif; ?>
-          </td>
-          <td style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($p['created_at'] ?? ''))) ?></td>
-        </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-    <?php endif; ?>
   </div>
 
   <div class="card">
     <div class="card-title">FAQ</div>
     <div class="cp-faq">
-      <div class="cp-faq-item"><div class="cp-faq-q">What is child panel? <span>+</span></div><div class="cp-faq-a">A child panel is your own white-label SMM website. You sell services to your clients; we deliver the orders. You set your prices and keep the margin.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How much does a child panel cost? <span>+</span></div><div class="cp-faq-a">The price is $<?= number_format($price, 0) ?> per month, deducted from your balance. Unlimited orders are included.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How long until my child panel is activated? <span>+</span></div><div class="cp-faq-a">After you submit the order and set the nameservers for your domain, we usually activate it within 24–48 hours. You will receive instructions by email or ticket.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Is hosting required for my child panel? <span>+</span></div><div class="cp-faq-a">No. We host the panel for you. You only need a domain and to point its nameservers to ours.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">I already have a domain. What do I do? <span>+</span></div><div class="cp-faq-a">Enter your domain in the order form. Then in your domain registrar’s control panel, set the nameservers to the ones shown above.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How do I change nameservers for my domain? <span>+</span></div><div class="cp-faq-a">Log in to where you bought the domain (GoDaddy, Namecheap, Cloudflare, etc.), find DNS or Nameservers settings, and replace the current nameservers with the ones we provide.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How to connect my child panel with WordPress? <span>+</span></div><div class="cp-faq-a">You can embed the panel in an iframe on your WordPress site or link to it. For full integration, use our API from a custom WordPress plugin.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Can I get a refund after purchasing a child panel? <span>+</span></div><div class="cp-faq-a">Refund policy depends on usage. Contact us via <a href="<?= h(path('tickets.php')) ?>">support ticket</a> for any refund request.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How can I change my child panel domain? <span>+</span></div><div class="cp-faq-a">Open a <a href="<?= h(path('tickets.php')) ?>">ticket</a> with your new domain. We will guide you through the change.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Is the affiliate feature available on child panel? <span>+</span></div><div class="cp-faq-a">Child panels can have their own referral/affiliate settings. Contact support to enable this for your panel.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How can I set up payment methods in my child account? <span>+</span></div><div class="cp-faq-a">After activation, you can add payment options in your child panel’s admin area or request integration via support.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">How do I collect money from my customers? <span>+</span></div><div class="cp-faq-a">Your child panel can use payment gateways (e.g. Stripe, PayPal) that you configure for your own clients. On this main panel, <strong>your balance is topped up with cryptocurrency only</strong> (BTC, ETH, USDT, etc.) via Add Funds.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">After integrating with WordPress, can customers discover the main panel? <span>+</span></div><div class="cp-faq-a">If you only link or embed the panel with your domain, customers see your brand. They do not see the main panel unless you expose its name or link.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Will changing the currency give me access to all payment gateways? <span>+</span></div><div class="cp-faq-a">Available gateways depend on the currency and your country. Support can help you enable the right options for your panel.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Can I use another admin email for my child panel? <span>+</span></div><div class="cp-faq-a">Yes. After activation you can set a different admin email in your child panel’s settings, or request it via ticket when ordering.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">What is a child panel? <span>+</span></div><div class="cp-faq-a">Your own branded SMM website. You set prices; we fulfill orders through our API. No separate hosting bill from us.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How fast is activation? <span>+</span></div><div class="cp-faq-a"><?= $autoMode === 'instant' || $autoMode === 'whm' ? 'Usually within seconds after payment. You get panel URL and API connection details on this page and by email.' : ($autoMode === 'dns' ? 'After you point nameservers to ours, click Check DNS — activation is automatic.' : 'Our team activates within 24–48 hours after reviewing your domain.') ?></div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">How do I connect to SMM Turk? <span>+</span></div><div class="cp-faq-a">Use the <strong>Parent API URL</strong> and <strong>API key</strong> shown on your active panel card. Standard SMM panel API format — same as ordering from this site.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Do I need hosting? <span>+</span></div><div class="cp-faq-a">You need a domain. We host the panel infrastructure; point nameservers to <?= $ns1 !== '' ? h($ns1) : 'our NS' ?><?= $ns2 !== '' ? ' and ' . h($ns2) : '' ?>.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Payment on this panel? <span>+</span></div><div class="cp-faq-a">Child panel fee is deducted from your <strong>balance</strong> (crypto via Add Funds). Your customers pay you through gateways you configure on your child panel.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Refund policy? <span>+</span></div><div class="cp-faq-a">Contact <a href="<?= h(path('tickets.php')) ?>">support</a> for refund requests before heavy usage.</div></div>
     </div>
   </div>
 </div>
