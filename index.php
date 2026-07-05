@@ -58,32 +58,36 @@ $platform = trim($_GET['platform'] ?? '');
 $preselectServiceId = isset($_GET['service']) ? (int)$_GET['service'] : 0;
 $searchQ = trim($_GET['q'] ?? '');
 
-$catSql = "SELECT DISTINCT category FROM services WHERE status='active'" . $providerSql . ' ORDER BY category';
-$catParams = $providerParams;
+$platformSql = '';
+$platformParams = [];
+if ($platform !== '') {
+    $platformSql = ' AND category LIKE ?';
+    $platformParams = ['%' . $platform . '%'];
+}
+
+$catSql = "SELECT DISTINCT category FROM services WHERE status='active'" . $providerSql . $platformSql . ' ORDER BY category';
+$catParams = array_merge($providerParams, $platformParams);
 $categoriesRaw = $db->fetchAll($catSql, $catParams);
 $seen = [];
 $categories = [];
 foreach ($categoriesRaw as $row) {
     $cat = trim($row['category'] ?? '');
     if ($cat !== '' && !isset($seen[$cat])) {
-        if ($platform !== '' && stripos($cat, $platform) === false) {
-            continue;
-        }
         $seen[$cat] = true;
         $categories[] = ['category' => $cat];
     }
 }
 
-$countSql = "SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active'" . $providerSql . " GROUP BY TRIM(COALESCE(category,''))";
-$countParams = $providerParams;
+$countSql = "SELECT TRIM(COALESCE(category,'')) AS category, COUNT(*) AS cnt FROM services WHERE status='active'" . $providerSql . $platformSql . " GROUP BY TRIM(COALESCE(category,''))";
+$countParams = array_merge($providerParams, $platformParams);
 $categoryCounts = $db->fetchAll($countSql, $countParams);
 $countByCategory = [];
 foreach ($categoryCounts as $r) {
     $countByCategory[trim($r['category'] ?? '')] = (int) $r['cnt'];
 }
 
-$totalSql = "SELECT COUNT(*) c FROM services WHERE status='active'" . $providerSql;
-$totalParams = $providerParams;
+$totalSql = "SELECT COUNT(*) c FROM services WHERE status='active'" . $providerSql . $platformSql;
+$totalParams = array_merge($providerParams, $platformParams);
 $totalServicesCount = (int) $db->fetch($totalSql, $totalParams)['c'];
 
 if ($preselectServiceId) {
@@ -109,10 +113,8 @@ if ($searchQ !== '') {
     } else {
         $sql = "SELECT * FROM services WHERE status='active' AND (name LIKE ? OR CAST(service_id AS CHAR) LIKE ?)";
         $params = [$like, $like];
-        if ($platform !== '') {
-            $sql .= " AND category LIKE ?";
-            $params[] = '%' . $platform . '%';
-        }
+        $sql .= $platformSql;
+        $params = array_merge($params, $platformParams);
         $sql .= $providerSql;
         $params = array_merge($params, $providerParams);
         $services = $db->fetchAll($sql . " ORDER BY service_id LIMIT 500", $params);
@@ -122,11 +124,18 @@ if ($searchQ !== '') {
         "SELECT * FROM services WHERE status='active' AND TRIM(COALESCE(category,''))=?" . $svcProviderClause . " ORDER BY service_id",
         array_merge([$selectedCat], $svcProviderParam)
     );
+} elseif ($platform !== '') {
+    $services = $db->fetchAll(
+        "SELECT * FROM services WHERE status='active'" . $platformSql . $svcProviderClause . " ORDER BY service_id LIMIT 500",
+        array_merge($platformParams, $svcProviderParam)
+    );
+    $showAllLimitHint = count($services) >= 500;
 } else {
     $services = [];
     $requireCategory = true;
 }
 $hasServices = count($services) > 0;
+$showEmptyFilterWarning = !$hasServices && !$requireCategory && !$searchQ;
 
 require_once __DIR__ . '/app/PlatformIcons.php';
 require_once __DIR__ . '/layouts/header.php';
@@ -233,25 +242,25 @@ echo platformFilterStrip('index.php', $platform, $searchQ, $tierExtra);
 </div>
 <?php endif; ?>
 <?php if ($requireCategory && !$searchQ): ?>
-<div class="alert alert-info">Choose <strong>SMM Turk One</strong> or <strong>SMM Turk Pro</strong> above, then pick a category to load services (<?= (int)$totalServicesCount ?> in this view).</div>
+<div class="alert alert-info">Pick a <strong>category</strong> below to load services<?= $totalServicesCount > 0 ? ' (' . (int) $totalServicesCount . ' available)' : '' ?>.</div>
 <?php endif; ?>
 <?php if ($showAllLimitHint): ?>
-<div class="alert alert-info" style="margin-bottom:12px;">Showing first 1,500 services. Select a category above to narrow down.</div>
+<div class="alert alert-info" style="margin-bottom:12px;">Showing first 500 services. Pick a category above to narrow the list.</div>
 <?php endif; ?>
-<?php if (!$hasServices): ?>
-<div class="alert alert-warning">No services match your filter. Try another category or clear the search. <a href="<?= h(path('index.php')) ?>">Show all categories</a></div>
+<?php if ($showEmptyFilterWarning): ?>
+<div class="alert alert-warning">No services match your filter. Try another category or <a href="<?= h(path('index.php')) ?>">clear filters</a>.</div>
 <?php endif; ?>
 
 <div class="order-grid">
   <div class="card">
     <div class="card-title"><?= icon('plus', 18) ?> New Order</div>
-    <form method="POST" action="<?= h(path('index.php')) ?>" id="order-form" data-preselect-service="<?= (int)$preselectServiceId ?>">
+    <form method="POST" action="<?= h(path('index.php') . (($orderQs = http_build_query(array_filter(['cat' => $selectedCat ?: null, 'platform' => $platform ?: null, 'tier' => $tier ?: null, 'q' => $searchQ ?: null]))) ? '?' . $orderQs : '')) ?>" id="order-form" data-preselect-service="<?= (int)$preselectServiceId ?>">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
       <div class="form-group">
         <label class="form-label" for="service-filter">Find service</label>
         <input type="search" id="service-filter" class="form-control service-picker-filter" placeholder="Type ID or service name…" autocomplete="off" aria-controls="service-select" <?= !$hasServices ? 'disabled' : '' ?>>
-        <div class="service-picker-meta" id="service-filter-meta"><?= count($services) ?> services in list</div>
+        <div class="service-picker-meta" id="service-filter-meta"><?= count($services) ?> service<?= count($services) === 1 ? '' : 's' ?> in list</div>
         <label class="form-label" for="service-select">Service</label>
         <select name="service_id" id="service-select" class="form-control" onchange="updateDesc()" required aria-required="true" <?= !$hasServices ? 'disabled' : '' ?> size="8">
           <option value="">— Select a service —</option>
