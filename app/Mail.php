@@ -256,7 +256,8 @@ class Mail
 
         $replyTo = $this->getReplyTo() ?? $from;
         $msg = 'From: ' . $this->encodeHeader($siteName) . ' <' . $from . ">\r\n"
-            . 'To: <' . $to . ">\r\nReply-To: <' . $replyTo . ">\r\n"
+            . 'To: <' . $to . ">\r\n"
+            . 'Reply-To: <' . $replyTo . ">\r\n"
             . 'Subject: ' . $this->encodeHeader($subject) . "\r\nMIME-Version: 1.0\r\n"
             . "Content-Type: text/html; charset=UTF-8\r\n\r\n"
             . $this->smtpDotStuff($body) . "\r\n";
