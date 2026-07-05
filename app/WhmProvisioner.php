@@ -90,6 +90,20 @@ class WhmProvisioner
         }
 
         $cpanelResult = $json['cpanelresult'] ?? $json;
+        if ($apiVersion === 3) {
+            $resultBlock = $cpanelResult['result'] ?? [];
+            $status = (int) ($resultBlock['status'] ?? 0);
+            if ($status !== 1) {
+                $errors = $resultBlock['errors'] ?? $resultBlock['messages'] ?? null;
+                $reason = is_array($errors) ? implode('; ', array_map('strval', $errors)) : (string) ($cpanelResult['error'] ?? 'UAPI call failed');
+                if (stripos($reason, 'already') !== false) {
+                    return ['success' => true, 'data' => $resultBlock['data'] ?? [], 'http_code' => $code];
+                }
+                return ['success' => false, 'error' => $reason !== '' ? $reason : 'UAPI call failed', 'data' => $json];
+            }
+            return ['success' => true, 'data' => $resultBlock['data'] ?? [], 'http_code' => $code];
+        }
+
         $event = $cpanelResult['event']['result'] ?? null;
         if ($event !== null && (int) $event !== 1) {
             $reason = $cpanelResult['event']['reason'] ?? $cpanelResult['error'] ?? 'Unknown cPanel error';
@@ -132,18 +146,26 @@ class WhmProvisioner
         }
 
         $dir = 'public_html/' . $domain;
-        $result = $this->whmCpanelCall('AddonDomain', 'addaddondomain', [
-            'newdomain' => $domain,
+        $result = $this->whmCpanelCall('AddonDomain', 'add_addon_domain', [
+            'domain' => $domain,
             'subdomain' => $sub,
-            'dir' => $dir,
-        ]);
+            'document_root' => $dir,
+        ], 3);
+
+        if (!$result['success']) {
+            $result = $this->whmCpanelCall('AddonDomain', 'addaddondomain', [
+                'newdomain' => $domain,
+                'subdomain' => $sub,
+                'dir' => $dir,
+            ], 2);
+        }
 
         if (!$result['success']) {
             $tryPark = $this->whmCpanelCall('Park', 'park', [
                 'domain' => $domain,
                 'topdomain' => $this->primaryDomain(),
                 'disallowdot' => 0,
-            ]);
+            ], 2);
             if (!$tryPark['success']) {
                 return ['success' => false, 'error' => $result['error'] ?? 'Addon domain failed.'];
             }
@@ -168,7 +190,10 @@ class WhmProvisioner
     public function domainExistsOnAccount(string $domain): bool
     {
         $domain = ChildPanelManager::normalizeDomain($domain);
-        $result = $this->whmCpanelCall('AddonDomain', 'listaddondomains');
+        $result = $this->whmCpanelCall('AddonDomain', 'list_addon_domains', [], 3);
+        if (!$result['success']) {
+            $result = $this->whmCpanelCall('AddonDomain', 'listaddondomains', [], 2);
+        }
         if (!$result['success']) {
             return is_dir((new ChildPanelDeployer())->docrootForDomain($domain));
         }
@@ -177,7 +202,7 @@ class WhmProvisioner
             return false;
         }
         foreach ($data as $row) {
-            $d = is_array($row) ? ($row['domain'] ?? $row[0] ?? '') : (string) $row;
+            $d = is_array($row) ? ($row['domain'] ?? $row['domainname'] ?? $row[0] ?? '') : (string) $row;
             if (ChildPanelManager::normalizeDomain($d) === $domain) {
                 return true;
             }

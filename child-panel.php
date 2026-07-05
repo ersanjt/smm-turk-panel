@@ -40,6 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
         redirect(url('child-panel.php'));
     }
 
+    if (isset($_POST['retry_provision'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $cfg = $cpm->getConfigForPanel($panelId, (int) $user['id']);
+        if (!$cfg) {
+            flash('error', 'Panel not found.');
+        } else {
+            $result = $cpm->provision($panelId);
+            if ($result['success']) {
+                $msg = 'Your child panel setup completed!';
+                if (!empty($result['admin_password_regenerated']) && !empty($result['admin_password'])) {
+                    $msg .= ' New admin password: ' . $result['admin_password'];
+                }
+                flash('success', $msg);
+            } else {
+                flash('error', $result['error'] ?? 'Setup failed. Try again or contact support.');
+            }
+        }
+        redirect(url('child-panel.php'));
+    }
+
     if (isset($_POST['check_dns'])) {
         $panelId = (int) ($_POST['panel_id'] ?? 0);
         $cfg = $cpm->getConfigForPanel($panelId, (int) $user['id']);
@@ -174,6 +194,16 @@ body.theme-dark .cp-faq-item.open .cp-faq-q { background:rgba(227,10,23,.18); co
 .cp-faq-a a:hover { text-decoration:underline; }
 body.theme-dark .cp-faq-a a { color:var(--primary-light); }
 .cp-panel-card { border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; background:var(--white); }
+body.theme-dark .cp-panel-card,
+body.panel-follows.theme-dark .cp-panel-card { background:#1a1416; }
+.cp-panel-card.cp-panel-failed { border-color:rgba(227,10,23,.35); background:rgba(227,10,23,.04); }
+body.theme-dark .cp-panel-card.cp-panel-failed,
+body.panel-follows.theme-dark .cp-panel-card.cp-panel-failed { background:rgba(227,10,23,.1); }
+.cp-provision-error { display:block; margin-top:8px; font-size:11px; color:var(--primary); line-height:1.45; word-break:break-word; }
+body.theme-dark .cp-btn-cancel,
+body.panel-follows.theme-dark .cp-btn-cancel { color:#f0e9eb; border-color:rgba(255,255,255,.22); }
+body.theme-dark .cp-btn-cancel:hover,
+body.panel-follows.theme-dark .cp-btn-cancel:hover { color:#ff8a96; border-color:var(--primary); }
 .cp-panel-card h4 { margin:0 0 8px; font-size:15px; }
 .cp-dns-status { margin:10px 0 0; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg); font-size:12px; line-height:1.55; color:var(--text-muted); }
 .cp-dns-status strong { color:var(--text); }
@@ -257,7 +287,7 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
               default => '',
           };
       ?>
-      <div class="cp-panel-card">
+      <div class="cp-panel-card<?= $ps === ChildPanelManager::PROVISION_FAILED ? ' cp-panel-failed' : '' ?>">
         <h4><?= h($p['domain']) ?> <span class="badge <?= $badge ?>" style="font-size:10px;vertical-align:middle;"><?= h($st) ?></span></h4>
         <div class="cp-steps">
           <?php
@@ -271,6 +301,9 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
           <?php endforeach; ?>
         </div>
         <?php if ($hint !== ''): ?><span class="cp-status-hint"><?= h($hint) ?></span><?php endif; ?>
+        <?php if ($ps === ChildPanelManager::PROVISION_FAILED && !empty($p['provision_error'])): ?>
+        <span class="cp-provision-error"><?= h((string) $p['provision_error']) ?></span>
+        <?php endif; ?>
 
         <?php if ($ps === ChildPanelManager::PROVISION_DNS_WAIT && $st !== 'cancelled'):
             $dnsDiag = $cpm->getDomainDnsDiagnostics((string) $p['domain']);
@@ -304,7 +337,7 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
         </div>
         <?php endif; ?>
         <?php
-        $showPanelActions = ($ps === ChildPanelManager::PROVISION_DNS_WAIT || $cpm->canCancel($p)) && $st !== 'cancelled';
+        $showPanelActions = ($ps === ChildPanelManager::PROVISION_DNS_WAIT || $ps === ChildPanelManager::PROVISION_FAILED || $cpm->canCancel($p)) && $st !== 'cancelled';
         if ($showPanelActions):
         ?>
         <div class="cp-panel-actions">
@@ -314,6 +347,13 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
           <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
           <input type="hidden" name="check_dns" value="1">
           <button type="submit" class="btn btn-primary" style="font-size:12px;padding:8px 14px;">Check DNS &amp; deploy panel</button>
+        </form>
+        <?php elseif ($ps === ChildPanelManager::PROVISION_FAILED): ?>
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+          <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
+          <input type="hidden" name="retry_provision" value="1">
+          <button type="submit" class="btn btn-primary" style="font-size:12px;padding:8px 14px;">Retry setup</button>
         </form>
         <?php endif; ?>
         <?php if ($cpm->canCancel($p)): ?>
