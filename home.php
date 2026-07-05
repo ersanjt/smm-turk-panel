@@ -74,8 +74,8 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
     <meta name="twitter:title" content="<?= h($seoOgTitle) ?>">
     <meta name="twitter:description" content="<?= h($seoOgDescription) ?>">
     <meta name="twitter:image" content="<?= h($logoUrl) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
-    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+    <link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
     <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
     <script type="application/ld+json"><?= json_encode([
         '@context' => 'https://schema.org',
@@ -99,7 +99,7 @@ for ($faqIndex = 1; $faqIndex <= 6; $faqIndex++) {
 <header class="nav" role="banner">
     <div class="nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
+            <span class="nav-logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
             <span class="nav-logo-text">SMM <span>TURK</span></span>
             <span class="nav-logo-tag">SMM Panel</span>
         </a>

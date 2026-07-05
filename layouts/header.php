@@ -61,8 +61,8 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
 <meta name="twitter:title" content="<?= h($pageOgTitle) ?> — <?= h($siteName) ?>">
 <meta name="twitter:description" content="<?= h($pageDesc) ?>">
 <meta name="twitter:image" content="<?= h($pageImg) ?>">
-<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
-<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
+<link rel="apple-touch-icon" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
 <link rel="manifest" href="<?= h(path('manifest.php')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,7 +81,7 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
   <div class="sidebar-mob-balance" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Balance: $<?= $balance ?></div>
   <div class="sidebar-logo">
     <a href="<?= h(path('index.php')) ?>">
-      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="36" height="36"></span>
+      <span class="logo-icon"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="36" height="36"></span>
       <span class="logo-text">SMM <span>TURK</span></span>
     </a>
   </div>
@@ -177,7 +177,7 @@ $ogLocale = $dashLang === 'tr' ? 'tr_TR' : ($dashLang === 'de' ? 'de_DE' : ($das
   <div class="topbar">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <a href="<?= h(path('index.php')) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
       <span class="topbar-badge"><?= ($user['status'] ?? 'active') === 'active' ? 'Active' : 'New' ?></span>
       <div class="topbar-stats">
         <div class="topbar-stat-card">

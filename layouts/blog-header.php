@@ -56,7 +56,7 @@ $blogHero = $blogHero ?? true;
     <meta name="twitter:title" content="<?= h($pageTitle) ?> — <?= h($siteName) ?>">
     <meta name="twitter:description" content="<?= h($pageDescription) ?>">
     <meta name="twitter:image" content="<?= h($pageImg) ?>">
-    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@ $blogHero = $blogHero ?? true;
 <nav class="blog-nav" role="navigation">
     <div class="blog-nav-inner">
         <a href="<?= h(path('home.php')) ?>" class="blog-nav-logo">
-            <img src="<?= h(path('assets/img/logo-icon.svg?v=5')) ?>" alt="<?= h($siteName) ?>" width="40" height="40">
+            <img src="<?= h(path('assets/img/logo-icon.svg?v=6')) ?>" alt="<?= h($siteName) ?>" width="40" height="40">
             SMM <span>TURK</span>
         </a>
         <div class="blog-nav-links">
