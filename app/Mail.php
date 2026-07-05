@@ -642,8 +642,8 @@ class Mail
         ?string $lang = null
     ): bool {
         $lang = MailLocale::resolveLang($lang);
-        $loginUrl = rtrim($panelUrl, '/') . '/login.php';
-        $adminUrl = rtrim($panelUrl, '/') . '/admin/';
+        $loginUrl = rtrim($panelUrl, '/') . '/login';
+        $adminUrl = rtrim($panelUrl, '/') . '/admin';
         $subject = $this->subjectPrefix(MailLocale::t('child_ready_subject', $lang, ['domain' => $domain]), $lang);
         $inner = '<p>' . MailLocale::t('child_ready_hi', $lang, ['name' => $username]) . '</p>'
             . '<p>' . MailLocale::t('child_ready_body', $lang, ['domain' => $domain]) . '</p>'

@@ -326,9 +326,9 @@ body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1)
           <dt>Panel URL</dt>
           <dd><a href="<?= h($panelUrl) ?>" target="_blank" rel="noopener"><?= h($panelUrl) ?></a></dd>
           <dt>Login (admin)</dt>
-          <dd><a href="<?= h($panelUrl . '/login.php') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/login.php') ?></a></dd>
+          <dd><a href="<?= h($panelUrl . '/login') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/login') ?></a></dd>
           <dt>Admin dashboard</dt>
-          <dd><a href="<?= h($panelUrl . '/admin/') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/admin/') ?></a></dd>
+          <dd><a href="<?= h($panelUrl . '/admin') ?>" target="_blank" rel="noopener"><?= h($panelUrl . '/admin') ?></a></dd>
           <dt>Admin username</dt>
           <dd><code><?= h($p['admin_username']) ?></code></dd>
           <dt>Admin password</dt>

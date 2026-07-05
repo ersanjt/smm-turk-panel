@@ -79,7 +79,7 @@ class ChildPanelDeployer
             }
         }
 
-        $copy = $this->copyTemplate($template, $documentRoot);
+        $copy = $this->copyTemplate($template, $documentRoot, true);
         if (!$copy['success']) {
             return $copy;
         }
@@ -137,7 +137,7 @@ class ChildPanelDeployer
     }
 
     /** @return array{success: bool, error?: string} */
-    private function copyTemplate(string $src, string $dest): array
+    private function copyTemplate(string $src, string $dest, bool $forceOverwrite = false): array
     {
         try {
             $iterator = new RecursiveIteratorIterator(
@@ -160,10 +160,15 @@ class ChildPanelDeployer
                     if (!is_dir($dir)) {
                         @mkdir($dir, 0755, true);
                     }
-                    if (!is_file($target)) {
+                    if ($forceOverwrite || !is_file($target) || filemtime($item->getPathname()) >= @filemtime($target)) {
                         @copy($item->getPathname(), $target);
                     }
                 }
+            }
+            // Ensure root .htaccess exists (some hosts hide dotfiles from iterator).
+            $htaccess = $src . '/.htaccess';
+            if (is_file($htaccess)) {
+                @copy($htaccess, $dest . '/.htaccess');
             }
         } catch (Throwable $e) {
             return ['success' => false, 'error' => 'File copy failed: ' . $e->getMessage()];
