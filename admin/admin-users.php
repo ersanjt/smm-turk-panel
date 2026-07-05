@@ -44,36 +44,35 @@ $users  = $db->fetchAll("SELECT * FROM users $where ORDER BY created_at DESC LIM
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<div class="card" style="padding:0;overflow:hidden;">
-  <div style="padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <div class="card-title" style="margin:0">👥 Manage Users</div>
-    <form method="GET" style="display:flex;gap:8px;">
-      <input type="text" name="q" value="<?= h($search) ?>" class="form-control" style="width:220px;" placeholder="Search username or email…">
-      <button type="submit" class="btn btn-primary" style="padding:8px 16px;">Search</button>
+<div class="card admin-page-card">
+  <div class="admin-page-head">
+    <div class="card-title">👥 Manage Users</div>
+    <form method="GET" class="admin-search-form">
+      <input type="text" name="q" value="<?= h($search) ?>" class="form-control" placeholder="Search username or email…">
+      <button type="submit" class="btn btn-primary">Search</button>
     </form>
   </div>
-  <div style="overflow-x:auto;margin-top:16px;">
-    <table class="table">
+  <div class="table-wrap admin-table-wrap">
+    <table class="table table-wide table-mobile-cards">
       <thead>
         <tr><th>ID</th><th>Username</th><th>Email</th><th>Balance</th><th>Spent</th><th>Referral $</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
       </thead>
       <tbody>
         <?php foreach ($users as $u): ?>
         <tr>
-          <td>#<?= $u['id'] ?></td>
-          <td><strong><?= h($u['username']) ?></strong><?= $u['role']==='admin' ? ' <span class="badge badge-blue">Admin</span>' : '' ?></td>
-          <td style="font-size:12px;"><?= h($u['email']) ?></td>
-          <td><strong>$<?= number_format($u['balance'], 4) ?></strong></td>
-          <td>$<?= number_format($u['spent'], 4) ?></td>
-          <td>$<?= number_format((float)($u['referral_earnings'] ?? 0), 2) ?></td>
-          <td>
+          <td data-label="ID">#<?= $u['id'] ?></td>
+          <td data-label="Username"><strong><?= h($u['username']) ?></strong><?= $u['role']==='admin' ? ' <span class="badge badge-blue">Admin</span>' : '' ?></td>
+          <td data-label="Email" style="font-size:12px;"><?= h($u['email']) ?></td>
+          <td data-label="Balance"><strong>$<?= number_format($u['balance'], 4) ?></strong></td>
+          <td data-label="Spent">$<?= number_format($u['spent'], 4) ?></td>
+          <td data-label="Referral">$<?= number_format((float)($u['referral_earnings'] ?? 0), 2) ?></td>
+          <td data-label="Status">
             <span class="badge <?= $u['status']==='active' ? 'badge-green' : 'badge-red' ?>">
               <?= h($u['status']) ?>
             </span>
           </td>
-          <td style="font-size:11px;color:var(--text-muted);"><?= date('Y-m-d', strtotime($u['created_at'])) ?></td>
-          <td>
-            <div style="display:flex;gap:6px;align-items:center;">
+          <td data-label="Joined" style="font-size:11px;color:var(--text-muted);"><?= date('Y-m-d', strtotime($u['created_at'])) ?></td>
+          <td data-label="Actions" class="td-actions admin-actions-cell">
               <!-- Add balance form -->
               <form method="POST" style="display:flex;gap:4px;" onsubmit="return confirm('Add balance?')">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -102,7 +101,6 @@ require_once __DIR__ . '/../layouts/header.php';
                 </button>
               </form>
               <?php endif; ?>
-            </div>
           </td>
         </tr>
         <?php endforeach; ?>

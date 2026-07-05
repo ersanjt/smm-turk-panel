@@ -158,18 +158,18 @@ require_once __DIR__ . '/../layouts/header.php';
         <a href="<?= h(path('admin/admin-orders.php')) ?>" class="admin-table-link">View all →</a>
       </div>
       <div class="table-wrap">
-        <table class="table" style="font-size:13px;">
+        <table class="table table-mobile-cards" style="font-size:13px;">
           <thead><tr><th>ID</th><th>User</th><th>Charge</th><th>Status</th><th>Date</th></tr></thead>
           <tbody>
             <?php if (empty($recentOrders)): ?>
-            <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:24px;">No orders yet</td></tr>
+            <tr><td colspan="5" data-label="" style="color:var(--text-muted);text-align:center;padding:24px;">No orders yet</td></tr>
             <?php else: foreach ($recentOrders as $o): ?>
             <tr>
-              <td><a href="<?= h(path('admin/admin-orders.php')) ?>" style="color:var(--primary);font-weight:600;">#<?= (int)$o['id'] ?></a></td>
-              <td><?= h($o['username']) ?></td>
-              <td>$<?= number_format((float)$o['charge'], 4) ?></td>
-              <td><span class="badge status-<?= str_replace(' ', '-', h($o['status'])) ?>"><?= h($o['status']) ?></span></td>
-              <td style="color:var(--text-muted)"><?= date('M j, H:i', strtotime($o['created_at'])) ?></td>
+              <td data-label="ID"><a href="<?= h(path('admin/admin-orders.php')) ?>" style="color:var(--primary);font-weight:600;">#<?= (int)$o['id'] ?></a></td>
+              <td data-label="User"><?= h($o['username']) ?></td>
+              <td data-label="Charge">$<?= number_format((float)$o['charge'], 4) ?></td>
+              <td data-label="Status"><span class="badge status-<?= str_replace(' ', '-', h($o['status'])) ?>"><?= h($o['status']) ?></span></td>
+              <td data-label="Date" style="color:var(--text-muted)"><?= date('M j, H:i', strtotime($o['created_at'])) ?></td>
             </tr>
             <?php endforeach; endif; ?>
           </tbody>
@@ -183,17 +183,17 @@ require_once __DIR__ . '/../layouts/header.php';
         <a href="<?= h(path('admin/admin-users.php')) ?>" class="admin-table-link">View all →</a>
       </div>
       <div class="table-wrap">
-        <table class="table" style="font-size:13px;">
+        <table class="table table-mobile-cards" style="font-size:13px;">
           <thead><tr><th>User</th><th>Balance</th><th>Spent</th><th>Joined</th></tr></thead>
           <tbody>
             <?php if (empty($recentUsers)): ?>
-            <tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:24px;">No users yet</td></tr>
+            <tr><td colspan="4" data-label="" style="color:var(--text-muted);text-align:center;padding:24px;">No users yet</td></tr>
             <?php else: foreach ($recentUsers as $u): ?>
             <tr>
-              <td><strong><?= h($u['username']) ?></strong><br><span style="color:var(--text-muted);font-size:11px;"><?= h($u['email']) ?></span></td>
-              <td>$<?= number_format((float)$u['balance'], 2) ?></td>
-              <td>$<?= number_format((float)$u['spent'], 2) ?></td>
-              <td style="color:var(--text-muted)"><?= date('M j, Y', strtotime($u['created_at'])) ?></td>
+              <td data-label="User"><strong><?= h($u['username']) ?></strong><br><span style="color:var(--text-muted);font-size:11px;"><?= h($u['email']) ?></span></td>
+              <td data-label="Balance">$<?= number_format((float)$u['balance'], 2) ?></td>
+              <td data-label="Spent">$<?= number_format((float)$u['spent'], 2) ?></td>
+              <td data-label="Joined" style="color:var(--text-muted)"><?= date('M j, Y', strtotime($u['created_at'])) ?></td>
             </tr>
             <?php endforeach; endif; ?>
           </tbody>

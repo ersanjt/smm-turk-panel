@@ -205,3 +205,81 @@ body.theme-dark .admin-dash .admin-qa-grid .qa-btn-urgent,
 body.panel-follows.theme-dark .admin-dash .admin-qa-grid .qa-btn-urgent {
   background: rgba(227, 10, 23, 0.1);
 }
+
+@media (max-width: 768px) {
+  .admin-dash .admin-dash-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .admin-dash .admin-dash-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .admin-dash .admin-dash-date {
+    align-self: flex-start;
+  }
+
+  .admin-dash .admin-qa-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .admin-dash .admin-charts {
+    grid-template-columns: 1fr;
+    margin-bottom: 22px;
+  }
+
+  .admin-dash .admin-chart-wrap {
+    height: 180px;
+  }
+
+  .admin-dash .admin-tables {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .admin-dash .admin-tables .card {
+    overflow: visible;
+  }
+
+  .admin-dash .admin-table-head {
+    flex-wrap: wrap;
+    padding: 14px 14px 0;
+    gap: 8px;
+  }
+
+  .admin-dash .admin-tables .table td,
+  .admin-dash .admin-tables .table th {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-dash .admin-grid {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .admin-dash .admin-card {
+    padding: 14px;
+  }
+
+  .admin-dash .admin-card .ac-info .ac-value {
+    font-size: 1.15rem;
+  }
+
+  .admin-dash .admin-qa-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dash .admin-chart-card {
+    padding: 14px 16px;
+  }
+
+  .admin-dash .admin-chart-wrap {
+    height: 160px;
+  }
+}
