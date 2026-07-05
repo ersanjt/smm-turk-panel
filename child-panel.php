@@ -25,6 +25,21 @@ $currencies = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
+    if (isset($_POST['cancel_order'])) {
+        $panelId = (int) ($_POST['panel_id'] ?? 0);
+        $result = $cpm->cancelOrder($panelId, (int) $user['id']);
+        if ($result['success']) {
+            $msg = 'Order cancelled.';
+            if (!empty($result['refunded'])) {
+                $msg .= ' $' . number_format((float) $result['refunded'], 2) . ' refunded to your balance.';
+            }
+            flash('success', $msg);
+        } else {
+            flash('error', $result['error'] ?? 'Could not cancel order.');
+        }
+        redirect(url('child-panel.php'));
+    }
+
     if (isset($_POST['check_dns'])) {
         $panelId = (int) ($_POST['panel_id'] ?? 0);
         $cfg = $cpm->getConfigForPanel($panelId, (int) $user['id']);
@@ -158,6 +173,9 @@ body.theme-dark .cp-faq-item.open .cp-faq-q { background:rgba(227,10,23,.18); co
 body.theme-dark .cp-faq-a a { color:var(--primary-light); }
 .cp-panel-card { border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; background:var(--white); }
 .cp-panel-card h4 { margin:0 0 8px; font-size:15px; }
+.cp-panel-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
+.cp-btn-cancel { font-size:12px; padding:8px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
+.cp-btn-cancel:hover { border-color:var(--primary); color:var(--primary); }
 </style>
 
 <div class="cp-hero">
@@ -228,6 +246,7 @@ body.theme-dark .cp-faq-a a { color:var(--primary-light); }
               $ps === ChildPanelManager::PROVISION_FAILED => 'Setup failed — contact support or retry',
               $st === 'pending' => 'Waiting for activation',
               $st === 'suspended' => 'Suspended — contact support',
+              $st === 'cancelled' => 'Order cancelled',
               default => '',
           };
       ?>
@@ -259,13 +278,28 @@ body.theme-dark .cp-faq-a a { color:var(--primary-light); }
         </dl>
         <?php endif; ?>
 
-        <?php if ($ps === ChildPanelManager::PROVISION_DNS_WAIT && $st !== 'cancelled'): ?>
-        <form method="POST" style="margin-top:12px;">
+        <?php
+        $showPanelActions = ($ps === ChildPanelManager::PROVISION_DNS_WAIT || $cpm->canCancel($p)) && $st !== 'cancelled';
+        if ($showPanelActions):
+        ?>
+        <div class="cp-panel-actions">
+        <?php if ($ps === ChildPanelManager::PROVISION_DNS_WAIT): ?>
+        <form method="POST">
           <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
           <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
           <input type="hidden" name="check_dns" value="1">
           <button type="submit" class="btn btn-primary" style="font-size:12px;padding:8px 14px;">Check DNS &amp; deploy panel</button>
         </form>
+        <?php endif; ?>
+        <?php if ($cpm->canCancel($p)): ?>
+        <form method="POST" onsubmit="return confirm('Cancel this order?<?= $cpm->shouldRefundOnCancel($p) ? ' Your payment will be refunded to your balance.' : '' ?>');">
+          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+          <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
+          <input type="hidden" name="cancel_order" value="1">
+          <button type="submit" class="cp-btn-cancel">Cancel order</button>
+        </form>
+        <?php endif; ?>
+        </div>
         <?php endif; ?>
         <?php if ($isActive && !empty($p['document_root'])): ?>
         <span class="cp-status-hint">Deployed: <?= h($p['document_root']) ?></span>
@@ -332,7 +366,7 @@ body.theme-dark .cp-faq-a a { color:var(--primary-light); }
       <div class="cp-faq-item"><div class="cp-faq-q">How do I connect to SMM Turk? <span>+</span></div><div class="cp-faq-a">Use the <strong>Parent API URL</strong> and <strong>API key</strong> shown on your active panel card. Standard SMM panel API format — same as ordering from this site.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Do I need hosting? <span>+</span></div><div class="cp-faq-a">You need a domain. We host the panel infrastructure; point nameservers to <?= $ns1 !== '' ? h($ns1) : 'our NS' ?><?= $ns2 !== '' ? ' and ' . h($ns2) : '' ?>.</div></div>
       <div class="cp-faq-item"><div class="cp-faq-q">Payment on this panel? <span>+</span></div><div class="cp-faq-a">Child panel fee is deducted from your <strong>balance</strong> (crypto via Add Funds). Your customers pay you through gateways you configure on your child panel.</div></div>
-      <div class="cp-faq-item"><div class="cp-faq-q">Refund policy? <span>+</span></div><div class="cp-faq-a">Contact <a href="<?= h(path('tickets.php')) ?>">support</a> for refund requests before heavy usage.</div></div>
+      <div class="cp-faq-item"><div class="cp-faq-q">Refund policy? <span>+</span></div><div class="cp-faq-a">If your panel was not deployed yet, use <strong>Cancel order</strong> on your panel card — payment returns to your balance automatically. For live panels, contact <a href="<?= h(path('tickets.php')) ?>">support</a>.</div></div>
     </div>
   </div>
 </div>

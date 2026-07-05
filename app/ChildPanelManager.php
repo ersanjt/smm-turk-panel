@@ -512,6 +512,88 @@ class ChildPanelManager
         ];
     }
 
+    public function isFullyDeployed(array $panel): bool
+    {
+        $ps = $panel['provision_status'] ?? '';
+        return ($panel['status'] ?? '') === self::STATUS_ACTIVE
+            && $ps === self::PROVISION_READY
+            && trim((string) ($panel['document_root'] ?? '')) !== '';
+    }
+
+    public function canCancel(array $panel, bool $isAdmin = false): bool
+    {
+        $st = $panel['status'] ?? '';
+        if ($st === self::STATUS_CANCELLED) {
+            return false;
+        }
+        if ($this->isFullyDeployed($panel)) {
+            return $isAdmin;
+        }
+        return in_array($st, [self::STATUS_PENDING, self::STATUS_ACTIVE, self::STATUS_SUSPENDED], true);
+    }
+
+    public function shouldRefundOnCancel(array $panel): bool
+    {
+        if (($panel['status'] ?? '') === self::STATUS_CANCELLED) {
+            return false;
+        }
+        return !$this->isFullyDeployed($panel);
+    }
+
+    /** @return array{success: bool, error?: string, refunded?: float} */
+    public function cancelOrder(int $panelId, ?int $userId = null, bool $refund = true): array
+    {
+        $panel = $this->db->fetch('SELECT * FROM child_panels WHERE id = ?', [$panelId]);
+        if (!$panel) {
+            return ['success' => false, 'error' => 'Order not found.'];
+        }
+        if ($userId !== null && (int) $panel['user_id'] !== $userId) {
+            return ['success' => false, 'error' => 'Order not found.'];
+        }
+        $isAdmin = $userId === null;
+        if (!$this->canCancel($panel, $isAdmin)) {
+            return ['success' => false, 'error' => 'This order cannot be cancelled. Contact support.'];
+        }
+
+        $shouldRefund = $refund && $this->shouldRefundOnCancel($panel);
+        $cancelledBy = $isAdmin ? 'admin' : 'user';
+
+        try {
+            $this->db->beginTransaction();
+            $this->db->execute(
+                "UPDATE child_panels SET status = ?, provision_status = ?, provision_error = ? WHERE id = ?",
+                [self::STATUS_CANCELLED, self::PROVISION_FAILED, 'Cancelled by ' . $cancelledBy, $panelId]
+            );
+
+            $refunded = 0.0;
+            if ($shouldRefund) {
+                $price = (float) $panel['price'];
+                $uid = (int) $panel['user_id'];
+                $user = $this->db->fetch('SELECT balance FROM users WHERE id = ?', [$uid]);
+                $balanceBefore = (float) ($user['balance'] ?? 0);
+                $balanceAfter = $balanceBefore + $price;
+                $this->db->execute(
+                    'UPDATE users SET balance = balance + ?, spent = GREATEST(0, spent - ?) WHERE id = ?',
+                    [$price, $price, $uid]
+                );
+                $this->db->insert(
+                    "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference)
+                     VALUES (?, 'refund', ?, ?, ?, ?, ?)",
+                    [$uid, $price, $balanceBefore, $balanceAfter, 'Child panel cancelled: ' . $panel['domain'], (string) $panelId]
+                );
+                $refunded = $price;
+            }
+
+            $this->appendLog($panelId, 'Order cancelled by ' . $cancelledBy . ($refunded > 0 ? ' (refunded $' . number_format($refunded, 2) . ')' : ''));
+            $this->db->commit();
+            return ['success' => true, 'refunded' => $refunded];
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            Logger::log('Child panel cancel failed: ' . $e->getMessage(), 'child_panel');
+            return ['success' => false, 'error' => 'Could not cancel order.'];
+        }
+    }
+
     private function appendLog(int $panelId, string $line): void
     {
         $row = $this->db->fetch('SELECT provision_log FROM child_panels WHERE id = ?', [$panelId]);

@@ -32,22 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
     } elseif ($action === 'reactivate' && $panel['status'] === 'suspended') {
         $db->execute("UPDATE child_panels SET status = 'active' WHERE id = ?", [$id]);
         flash('success', 'Child panel reactivated.');
-    } elseif ($action === 'cancel' && in_array($panel['status'], ['pending', 'suspended'], true)) {
-        $db->beginTransaction();
-        try {
-            $db->execute("UPDATE child_panels SET status = 'cancelled', provision_status = 'failed' WHERE id = ?", [$id]);
-            if ($panel['status'] === 'pending') {
-                $price = (float) $panel['price'];
-                $db->execute(
-                    "UPDATE users SET balance = balance + ?, spent = GREATEST(0, spent - ?) WHERE id = ?",
-                    [$price, $price, $panel['user_id']]
-                );
+    } elseif ($action === 'cancel') {
+        $result = $cpm->cancelOrder($id);
+        if ($result['success']) {
+            $msg = 'Order cancelled for ' . $panel['domain'] . '.';
+            if (!empty($result['refunded'])) {
+                $msg .= ' $' . number_format((float) $result['refunded'], 2) . ' refunded.';
             }
-            $db->commit();
-            flash('success', 'Order cancelled' . ($panel['status'] === 'pending' ? ' and balance refunded.' : '.'));
-        } catch (Throwable $e) {
-            $db->rollBack();
-            flash('error', 'Could not cancel order.');
+            flash('success', $msg);
+        } else {
+            flash('error', $result['error'] ?? 'Could not cancel order.');
         }
     } else {
         flash('error', 'Invalid action for current status.');
@@ -144,14 +138,15 @@ require_once __DIR__ . '/../layouts/header.php';
                 <button type="submit" class="btn btn-primary" style="padding:6px 10px;font-size:11px;"><?= $st === 'pending' ? 'Deploy' : 'Retry deploy' ?></button>
               </form>
               <?php endif; ?>
-              <?php if ($st === 'pending'): ?>
-              <form method="POST" style="display:inline;" onsubmit="return confirm('Cancel and refund user?');">
+              <?php if ($cpm->canCancel($p, true)): ?>
+              <form method="POST" style="display:inline;" onsubmit="return confirm('Cancel this order<?= $cpm->shouldRefundOnCancel($p) ? ' and refund user' : '' ?>?');">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
                 <input type="hidden" name="action" value="cancel">
                 <button type="submit" class="btn" style="padding:6px 10px;font-size:11px;background:var(--text-muted);color:#fff;">Cancel</button>
               </form>
-              <?php elseif ($st === 'active'): ?>
+              <?php endif; ?>
+              <?php if ($st === 'active' && $cpm->isFullyDeployed($p)): ?>
               <form method="POST" style="display:inline;" onsubmit="return confirm('Suspend this panel?');">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="panel_id" value="<?= (int) $p['id'] ?>">
