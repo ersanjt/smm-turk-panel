@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_verify()) {
                     flash('error', $result['error'] ?? 'Provisioning failed. Contact support.');
                 }
             } else {
-                flash('error', 'DNS not ready yet. Set nameservers OR add A record pointing to our server, then try again.');
+                $diag = $cpm->getDomainDnsDiagnostics($domain);
+                flash('error', $diag['hint']);
             }
         }
         redirect(url('child-panel.php'));
@@ -173,6 +174,11 @@ body.theme-dark .cp-faq-item.open .cp-faq-q { background:rgba(227,10,23,.18); co
 body.theme-dark .cp-faq-a a { color:var(--primary-light); }
 .cp-panel-card { border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; background:var(--white); }
 .cp-panel-card h4 { margin:0 0 8px; font-size:15px; }
+.cp-dns-status { margin:10px 0 0; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg); font-size:12px; line-height:1.55; color:var(--text-muted); }
+.cp-dns-status strong { color:var(--text); }
+.cp-dns-status code { font-size:11px; word-break:break-all; }
+.cp-dns-status.ok { border-color:rgba(22,163,74,.35); background:rgba(22,163,74,.08); color:#15803d; }
+body.theme-dark .cp-dns-status.ok { color:#86efac; background:rgba(34,197,94,.1); }
 .cp-panel-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
 .cp-btn-cancel { font-size:12px; padding:8px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
 .cp-btn-cancel:hover { border-color:var(--primary); color:var(--primary); }
@@ -264,6 +270,19 @@ body.theme-dark .cp-faq-a a { color:var(--primary-light); }
           <?php endforeach; ?>
         </div>
         <?php if ($hint !== ''): ?><span class="cp-status-hint"><?= h($hint) ?></span><?php endif; ?>
+
+        <?php if ($ps === ChildPanelManager::PROVISION_DNS_WAIT && $st !== 'cancelled'):
+            $dnsDiag = $cpm->getDomainDnsDiagnostics((string) $p['domain']);
+        ?>
+        <div class="cp-dns-status <?= $dnsDiag['ready'] ? 'ok' : '' ?>">
+          <strong>DNS check</strong><br>
+          <?php if ($dnsDiag['ns'] !== []): ?>Found NS: <code><?= h(implode(', ', $dnsDiag['ns'])) ?></code><br><?php endif; ?>
+          <?php if ($dnsDiag['a'] !== []): ?>Found A: <code><?= h(implode(', ', $dnsDiag['a'])) ?></code><br><?php endif; ?>
+          <?php if ($dnsDiag['resolved_ip'] !== ''): ?>Resolves to: <code><?= h($dnsDiag['resolved_ip']) ?></code><br><?php endif; ?>
+          Expected: NS <code><?= h(implode(' + ', $dnsDiag['expected_ns'])) ?></code> or A → <code><?= h($dnsDiag['expected_ip']) ?></code><br>
+          <?= h($dnsDiag['hint']) ?>
+        </div>
+        <?php endif; ?>
 
         <?php if ($isActive): ?>
         <dl class="cp-connect">

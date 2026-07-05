@@ -125,44 +125,171 @@ class ChildPanelManager
         return $plain === false ? '' : $plain;
     }
 
-    /** @return array{ready: bool, method: string} */
+    /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string} */
     public function checkDomainReady(string $domain): array
     {
         $domain = self::normalizeDomain($domain);
         $dnsMode = strtolower(trim((string) ($this->db->getSetting('child_panel_dns_mode') ?? 'both')));
         $serverIp = $this->serverIp();
 
-        $nsOk = $this->checkNameservers($domain);
-        $aOk = false;
-        $records = @dns_get_record($domain, DNS_A);
-        if (is_array($records)) {
-            foreach ($records as $row) {
-                $ip = (string) ($row['ip'] ?? '');
-                if ($ip === '') {
-                    continue;
-                }
-                if ($serverIp === '' || $ip === $serverIp) {
-                    $aOk = true;
-                    break;
-                }
-            }
-            if (!$aOk && $records !== [] && $dnsMode !== 'ns') {
-                $aOk = true;
-            }
-        }
-        $resolves = @gethostbyname($domain);
-        $resolveOk = is_string($resolves) && $resolves !== $domain;
+        $nsRecords = $this->fetchPublicDns($domain, 'NS');
+        $nsOk = $this->nameserversMatch($nsRecords);
+        $aRecords = $this->fetchPublicDns($domain, 'A');
+        $aOk = $this->addressRecordsMatch($aRecords, $serverIp);
+
+        $resolvedIp = $this->resolveHostIp($domain);
+        $resolveOk = $serverIp !== '' && $resolvedIp === $serverIp;
 
         if ($dnsMode === 'ns') {
-            return ['ready' => $nsOk, 'method' => $nsOk ? 'ns' : ''];
+            return $this->dnsReadyResult($nsOk, 'ns', $nsRecords, $aRecords, $resolvedIp);
         }
         if ($dnsMode === 'a') {
             $ready = $aOk || $resolveOk;
-            return ['ready' => $ready, 'method' => $aOk ? 'a' : ($resolveOk ? 'resolve' : '')];
+            $method = $aOk ? 'a' : ($resolveOk ? 'resolve' : '');
+            return $this->dnsReadyResult($ready, $method, $nsRecords, $aRecords, $resolvedIp);
         }
         $ready = $nsOk || $aOk || $resolveOk;
         $method = $nsOk ? 'ns' : ($aOk ? 'a' : ($resolveOk ? 'resolve' : ''));
-        return ['ready' => $ready, 'method' => $method];
+        return $this->dnsReadyResult($ready, $method, $nsRecords, $aRecords, $resolvedIp);
+    }
+
+    /** @return array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string, expected_ns: list<string>, expected_ip: string, hint: string} */
+    public function getDomainDnsDiagnostics(string $domain): array
+    {
+        $check = $this->checkDomainReady($domain);
+        $expectedNs = array_values(array_filter([
+            strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns1') ?? '')), '.')),
+            strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns2') ?? '')), '.')),
+        ]));
+        $expectedIp = $this->serverIp();
+        $hint = $this->buildDnsHint($check, $expectedNs, $expectedIp);
+        return [
+            'ready' => $check['ready'],
+            'method' => $check['method'],
+            'ns' => $check['ns'],
+            'a' => $check['a'],
+            'resolved_ip' => $check['resolved_ip'],
+            'expected_ns' => $expectedNs,
+            'expected_ip' => $expectedIp,
+            'hint' => $hint,
+        ];
+    }
+
+    /** @param list<string> $nsRecords */
+    private function nameserversMatch(array $nsRecords): bool
+    {
+        $ns1 = strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns1') ?? '')), '.'));
+        $ns2 = strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns2') ?? '')), '.'));
+        $required = array_filter([$ns1, $ns2]);
+        if ($required === []) {
+            return false;
+        }
+        foreach ($required as $need) {
+            if (!in_array($need, $nsRecords, true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** @param list<string> $aRecords */
+    private function addressRecordsMatch(array $aRecords, string $serverIp): bool
+    {
+        if ($serverIp === '') {
+            return $aRecords !== [];
+        }
+        return in_array($serverIp, $aRecords, true);
+    }
+
+    private function resolveHostIp(string $domain): string
+    {
+        $resolved = @gethostbyname($domain);
+        if (!is_string($resolved) || $resolved === $domain) {
+            return '';
+        }
+        return $resolved;
+    }
+
+    /** @return list<string> */
+    private function fetchPublicDns(string $domain, string $type): array
+    {
+        $records = [];
+        $phpType = $type === 'NS' ? DNS_NS : DNS_A;
+        $raw = @dns_get_record($domain, $phpType);
+        if (is_array($raw)) {
+            foreach ($raw as $row) {
+                $value = $type === 'NS'
+                    ? strtolower(rtrim((string) ($row['target'] ?? ''), '.'))
+                    : (string) ($row['ip'] ?? '');
+                if ($value !== '') {
+                    $records[] = $value;
+                }
+            }
+        }
+        if ($records !== []) {
+            return array_values(array_unique($records));
+        }
+
+        $url = 'https://dns.google/resolve?name=' . rawurlencode($domain) . '&type=' . rawurlencode($type);
+        $ctx = stream_context_create(['http' => ['timeout' => 5, 'user_agent' => 'SMM-Turk-ChildPanel/1.0']]);
+        $json = @file_get_contents($url, false, $ctx);
+        if (!is_string($json) || $json === '') {
+            return [];
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data)) {
+            return [];
+        }
+        foreach ($data['Answer'] ?? [] as $answer) {
+            if (!is_array($answer)) {
+                continue;
+            }
+            $value = (string) ($answer['data'] ?? '');
+            if ($value === '') {
+                continue;
+            }
+            if ($type === 'NS') {
+                $records[] = strtolower(rtrim($value, '.'));
+            } elseif (filter_var($value, FILTER_VALIDATE_IP)) {
+                $records[] = $value;
+            }
+        }
+        return array_values(array_unique($records));
+    }
+
+    /** @param list<string> $nsRecords @param list<string> $aRecords */
+    private function dnsReadyResult(bool $ready, string $method, array $nsRecords, array $aRecords, string $resolvedIp): array
+    {
+        return [
+            'ready' => $ready,
+            'method' => $method,
+            'ns' => $nsRecords,
+            'a' => $aRecords,
+            'resolved_ip' => $resolvedIp,
+        ];
+    }
+
+    /** @param array{ready: bool, method: string, ns: list<string>, a: list<string>, resolved_ip: string} $check */
+    private function buildDnsHint(array $check, array $expectedNs, string $expectedIp): string
+    {
+        if ($check['ready']) {
+            return 'DNS looks good — click Check DNS to deploy your panel.';
+        }
+        if ($check['ns'] !== [] && !$this->nameserversMatch($check['ns'])) {
+            $seen = implode(', ', $check['ns']);
+            $want = implode(' + ', $expectedNs);
+            return "Nameservers still show: {$seen}. Expected: {$want}. DNS changes can take up to 24–48 hours to propagate globally.";
+        }
+        if ($check['a'] !== [] || $check['resolved_ip'] !== '') {
+            $seen = $check['a'] !== [] ? implode(', ', $check['a']) : $check['resolved_ip'];
+            return "Domain points to {$seen}, not our server ({$expectedIp}). Use nameservers or set A record @ → {$expectedIp} (DNS only).";
+        }
+        return 'No DNS records detected yet. Set nameservers or an A record, then wait a few minutes and try again.';
+    }
+
+    public function checkNameservers(string $domain): bool
+    {
+        return $this->nameserversMatch($this->fetchPublicDns(self::normalizeDomain($domain), 'NS'));
     }
 
     public static function normalizeDomain(string $domain): string
@@ -469,33 +596,6 @@ class ChildPanelManager
         }
 
         return ['success' => true];
-    }
-
-    public function checkNameservers(string $domain): bool
-    {
-        $ns1 = strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns1') ?? '')), '.'));
-        $ns2 = strtolower(rtrim(trim((string) ($this->db->getSetting('child_panel_ns2') ?? '')), '.'));
-        if ($ns1 === '' && $ns2 === '') {
-            return false;
-        }
-        $records = @dns_get_record($domain, DNS_NS);
-        if (!is_array($records) || $records === []) {
-            return false;
-        }
-        $found = [];
-        foreach ($records as $row) {
-            $target = strtolower(rtrim((string) ($row['target'] ?? ''), '.'));
-            if ($target !== '') {
-                $found[] = $target;
-            }
-        }
-        $required = array_filter([$ns1, $ns2]);
-        foreach ($required as $need) {
-            if (!in_array($need, $found, true)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /** Process DNS-waiting panels. Returns number provisioned. */
