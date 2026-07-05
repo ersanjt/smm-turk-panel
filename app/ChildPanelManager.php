@@ -62,7 +62,12 @@ class ChildPanelManager
             }
         }
         try {
-            $pdo->exec('CREATE UNIQUE INDEX uk_child_panels_domain ON child_panels (domain)');
+            $pdo->exec('ALTER TABLE child_panels DROP INDEX uk_child_panels_domain');
+        } catch (PDOException $e) {
+            /* unique index may not exist */
+        }
+        try {
+            $pdo->exec('CREATE INDEX idx_child_panels_domain ON child_panels (domain)');
         } catch (PDOException $e) {
             /* index may exist */
         }
@@ -218,6 +223,11 @@ class ChildPanelManager
         };
 
         $passwordEnc = self::encryptSecret($adminPassword);
+        $cancelledRow = $this->db->fetch(
+            'SELECT id FROM child_panels WHERE domain = ? AND user_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
+            [$domain, $userId, self::STATUS_CANCELLED]
+        );
+        $reuseId = $cancelledRow ? (int) $cancelledRow['id'] : 0;
 
         try {
             $this->db->beginTransaction();
@@ -230,28 +240,53 @@ class ChildPanelManager
                 return ['success' => false, 'error' => 'Insufficient balance.'];
             }
 
-            $panelId = $this->db->insert(
-                'INSERT INTO child_panels (user_id, domain, currency, admin_username, admin_password, admin_password_enc, admin_email, price, status, provision_status, panel_api_key)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [
-                    $userId,
-                    $domain,
-                    $currency,
-                    $adminUsername,
-                    password_hash($adminPassword, PASSWORD_DEFAULT),
-                    $passwordEnc,
-                    $adminEmail,
-                    $price,
-                    $initialStatus,
-                    $provisionStatus,
-                    $user['api_key'] ?? bin2hex(random_bytes(20)),
-                ]
-            );
+            $apiKey = $user['api_key'] ?? bin2hex(random_bytes(20));
+            if ($reuseId > 0) {
+                $this->db->execute(
+                    'UPDATE child_panels SET currency = ?, admin_username = ?, admin_password = ?, admin_password_enc = ?,
+                     admin_email = ?, price = ?, status = ?, provision_status = ?, provision_error = NULL, provision_log = NULL,
+                     panel_url = NULL, document_root = NULL, panel_api_key = ?, activated_at = NULL, ns_verified = 0, updated_at = NOW()
+                     WHERE id = ? AND user_id = ? AND status = ?',
+                    [
+                        $currency,
+                        $adminUsername,
+                        password_hash($adminPassword, PASSWORD_DEFAULT),
+                        $passwordEnc,
+                        $adminEmail,
+                        $price,
+                        $initialStatus,
+                        $provisionStatus,
+                        $apiKey,
+                        $reuseId,
+                        $userId,
+                        self::STATUS_CANCELLED,
+                    ]
+                );
+                $panelId = $reuseId;
+            } else {
+                $panelId = $this->db->insert(
+                    'INSERT INTO child_panels (user_id, domain, currency, admin_username, admin_password, admin_password_enc, admin_email, price, status, provision_status, panel_api_key)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        $userId,
+                        $domain,
+                        $currency,
+                        $adminUsername,
+                        password_hash($adminPassword, PASSWORD_DEFAULT),
+                        $passwordEnc,
+                        $adminEmail,
+                        $price,
+                        $initialStatus,
+                        $provisionStatus,
+                        $apiKey,
+                    ]
+                );
+            }
 
             $balanceAfter = (float) $user['balance'] - $price;
             $this->db->insert(
                 "INSERT INTO transactions (user_id, type, amount, balance_before, balance_after, description, reference)
-                 VALUES (?, 'child_panel', ?, ?, ?, ?, ?)",
+                 VALUES (?, 'order', ?, ?, ?, ?, ?)",
                 [$userId, -$price, (float) $user['balance'], $balanceAfter, 'Child panel: ' . $domain, (string) $panelId]
             );
 
@@ -261,6 +296,9 @@ class ChildPanelManager
             Logger::log('Child panel order failed: ' . $e->getMessage(), 'child_panel');
             if (stripos($e->getMessage(), "doesn't exist") !== false) {
                 return ['success' => false, 'error' => 'Child panel tables missing. Run php migrate-db.php on the server.'];
+            }
+            if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'domain')) {
+                return ['success' => false, 'error' => 'This domain was used on a previous order. Try again in a moment or contact support.'];
             }
             return ['success' => false, 'error' => 'Order failed. Please try again or contact support.'];
         }

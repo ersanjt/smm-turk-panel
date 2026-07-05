@@ -189,18 +189,22 @@
 }
 
 .add-funds-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.add-funds-presets button {
+.add-funds-presets button,
+.add-funds-presets .preset-btn {
   padding: 10px 16px;
   border-radius: 10px;
   border: 1.5px solid var(--border);
-  background: #fff;
+  background: var(--white);
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color .2s, background .2s, color .2s;
 }
-.add-funds-presets button:hover { border-color: var(--primary); color: var(--primary); }
-.add-funds-presets button.active {
+.add-funds-presets button:hover,
+.add-funds-presets .preset-btn:hover { border-color: var(--primary); color: var(--primary); }
+.add-funds-presets button.active,
+.add-funds-presets .preset-btn.active {
   border-color: var(--primary);
   background: rgba(227, 10, 23, .08);
   color: var(--primary);
@@ -432,9 +436,26 @@
 [data-theme="dark"] .coin-card,
 [data-theme="dark"] .pay-qr-wrap,
 [data-theme="dark"] .pay-address-block code,
-[data-theme="dark"] .add-funds-presets button,
 [data-theme="dark"] .pay-summary .pay-coin-pill {
-  background: var(--card);
+  background: var(--white);
+}
+[data-theme="dark"] .add-funds-presets button,
+[data-theme="dark"] .add-funds-presets .preset-btn {
+  background: #1a1416;
+  color: var(--text);
+  border-color: rgba(255, 255, 255, .14);
+}
+[data-theme="dark"] .add-funds-presets button:hover,
+[data-theme="dark"] .add-funds-presets .preset-btn:hover {
+  border-color: var(--primary);
+  color: #ff8a96;
+  background: rgba(227, 10, 23, .12);
+}
+[data-theme="dark"] .add-funds-presets button.active,
+[data-theme="dark"] .add-funds-presets .preset-btn.active {
+  border-color: var(--primary);
+  background: rgba(227, 10, 23, .2);
+  color: #ff9aa5;
 }
 [data-theme="dark"] .add-funds-banner {
   background: rgba(56, 189, 248, .08);
@@ -585,17 +606,35 @@ body.theme-dark .add-funds-hero,
 body.theme-dark .af-stat,
 body.theme-dark .af-amount-input-wrap,
 body.theme-dark .af-preview-row {
-  background: var(--card);
+  background: var(--white);
 }
 body.theme-dark .add-funds-hero {
-  background: linear-gradient(135deg, rgba(227, 10, 23, .18) 0%, rgba(227, 10, 23, .04) 60%, var(--card) 100%);
+  background: linear-gradient(135deg, rgba(227, 10, 23, .18) 0%, rgba(227, 10, 23, .04) 60%, var(--white) 100%);
 }
 body.theme-dark .coin-card,
 body.theme-dark .pay-qr-wrap,
 body.theme-dark .pay-address-block code,
-body.theme-dark .add-funds-presets button,
 body.theme-dark .pay-summary .pay-coin-pill {
-  background: var(--card);
+  background: #1a1416;
+}
+body.theme-dark .add-funds-presets button,
+body.theme-dark .add-funds-presets .preset-btn {
+  background: #1a1416;
+  color: #f0e9eb;
+  border-color: rgba(255, 255, 255, .14);
+}
+body.theme-dark .add-funds-presets button:hover,
+body.theme-dark .add-funds-presets .preset-btn:hover {
+  border-color: var(--primary);
+  color: #ff8a96;
+  background: rgba(227, 10, 23, .12);
+}
+body.theme-dark .add-funds-presets button.active,
+body.theme-dark .add-funds-presets .preset-btn.active {
+  border-color: var(--primary);
+  background: rgba(227, 10, 23, .22);
+  color: #ff9aa5;
+  box-shadow: 0 0 0 1px rgba(227, 10, 23, .35);
 }
 body.theme-dark .add-funds-banner {
   background: rgba(56, 189, 248, .08);

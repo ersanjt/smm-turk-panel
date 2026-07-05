@@ -33,7 +33,8 @@ function db_exec(PDO $pdo, string $sql, string $label): void
         if (str_contains($m, 'Duplicate column')
             || str_contains($m, 'Duplicate key name')
             || str_contains($m, 'already exists')
-            || str_contains($m, 'Duplicate entry')) {
+            || str_contains($m, 'Duplicate entry')
+            || str_contains($m, 'check that column/key exists')) {
             db_skip($label);
             return;
         }
@@ -236,6 +237,7 @@ db_apply_sql_file($pdo, __DIR__ . '/migrations/014_heleket_panel_mode.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/015_mail_lang.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/016_child_panel_automation.sql');
 db_apply_sql_file($pdo, __DIR__ . '/migrations/017_child_panel_full_auto.sql');
+db_apply_sql_file($pdo, __DIR__ . '/migrations/018_child_panel_domain_reuse.sql');
 
 // ─── Analyze tables (refresh optimizer stats) ────────────────────────────────
 echo "\n--- Analyze ---\n";
