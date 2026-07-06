@@ -53,16 +53,32 @@ function deploy_repair_files(): array
 {
     $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
     $files = [
+        'fix-app.php',
+        'repair-deploy.php',
+        'deploy-webhook.php',
         'app/bootstrap.php',
         'app/init.php',
         'app/init-v2.php',
+        'app/Seo.php',
+        'app/Lang.php',
         'app/ChildPanelRemoteSettings.php',
         'app/ChildPanelRemoteSettingsImpl.php',
-        'admin/_init.php',
+        'app/ChildPanelDeployer.php',
+        'app/ChildPanelManager.php',
+        'app/Auth.php',
+        'lang/tr.php',
+        'lang/en.php',
+        'lang/de.php',
+        'pricing.php',
+        'earn.php',
+        'robots.php',
+        'sitemap.php',
+        'manifest.php',
+        'blog-post.php',
+        'partials/public-seo-head.php',
+        'partials/landing-nav.php',
         'child-panel.php',
         'DEPLOY_VERSION',
-        'repair-deploy.php',
-        'deploy-webhook.php',
     ];
     $repaired = [];
     $errors = [];

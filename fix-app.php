@@ -38,6 +38,7 @@ if (function_exists('opcache_reset')) {
 
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
+    'fix-app.php',
     'app/bootstrap.php',
     'app/init.php',
     'app/init-v2.php',

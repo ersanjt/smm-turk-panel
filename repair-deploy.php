@@ -33,26 +33,50 @@ if ($webhookSecret === '' || !hash_equals($webhookSecret, $key)) {
     exit;
 }
 
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+}
+
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
-    'app/ChildPanelRemoteSettings.php',
+    'fix-app.php',
+    'repair-deploy.php',
+    'app/bootstrap.php',
     'app/init.php',
-    'admin/_init.php',
+    'app/init-v2.php',
+    'app/Seo.php',
+    'app/Lang.php',
+    'app/ChildPanelRemoteSettings.php',
+    'app/ChildPanelRemoteSettingsImpl.php',
+    'app/ChildPanelDeployer.php',
+    'app/ChildPanelManager.php',
+    'app/Auth.php',
+    'lang/tr.php',
+    'lang/en.php',
+    'lang/de.php',
+    'pricing.php',
+    'earn.php',
+    'robots.php',
+    'sitemap.php',
+    'manifest.php',
+    'blog-post.php',
+    'partials/public-seo-head.php',
+    'partials/landing-nav.php',
     'child-panel.php',
     'DEPLOY_VERSION',
 ];
 
 $repaired = [];
 $errors = [];
+$ctx = stream_context_create([
+    'http' => [
+        'timeout' => 45,
+        'header' => "User-Agent: smm-turk-repair\r\n",
+    ],
+]);
 
 foreach ($files as $rel) {
     $url = $repoBase . str_replace('\\', '/', $rel);
-    $ctx = stream_context_create([
-        'http' => [
-            'timeout' => 30,
-            'header' => "User-Agent: smm-turk-repair\r\n",
-        ],
-    ]);
     $content = @file_get_contents($url, false, $ctx);
     if ($content === false || $content === '') {
         $errors[] = "download failed: $rel";
@@ -64,9 +88,19 @@ foreach ($files as $rel) {
         $errors[] = "mkdir failed: $dir";
         continue;
     }
-    if (@file_put_contents($dest, $content) === false) {
+    $tmp = $dest . '.tmp.' . getmypid();
+    if (@file_put_contents($tmp, $content) === false) {
         $errors[] = "write failed: $rel";
         continue;
+    }
+    @chmod($tmp, 0644);
+    if (!@rename($tmp, $dest)) {
+        @unlink($tmp);
+        $errors[] = "rename failed: $rel";
+        continue;
+    }
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate($dest, true);
     }
     $repaired[] = $rel;
 }
@@ -74,35 +108,10 @@ foreach ($files as $rel) {
 if (function_exists('opcache_reset')) {
     @opcache_reset();
 }
-if (function_exists('opcache_invalidate')) {
-    foreach ($repaired as $rel) {
-        @opcache_invalidate(__DIR__ . '/' . str_replace('/', DIRECTORY_SEPARATOR, $rel), true);
-    }
-}
 
-$deployScript = $config['DEPLOY_SCRIPT'] ?? '/home/smmturk/deploy-smm.sh';
-$deployRan = false;
-$deployOut = '';
-if (is_readable($deployScript) && function_exists('exec')) {
-    $disabled = strtolower((string) ini_get('disable_functions'));
-    $execOff = $disabled !== '' && in_array('exec', array_map('trim', explode(',', $disabled)), true);
-    if (!$execOff) {
-        $out = [];
-        $code = 0;
-        @exec('bash ' . escapeshellarg($deployScript) . ' 2>&1', $out, $code);
-        $deployRan = true;
-        $deployOut = implode("\n", $out);
-    }
-}
-
-$ok = $errors === [] && $repaired !== [];
-http_response_code($ok ? 200 : 500);
 echo json_encode([
-    'ok' => $ok,
+    'ok' => $errors === [],
     'repaired' => $repaired,
     'errors' => $errors,
-    'opcache_reset' => function_exists('opcache_reset'),
-    'deploy_ran' => $deployRan,
-    'deploy_output' => $deployOut !== '' ? $deployOut : null,
-    'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    'count' => count($repaired),
+], JSON_PRETTY_PRINT);
