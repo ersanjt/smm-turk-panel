@@ -15,6 +15,7 @@ $refCommission = (float) ($db->getSetting('referral_commission') ?: 2);
 $welcomeCredit = $growth->welcomeCreditAmount();
 $depositBonus = (float) ($db->getSetting('deposit_bonus_percent') ?: 0);
 $refLink = '';
+$refPct = number_format($refCommission, 0);
 
 if ($loggedIn) {
     Lang::initUser();
@@ -48,7 +49,6 @@ if ($loggedIn) {
     $extraCssHrefs = [asset_url('assets/css/earn.css')];
 }
 
-$refPct = number_format($refCommission, 0);
 $incomePaths = [
     [
         'id' => 'child-panel',
