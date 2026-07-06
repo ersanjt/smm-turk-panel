@@ -70,7 +70,6 @@ function deploy_repair_files(): array
         'app/Seo.php',
         'app/Lang.php',
         'app/ChildPanelRemoteSettings.php',
-        'app/ChildPanelRemoteSettingsImpl.php',
         'app/ChildPanelDeployer.php',
         'app/ChildPanelManager.php',
         'app/Auth.php',
@@ -122,6 +121,14 @@ function deploy_repair_files(): array
     }
     if (function_exists('opcache_reset')) {
         @opcache_reset();
+    }
+    $legacyImpl = __DIR__ . '/app/ChildPanelRemoteSettingsImpl.php';
+    if (is_file($legacyImpl)) {
+        @unlink($legacyImpl);
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($legacyImpl, true);
+        }
+        $repaired[] = '(deleted) app/ChildPanelRemoteSettingsImpl.php';
     }
     return [
         'ok' => $errors === [] && $repaired !== [],

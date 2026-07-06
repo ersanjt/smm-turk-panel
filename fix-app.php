@@ -52,7 +52,6 @@ $files = [
     'app/init.php',
     'app/init-v2.php',
     'app/ChildPanelRemoteSettings.php',
-    'app/ChildPanelRemoteSettingsImpl.php',
     'app/ChildPanelDeployer.php',
     'app/ChildPanelManager.php',
     'app/ChildPanelAutomation.php',
@@ -121,6 +120,15 @@ if (function_exists('opcache_reset')) {
     @opcache_reset();
 }
 
+$legacyImpl = __DIR__ . '/app/ChildPanelRemoteSettingsImpl.php';
+if (is_file($legacyImpl)) {
+    @unlink($legacyImpl);
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate($legacyImpl, true);
+    }
+    $repaired[] = '(deleted) app/ChildPanelRemoteSettingsImpl.php';
+}
+
 echo json_encode([
     'ok' => $errors === [] && $repaired !== [],
     'repaired' => $repaired,
@@ -130,7 +138,8 @@ echo json_encode([
         : null,
     'bootstrap_loaded' => is_readable(__DIR__ . '/app/bootstrap.php'),
     'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
-    'impl_first_bytes' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettingsImpl.php')
-        ? bin2hex((string) substr((string) file_get_contents(__DIR__ . '/app/ChildPanelRemoteSettingsImpl.php'), 0, 5))
+    'cprs_first_bytes' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettings.php')
+        ? bin2hex((string) substr((string) file_get_contents(__DIR__ . '/app/ChildPanelRemoteSettings.php'), 0, 5))
         : null,
+    'legacy_impl_exists' => is_file(__DIR__ . '/app/ChildPanelRemoteSettingsImpl.php'),
 ], JSON_PRETTY_PRINT);

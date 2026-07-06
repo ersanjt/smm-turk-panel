@@ -55,7 +55,6 @@ $files = [
     'app/Seo.php',
     'app/Lang.php',
     'app/ChildPanelRemoteSettings.php',
-    'app/ChildPanelRemoteSettingsImpl.php',
     'app/ChildPanelDeployer.php',
     'app/ChildPanelManager.php',
     'app/Auth.php',
@@ -116,6 +115,14 @@ foreach ($files as $rel) {
 
 if (function_exists('opcache_reset')) {
     @opcache_reset();
+}
+
+$legacyImpl = __DIR__ . '/app/ChildPanelRemoteSettingsImpl.php';
+if (is_file($legacyImpl)) {
+    @unlink($legacyImpl);
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate($legacyImpl, true);
+    }
 }
 
 echo json_encode([
