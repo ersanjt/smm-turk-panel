@@ -89,43 +89,7 @@ $homeJsonLd = [
 </div>
 <?php endif; ?>
 
-<header class="nav" role="banner">
-    <div class="nav-inner">
-        <a href="<?= h(home_path()) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
-            <span class="nav-logo-icon"><img src="<?= h(logo_url()) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
-            <span class="nav-logo-text">SMM <span>TURK</span></span>
-            <span class="nav-logo-tag">SMM Panel</span>
-        </a>
-        <div class="nav-links">
-            <a href="<?= h(route_path('login.php')) ?>"><?= h(__('nav_sign_in')) ?></a>
-            <a href="<?= h(path('pricing.php')) ?>">Prices</a>
-            <a href="<?= h(path('earn.php')) ?>">Earn Money</a>
-            <a href="<?= h(path('blog.php')) ?>"><?= h(__('blog_nav_blog')) ?></a>
-            <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
-            <?php if ($registrationEnabled): ?>
-            <a href="<?= h(register_path()) ?>"><?= h(__('nav_sign_up')) ?></a>
-            <?php endif; ?>
-            <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a>
-            <button type="button" class="nav-theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
-                <span class="theme-icon theme-icon-light" aria-hidden="true"><?= icon('sun', 18) ?></span>
-                <span class="theme-icon theme-icon-dark" aria-hidden="true"><?= icon('moon', 18) ?></span>
-            </button>
-            <div class="nav-lang nav-lang-compact">
-                <div class="nav-lang-dropdown" id="langDropdown">
-                    <?php foreach (Lang::allowed() as $l): ?>
-                    <a href="<?= h(Lang::urlFor($l, home_path())) ?>"><?= h(Lang::label($l)) ?></a>
-                    <?php endforeach; ?>
-                </div>
-                <button type="button" class="nav-lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false"><?= strtoupper($lang) ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
-            </div>
-            <?php if ($registrationEnabled): ?>
-            <a href="<?= h(register_path()) ?>" class="nav-btn"><?= h(__('nav_sign_up')) ?> →</a>
-            <?php else: ?>
-            <a href="<?= h(route_path('login.php')) ?>" class="nav-btn"><?= h(__('nav_sign_in')) ?> →</a>
-            <?php endif; ?>
-        </div>
-    </div>
-</header>
+<?php require __DIR__ . '/partials/landing-nav.php'; ?>
 <main id="main-content">
 <section class="hero" aria-labelledby="hero-title">
     <div class="hero-orb hero-orb-1" aria-hidden="true"></div>

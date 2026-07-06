@@ -102,20 +102,14 @@ if (!$loggedIn):
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/pricing-public.css')) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/earn.css')) ?>">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 </head>
 <body>
+<script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
 <?php if ($promo['enabled']): ?>
 <div class="growth-promo-bar"><span><?= h($promo['text']) ?></span><a href="<?= h($promo['cta_url']) ?>"><?= h($promo['cta_label']) ?></a></div>
 <?php endif; ?>
-<header class="nav"><div class="nav-inner">
-    <a href="<?= h(home_path()) ?>" class="nav-logo"><span class="nav-logo-text">SMM <span>TURK</span></span></a>
-    <div class="nav-links">
-        <a href="<?= h(path('pricing.php')) ?>">Prices</a>
-        <a href="<?= h(path('earn.php')) ?>">Earn</a>
-        <a href="<?= h(path('blog.php')) ?>">Blog</a>
-        <a href="<?= h(register_path()) ?>" class="nav-btn">Sign up →</a>
-    </div>
-</div></header>
+<?php $navActive = 'earn'; $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1'; require __DIR__ . '/partials/landing-nav.php'; ?>
 <?php endif; ?>
 
 <div class="earn-page">
@@ -195,5 +189,6 @@ if (!$loggedIn):
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>
 <?php else: ?>
 <footer style="padding:24px;text-align:center;font-size:13px;"><a href="<?= h(home_path()) ?>">Home</a> · <a href="<?= h(path('help.php')) ?>">Help</a></footer>
+<script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
 </body></html>
 <?php endif; ?>

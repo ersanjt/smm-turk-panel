@@ -45,8 +45,10 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
     <meta property="og:image" content="<?= h($pageImg) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/pricing-public.css')) ?>">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
 </head>
 <body>
+<script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
 <?php $promo = $growth->promoBar(); if ($promo['enabled']): ?>
 <div class="growth-promo-bar">
     <span><?= h($promo['text']) ?></span>
@@ -54,17 +56,7 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
 </div>
 <?php endif; ?>
 
-<header class="nav" role="banner">
-    <div class="nav-inner">
-        <a href="<?= h(home_path()) ?>" class="nav-logo"><span class="nav-logo-text">SMM <span>TURK</span></span></a>
-        <div class="nav-links">
-            <a href="<?= h(path('pricing.php')) ?>">Prices</a>
-            <a href="<?= h(path('blog.php')) ?>">Blog</a>
-            <a href="<?= h(route_path('login.php')) ?>">Sign in</a>
-            <a href="<?= h(register_path()) ?>" class="nav-btn">Sign up →</a>
-        </div>
-    </div>
-</header>
+<?php $navActive = 'pricing'; $registrationEnabled = ($db->getSetting('registration_enabled') ?? '1') === '1'; require __DIR__ . '/partials/landing-nav.php'; ?>
 
 <main class="pricing-public">
     <section class="pricing-hero">
@@ -142,5 +134,6 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
 <footer class="footer" style="padding:24px;text-align:center;font-size:13px;color:var(--muted);">
     <a href="<?= h(home_path()) ?>"><?= h($siteName) ?></a> · <a href="<?= h(path('terms.php')) ?>">Terms</a> · <a href="<?= h(path('help.php')) ?>">Help</a>
 </footer>
+<script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
 </body>
 </html>
