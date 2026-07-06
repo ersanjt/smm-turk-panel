@@ -46,6 +46,62 @@ class ChildPanelDeployer
         return $home . '/public_html/' . ChildPanelManager::normalizeDomain($domain);
     }
 
+    public function resolveDocumentRoot(string $domain, string $stored = ''): string
+    {
+        $domain = ChildPanelManager::normalizeDomain($domain);
+        $candidates = [];
+
+        if (class_exists('WhmProvisioner')) {
+            $whm = new WhmProvisioner();
+            if ($whm->isConfigured()) {
+                $addon = $whm->findAddonDomain($domain);
+                if ($addon !== null && trim((string) ($addon['document_root'] ?? '')) !== '') {
+                    $candidates[] = $this->normalizeAbsolutePath((string) $addon['document_root']);
+                }
+            }
+        }
+
+        if ($stored !== '') {
+            $candidates[] = $this->normalizeAbsolutePath($stored);
+        }
+
+        $candidates[] = $this->docrootForDomain($domain);
+
+        $seen = [];
+        foreach ($candidates as $path) {
+            if ($path === '' || isset($seen[$path])) {
+                continue;
+            }
+            $seen[$path] = true;
+            if (is_file($path . '/home.php') || is_file($path . '/index.php')) {
+                return $path;
+            }
+        }
+
+        foreach (array_keys($seen) as $path) {
+            if (is_dir($path)) {
+                return $path;
+            }
+        }
+
+        return $candidates[0] ?? '';
+    }
+
+    private function normalizeAbsolutePath(string $path): string
+    {
+        $path = trim(str_replace('\\', '/', $path));
+        if ($path === '') {
+            return '';
+        }
+        if (!str_starts_with($path, '/')) {
+            $home = $this->homePath();
+            if ($home !== '') {
+                return rtrim($home, '/') . '/' . ltrim($path, '/');
+            }
+        }
+        return rtrim($path, '/');
+    }
+
     public function templatePath(): string
     {
         $custom = trim((string) ($this->db->getSetting('child_panel_template_path') ?? ''));
@@ -67,7 +123,9 @@ class ChildPanelDeployer
             return ['success' => false, 'error' => 'Panel template path not found on server.'];
         }
         if ($documentRoot === '') {
-            $documentRoot = $this->docrootForDomain($domain);
+            $documentRoot = $this->resolveDocumentRoot($domain, $documentRoot);
+        } else {
+            $documentRoot = $this->resolveDocumentRoot($domain, $documentRoot);
         }
         if ($documentRoot === '') {
             return ['success' => false, 'error' => 'Could not determine document root for domain.'];
@@ -84,8 +142,17 @@ class ChildPanelDeployer
             return $copy;
         }
 
-        $dbResult = $this->bootstrapDatabase((int) ($panel['id'] ?? 0), $domain);
+        $this->fixPermissions($documentRoot);
+
+        $dbResult = $this->connectExistingDatabase($documentRoot);
+        if ($dbResult === null) {
+            $dbResult = $this->bootstrapDatabase((int) ($panel['id'] ?? 0), $domain);
+        }
         if (!$dbResult['success']) {
+            $ready = $this->documentRootReady($documentRoot);
+            if ($ready['ok']) {
+                return ['success' => false, 'error' => ($dbResult['error'] ?? 'Database setup failed') . ' (files OK at ' . $documentRoot . ')'];
+            }
             return $dbResult;
         }
 
@@ -131,6 +198,15 @@ class ChildPanelDeployer
         @mkdir($documentRoot . '/storage/logs', 0755, true);
         @mkdir($documentRoot . '/uploads', 0755, true);
         $this->fixPermissions($documentRoot);
+        $this->ensureWebEntry($documentRoot);
+
+        $ready = $this->documentRootReady($documentRoot);
+        if (!$ready['ok']) {
+            return [
+                'success' => false,
+                'error' => 'Deploy incomplete — missing: ' . implode(', ', $ready['missing'] ?? []) . ' in ' . $documentRoot,
+            ];
+        }
 
         return [
             'success' => true,
@@ -230,6 +306,48 @@ class ChildPanelDeployer
             return true;
         }
         return false;
+    }
+
+    private function ensureWebEntry(string $documentRoot): void
+    {
+        if (is_file($documentRoot . '/home.php') || is_file($documentRoot . '/index.php')) {
+            return;
+        }
+        $indexSrc = $this->templatePath() . '/index.php';
+        if (is_file($indexSrc)) {
+            @copy($indexSrc, $documentRoot . '/index.php');
+        }
+    }
+
+    /**
+     * @return array{success: bool, error?: string, db_name?: string, db_user?: string, db_pass?: string, pdo?: PDO}|null
+     */
+    private function connectExistingDatabase(string $documentRoot): ?array
+    {
+        $cfg = $this->readConfigConstants($documentRoot, ['DB_NAME', 'DB_USER', 'DB_PASS']);
+        $dbName = trim((string) ($cfg['DB_NAME'] ?? ''));
+        $dbUser = trim((string) ($cfg['DB_USER'] ?? ''));
+        $dbPass = (string) ($cfg['DB_PASS'] ?? '');
+        if ($dbName === '' || $dbUser === '') {
+            return null;
+        }
+        try {
+            $pdo = new PDO(
+                'mysql:host=localhost;dbname=' . $dbName . ';charset=utf8mb4',
+                $dbUser,
+                $dbPass,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+            return [
+                'success' => true,
+                'db_name' => $dbName,
+                'db_user' => $dbUser,
+                'db_pass' => $dbPass,
+                'pdo' => $pdo,
+            ];
+        } catch (PDOException $e) {
+            return null;
+        }
     }
 
     /**

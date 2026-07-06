@@ -43,8 +43,12 @@ $files = [
     'app/init-v2.php',
     'app/ChildPanelRemoteSettings.php',
     'app/ChildPanelRemoteSettingsImpl.php',
+    'app/ChildPanelDeployer.php',
+    'app/ChildPanelManager.php',
+    'app/ChildPanelAutomation.php',
     'admin/_init.php',
     'child-panel.php',
+    'repair-panel.php',
     'DEPLOY_VERSION',
 ];
 

@@ -899,6 +899,8 @@ class ChildPanelManager
                 } else {
                     $this->appendLog($panelId, $whmResult['message'] ?? 'Addon domain OK');
                     $documentRoot = trim((string) ($whmResult['document_root'] ?? $documentRoot));
+                    $deployer = new ChildPanelDeployer();
+                    $documentRoot = $deployer->resolveDocumentRoot($domain, $documentRoot);
                     if (!empty($whmResult['panel_url'])) {
                         $panelUrl = $whmResult['panel_url'];
                     }
@@ -910,7 +912,7 @@ class ChildPanelManager
                 }
             } else {
                 $deployer = new ChildPanelDeployer();
-                $documentRoot = $documentRoot !== '' ? $documentRoot : $deployer->docrootForDomain($domain);
+                $documentRoot = $deployer->resolveDocumentRoot($domain, $documentRoot);
                 $this->appendLog($panelId, 'Local deploy path: ' . $documentRoot);
             }
 
