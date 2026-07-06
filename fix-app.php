@@ -50,6 +50,11 @@ $files = [
     'admin/_init.php',
     'child-panel.php',
     'repair-panel.php',
+    'earn.php',
+    'assets/css/earn.css',
+    'assets/css/landing.css',
+    'partials/landing-nav.php',
+    'assets/js/landing.js',
     'DEPLOY_VERSION',
 ];
 
