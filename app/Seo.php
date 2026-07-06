@@ -304,6 +304,25 @@ class Seo
         ];
     }
 
+    public static function webPageSchema(string $name, string $description, string $url, ?string $lang = null): array
+    {
+        $schema = [
+            '@type' => 'WebPage',
+            'name' => $name,
+            'description' => $description,
+            'url' => $url,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'name' => self::siteName(),
+                'url' => self::siteUrl() ?: home_path(),
+            ],
+        ];
+        if ($lang !== null) {
+            $schema['inLanguage'] = self::pageLanguage($lang);
+        }
+        return $schema;
+    }
+
     /** @param array<int, array{name: string, text: string}> $items */
     public static function faqSchema(array $items, ?string $lang = null): array
     {

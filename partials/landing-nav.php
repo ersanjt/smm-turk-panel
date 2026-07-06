@@ -17,8 +17,8 @@ $navActive = $navActive ?? '';
 
 $navItems = [
     ['id' => 'login', 'href' => route_path('login.php'), 'label' => __('nav_sign_in')],
-    ['id' => 'pricing', 'href' => path('pricing.php'), 'label' => 'Prices'],
-    ['id' => 'earn', 'href' => path('earn.php'), 'label' => 'Earn Money'],
+    ['id' => 'pricing', 'href' => path('pricing.php'), 'label' => __('nav_prices')],
+    ['id' => 'earn', 'href' => path('earn.php'), 'label' => __('nav_earn')],
     ['id' => 'blog', 'href' => path('blog.php'), 'label' => __('blog_nav_blog')],
     ['id' => 'help', 'href' => path('help.php'), 'label' => __('help_title')],
     ['id' => 'terms', 'href' => path('terms.php'), 'label' => __('nav_terms')],
@@ -54,7 +54,7 @@ $ctaLabel = $registrationEnabled ? __('nav_sign_up') : __('nav_sign_in');
                 </button>
                 <div class="nav-lang-dropdown" id="langDropdown" role="menu">
                     <?php foreach (Lang::allowed() as $l): ?>
-                    <a href="<?= h(Lang::urlFor($l, home_path())) ?>" role="menuitem"<?= $lang === $l ? ' class="is-active"' : '' ?>><?= h(Lang::label($l)) ?></a>
+                    <a href="<?= h(Lang::urlFor($l)) ?>" role="menuitem"<?= $lang === $l ? ' class="is-active"' : '' ?>><?= h(Lang::label($l)) ?></a>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -98,7 +98,7 @@ $ctaLabel = $registrationEnabled ? __('nav_sign_up') : __('nav_sign_in');
                     </button>
                     <div class="nav-mobile-langs">
                         <?php foreach (Lang::allowed() as $l): ?>
-                        <a href="<?= h(Lang::urlFor($l, home_path())) ?>" class="nav-mobile-lang<?= $lang === $l ? ' is-active' : '' ?>"><?= strtoupper($l) ?></a>
+                        <a href="<?= h(Lang::urlFor($l)) ?>" class="nav-mobile-lang<?= $lang === $l ? ' is-active' : '' ?>"><?= strtoupper($l) ?></a>
                         <?php endforeach; ?>
                     </div>
                 </div>

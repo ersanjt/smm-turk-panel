@@ -8,6 +8,8 @@ $siteUrl = Seo::siteUrl() !== '' ? Seo::siteUrl() : 'https://smm-turk.com';
 header('Content-Type: text/plain; charset=UTF-8');
 echo "User-agent: *\n";
 echo "Allow: /\n";
+echo "Allow: /pricing\n";
+echo "Allow: /earn\n";
 echo "Allow: /blog\n";
 echo "Allow: /help\n";
 echo "Allow: /terms\n";

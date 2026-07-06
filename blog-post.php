@@ -78,7 +78,7 @@ if (!empty($tags)) {
 }
 
 $blogNavActive = 'blog';
-$seoHreflang = true;
+$seoHreflang = false;
 $seoHreflangBase = $canonicalUrl;
 $jsonLdExtra = [
     Seo::breadcrumbSchema([

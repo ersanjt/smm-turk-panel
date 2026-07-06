@@ -19,33 +19,25 @@ $highlights = $growth->pricingHighlights(2);
 $table = $growth->pricingTable(36);
 
 $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
-$siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
-$canonical = Seo::absoluteUrl(path('pricing.php'));
-$seoTitle = 'SMM Panel Prices — Instagram, TikTok, YouTube | ' . $siteName;
-$seoDescription = 'Cheapest SMM panel prices. Buy Instagram followers, TikTok likes, YouTube views from $' . preg_replace('/[^0-9.]/', '', $stats['min_price']) . '/1K. Crypto payments, instant start.';
-$pageImg = og_image_url();
-if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
-    $pageImg = Seo::absoluteUrl($pageImg);
-}
+$baseCanonical = Seo::absoluteUrl(path('pricing.php'));
+$minPrice = preg_replace('/[^0-9.]/', '', $stats['min_price']);
+$seoTitle = __('pricing_meta_title');
+$seoDescription = sprintf(__('pricing_meta_desc'), '$' . $minPrice);
+$metaKeywords = __('pricing_keywords');
+$jsonLdGraph = [
+    Seo::organizationSchema($seoDescription, $lang),
+    Seo::websiteSchema($seoDescription),
+    Seo::webPageSchema(__('pricing_h1'), $seoDescription, Seo::pageCanonical($baseCanonical, $lang), $lang),
+    Seo::breadcrumbSchema([
+        ['name' => __('blog_nav_home'), 'url' => Seo::absoluteUrl(home_path())],
+        ['name' => __('nav_prices'), 'url' => $baseCanonical],
+    ], $lang),
+];
 ?>
 <!DOCTYPE html>
 <html lang="<?= h(Seo::htmlLang($lang)) ?>">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= h($seoTitle) ?></title>
-    <meta name="description" content="<?= h($seoDescription) ?>">
-    <meta name="robots" content="<?= h(Seo::robotsContent(true)) ?>">
-    <link rel="canonical" href="<?= h($canonical) ?>">
-    <?= Seo::hreflangTags(path('pricing.php')) ?>
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="<?= h($seoTitle) ?>">
-    <meta property="og:description" content="<?= h($seoDescription) ?>">
-    <meta property="og:url" content="<?= h($canonical) ?>">
-    <meta property="og:image" content="<?= h($pageImg) ?>">
-    <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
-    <link rel="stylesheet" href="<?= h(asset_url('assets/css/pricing-public.css')) ?>">
-    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
+<?php require __DIR__ . '/partials/public-seo-head.php'; ?>
 </head>
 <body>
 <script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
@@ -60,25 +52,25 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
 
 <main class="pricing-public">
     <section class="pricing-hero">
-        <h1>SMM Panel Prices</h1>
-        <p>Transparent rates for Instagram, TikTok, YouTube & more. <?= count($offers) ?> reasons to start today:</p>
+        <h1><?= h(__('pricing_h1')) ?></h1>
+        <p><?= h(sprintf(__('pricing_intro'), count($offers))) ?></p>
         <ul class="pricing-offers">
             <?php foreach ($offers as $line): ?><li>✓ <?= h($line) ?></li><?php endforeach; ?>
         </ul>
         <div class="pricing-hero-cta">
-            <a href="<?= h(register_path()) ?>" class="btn-cta">Create free account →</a>
-            <a href="<?= h(path('login.php')) ?>" class="btn-cta-outline">Sign in</a>
+            <a href="<?= h(register_path()) ?>" class="btn-cta"><?= h(__('pricing_cta_register')) ?></a>
+            <a href="<?= h(path('login.php')) ?>" class="btn-cta-outline"><?= h(__('pricing_cta_login')) ?></a>
         </div>
         <div class="stats-row" style="margin-top:32px;">
-            <div class="stat-item"><div class="stat-value"><?= h($stats['services']) ?></div><div class="stat-label">Services</div></div>
-            <div class="stat-item"><div class="stat-value"><?= h($stats['orders']) ?></div><div class="stat-label">Orders completed</div></div>
-            <div class="stat-item"><div class="stat-value"><?= h($stats['min_price']) ?></div><div class="stat-label">Prices from</div></div>
+            <div class="stat-item"><div class="stat-value"><?= h($stats['services']) ?></div><div class="stat-label"><?= h(__('pricing_stat_services')) ?></div></div>
+            <div class="stat-item"><div class="stat-value"><?= h($stats['orders']) ?></div><div class="stat-label"><?= h(__('pricing_stat_orders')) ?></div></div>
+            <div class="stat-item"><div class="stat-value"><?= h($stats['min_price']) ?></div><div class="stat-label"><?= h(__('pricing_stat_from')) ?></div></div>
         </div>
     </section>
 
     <?php if (!empty($highlights)): ?>
     <section class="section" style="padding-top:20px;">
-        <h2 class="section-title">Popular platforms</h2>
+        <h2 class="section-title"><?= h(__('pricing_platforms_title')) ?></h2>
         <div class="pricing-platform-grid">
             <?php
             $byPlatform = [];
@@ -105,11 +97,11 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
     <?php endif; ?>
 
     <section class="section" style="background:var(--white);">
-        <h2 class="section-title">Service price list</h2>
-        <p class="section-desc">Register to place orders. Prices include panel markup — VIP discounts apply after you spend more.</p>
+        <h2 class="section-title"><?= h(__('pricing_table_title')) ?></h2>
+        <p class="section-desc"><?= h(__('pricing_table_desc')) ?></p>
         <div class="pricing-table-wrap">
             <table class="pricing-table">
-                <thead><tr><th>ID</th><th>Service</th><th>Category</th><th>Rate / 1K</th><th>Min</th></tr></thead>
+                <thead><tr><th><?= h(__('pricing_th_id')) ?></th><th><?= h(__('pricing_th_service')) ?></th><th><?= h(__('pricing_th_category')) ?></th><th><?= h(__('pricing_th_rate')) ?></th><th><?= h(__('pricing_th_min')) ?></th></tr></thead>
                 <tbody>
                 <?php foreach ($table as $s): ?>
                 <tr>
@@ -124,15 +116,15 @@ if ($pageImg !== '' && !preg_match('#^https?://#i', $pageImg)) {
             </table>
         </div>
         <div class="cta-block" style="margin-top:40px;">
-            <h2 class="section-title">Ready to order?</h2>
-            <p class="section-desc">Create account in 30 seconds — pay with crypto, start in minutes.</p>
-            <a href="<?= h(register_path()) ?>" class="btn-cta">Sign up & get started →</a>
+            <h2 class="section-title"><?= h(__('pricing_cta_title')) ?></h2>
+            <p class="section-desc"><?= h(__('pricing_cta_desc')) ?></p>
+            <a href="<?= h(register_path()) ?>" class="btn-cta"><?= h(__('pricing_cta_btn')) ?></a>
         </div>
     </section>
 </main>
 
 <footer class="footer" style="padding:24px;text-align:center;font-size:13px;color:var(--muted);">
-    <a href="<?= h(home_path()) ?>"><?= h($siteName) ?></a> · <a href="<?= h(path('terms.php')) ?>">Terms</a> · <a href="<?= h(path('help.php')) ?>">Help</a>
+    <a href="<?= h(home_path()) ?>"><?= h($siteName) ?></a> · <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a> · <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
 </footer>
 <script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
 </body>
