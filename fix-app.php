@@ -36,6 +36,15 @@ if (function_exists('opcache_reset')) {
     @opcache_reset();
 }
 
+/** Strip UTF-8 BOM and accidental leading whitespace before <?php. */
+function deploy_normalize_php(string $content): string
+{
+    if (strncmp($content, "\xEF\xBB\xBF", 3) === 0) {
+        $content = substr($content, 3);
+    }
+    return preg_replace('/^\s+(?=<\?php)/', '', $content) ?? $content;
+}
+
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
     'fix-app.php',
@@ -82,6 +91,7 @@ foreach ($files as $rel) {
         $errors[] = "download: $rel";
         continue;
     }
+    $content = deploy_normalize_php($content);
     $dest = __DIR__ . '/' . str_replace('/', DIRECTORY_SEPARATOR, $rel);
     $dir = dirname($dest);
     if (!is_dir($dir)) {
@@ -120,4 +130,7 @@ echo json_encode([
         : null,
     'bootstrap_loaded' => is_readable(__DIR__ . '/app/bootstrap.php'),
     'deploy_version' => is_readable(__DIR__ . '/DEPLOY_VERSION') ? trim((string) file_get_contents(__DIR__ . '/DEPLOY_VERSION')) : null,
+    'impl_first_bytes' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettingsImpl.php')
+        ? bin2hex((string) substr((string) file_get_contents(__DIR__ . '/app/ChildPanelRemoteSettingsImpl.php'), 0, 5))
+        : null,
 ], JSON_PRETTY_PRINT);

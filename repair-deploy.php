@@ -37,6 +37,14 @@ if (function_exists('opcache_reset')) {
     @opcache_reset();
 }
 
+function deploy_normalize_php(string $content): string
+{
+    if (strncmp($content, "\xEF\xBB\xBF", 3) === 0) {
+        $content = substr($content, 3);
+    }
+    return preg_replace('/^\s+(?=<\?php)/', '', $content) ?? $content;
+}
+
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
     'fix-app.php',
@@ -82,6 +90,7 @@ foreach ($files as $rel) {
         $errors[] = "download failed: $rel";
         continue;
     }
+    $content = deploy_normalize_php($content);
     $dest = __DIR__ . '/' . str_replace('/', DIRECTORY_SEPARATOR, $rel);
     $dir = dirname($dest);
     if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {

@@ -46,6 +46,14 @@ function deploy_load_secret(string $key): array
     return ['ok' => true, 'config' => $config, 'secret_path' => $secretPath];
 }
 
+function deploy_normalize_php(string $content): string
+{
+    if (strncmp($content, "\xEF\xBB\xBF", 3) === 0) {
+        $content = substr($content, 3);
+    }
+    return preg_replace('/^\s+(?=<\?php)/', '', $content) ?? $content;
+}
+
 /**
  * @return array{ok: bool, repaired?: list<string>, errors?: list<string>}
  */
@@ -91,9 +99,20 @@ function deploy_repair_files(): array
             $errors[] = "download failed: $rel";
             continue;
         }
+        $content = deploy_normalize_php($content);
         $dest = __DIR__ . '/' . str_replace('/', DIRECTORY_SEPARATOR, $rel);
-        if (@file_put_contents($dest, $content) === false) {
+        if (is_file($dest)) {
+            @unlink($dest);
+        }
+        $tmp = $dest . '.tmp.' . getmypid();
+        if (@file_put_contents($tmp, $content) === false) {
             $errors[] = "write failed: $rel";
+            continue;
+        }
+        @chmod($tmp, 0644);
+        if (!@rename($tmp, $dest)) {
+            @unlink($tmp);
+            $errors[] = "rename failed: $rel";
             continue;
         }
         $repaired[] = $rel;
