@@ -143,13 +143,16 @@ body.theme-dark .nav-theme-toggle .theme-icon-dark{display:inline-flex}
   font-size:0!important;line-height:0;
 }
 .benefit-icon .icon-box,.feature-block .icon .icon-box,.why-us-icon .ico .icon-box,.stat-item .icon .icon-box{
-  width:52px;height:52px;border-radius:16px;
+  width:58px;height:58px;border-radius:18px;
 }
 .benefit-card{
   transition:transform .3s var(--ease-spring,cubic-bezier(.34,1.56,.64,1)),box-shadow .3s ease;
 }
 .benefit-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-md,0 12px 40px rgba(26,10,14,.08))}
-.feature-block .icon .icon-box{width:56px;height:56px;border-radius:18px}
+.benefit-card:hover .benefit-icon .icon-box,.feature-block:hover .icon .icon-box{
+  box-shadow:0 8px 24px rgba(26,10,14,.12);
+}
+.feature-block .icon .icon-box{width:64px;height:64px;border-radius:18px}
 .why-us-icon .ico .icon-box{width:64px;height:64px;border-radius:20px}
 .stat-item .icon .icon-box{width:44px;height:44px;border-radius:14px;margin:0 auto 10px}
 
