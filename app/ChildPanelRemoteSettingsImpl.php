@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Remote child panel settings from parent site (child-panel.php).
  */
