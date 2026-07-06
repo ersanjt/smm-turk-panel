@@ -124,6 +124,28 @@ if (is_file($legacyImpl)) {
     if (function_exists('opcache_invalidate')) {
         @opcache_invalidate($legacyImpl, true);
     }
+    $repaired[] = '(deleted) app/ChildPanelRemoteSettingsImpl.php';
+}
+
+$cprsPath = __DIR__ . '/app/ChildPanelRemoteSettings.php';
+if (is_readable($cprsPath)) {
+    $cprsBody = (string) file_get_contents($cprsPath);
+    if (strpos($cprsBody, 'ChildPanelRemoteSettingsImpl') !== false) {
+        $fresh = @file_get_contents($repoBase . 'app/ChildPanelRemoteSettings.php', false, $ctx);
+        if ($fresh !== false && $fresh !== '') {
+            $fresh = deploy_normalize_php($fresh);
+            $tmp = $cprsPath . '.tmp.' . getmypid();
+            if (@file_put_contents($tmp, $fresh) !== false && @rename($tmp, $cprsPath)) {
+                @chmod($cprsPath, 0644);
+                if (function_exists('opcache_invalidate')) {
+                    @opcache_invalidate($cprsPath, true);
+                }
+                $repaired[] = '(fixed) app/ChildPanelRemoteSettings.php stub replaced';
+            } else {
+                @unlink($tmp);
+            }
+        }
+    }
 }
 
 echo json_encode([
@@ -131,4 +153,8 @@ echo json_encode([
     'repaired' => $repaired,
     'errors' => $errors,
     'count' => count($repaired),
+    'cprs_first_bytes' => is_readable($cprsPath)
+        ? bin2hex((string) substr((string) file_get_contents($cprsPath), 0, 5))
+        : null,
+    'legacy_impl_exists' => is_file($legacyImpl),
 ], JSON_PRETTY_PRINT);
