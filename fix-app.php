@@ -46,6 +46,7 @@ $files = [
     'app/ChildPanelDeployer.php',
     'app/ChildPanelManager.php',
     'app/ChildPanelAutomation.php',
+    'app/Auth.php',
     'admin/_init.php',
     'child-panel.php',
     'repair-panel.php',

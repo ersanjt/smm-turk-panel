@@ -350,7 +350,7 @@ class Auth {
             return;
         }
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        if (preg_match('#account-settings|logout#', $uri)) {
+        if (preg_match('#(?:/settings|account-settings)(?:[/?]|$)|logout#', $uri)) {
             return;
         }
         flash('error', 'Please change your default password before continuing.');

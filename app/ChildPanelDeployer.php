@@ -588,6 +588,11 @@ class ChildPanelDeployer
         }
         $result = $this->createAdminUser($pdo, $username, $password, $email, $apiKey, $passwordIsHash);
         if ($result['success']) {
+            try {
+                $pdo->exec("UPDATE users SET must_change_password = 0 WHERE role = 'admin'");
+            } catch (PDOException $e) {
+                /* column may be missing on very old child DBs */
+            }
             $this->clearLoginRateLimits($documentRoot);
         }
         return $result;
@@ -651,9 +656,9 @@ class ChildPanelDeployer
         }
         try {
             $stmt = $pdo->prepare(
-                "INSERT INTO users (username, email, password, role, status, api_key, api_key_created_at, email_verification_token)
-                 VALUES (?, ?, ?, 'admin', 'active', ?, NOW(), NULL)
-                 ON DUPLICATE KEY UPDATE password = VALUES(password), role = 'admin', status = 'active', email = VALUES(email), username = VALUES(username)"
+                "INSERT INTO users (username, email, password, role, status, api_key, api_key_created_at, email_verification_token, must_change_password)
+                 VALUES (?, ?, ?, 'admin', 'active', ?, NOW(), NULL, 0)
+                 ON DUPLICATE KEY UPDATE password = VALUES(password), role = 'admin', status = 'active', email = VALUES(email), username = VALUES(username), must_change_password = 0"
             );
             $stmt->execute([$username, $email, $hash, $apiKey !== '' ? $apiKey : bin2hex(random_bytes(20))]);
         } catch (PDOException $e) {
