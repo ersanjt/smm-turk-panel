@@ -99,6 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = $isNew ? 'New Article' : 'Edit Article';
+$backUrl = admin_path('admin-blog.php');
+$backLabel = 'Manage Blog';
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 <div class="card">

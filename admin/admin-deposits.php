@@ -70,7 +70,7 @@ $failedWithTx = $db->fetchAll(
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<div style="max-width:900px;">
+<div class="admin-page-shell" style="max-width:900px;">
   <div class="card" style="margin-bottom:18px;">
     <div class="card-title">₿ Pending crypto deposits</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Approve after the crypto payment arrives in your wallet. Users pay by sending cryptocurrency only — no cards or PayPal on this panel.</p>
@@ -116,7 +116,7 @@ require_once __DIR__ . '/../layouts/header.php';
   </div>
 
   <?php if (!empty($failedWithTx)): ?>
-  <div class="card" style="margin-bottom:18px;border-color:#f59e0b;">
+  <div class="card admin-card-warning" style="margin-bottom:18px;">
     <div class="card-title">⚠ Failed deposits with TxHash (recovery)</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">User paid on-chain but the panel marked the deposit as failed (e.g. changed payment method after sending). Verify the TxHash on Tronscan, then click <strong>Recover &amp; credit</strong>.</p>
     <table class="table">

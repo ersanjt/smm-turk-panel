@@ -35,11 +35,9 @@ $editId = (int) ($_GET['edit'] ?? 0);
 $edit = $editId ? $db->fetch('SELECT * FROM coupons WHERE id = ?', [$editId]) : null;
 
 require_once __DIR__ . '/../layouts/header.php';
-$pageSubtitle = 'Create discount codes for orders and deposit bonuses.';
-require_once __DIR__ . '/../partials/admin-page-header.php';
 ?>
 
-<div style="max-width:900px;">
+<div class="admin-page-shell" style="max-width:900px;">
   <div class="card" style="margin-bottom:18px;">
     <div class="card-title">🎟️ <?= $edit ? 'Edit coupon' : 'New coupon' ?></div>
     <form method="POST">
@@ -136,10 +134,6 @@ require_once __DIR__ . '/../partials/admin-page-header.php';
       </tbody>
     </table>
   </div>
-
-  <p class="admin-back">
-    <a href="<?= h(admin_path('index.php')) ?>" class="admin-back-link">← Admin Panel</a>
-  </p>
 </div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

@@ -99,6 +99,4 @@ require_once __DIR__ . '/../layouts/header.php';
   <?php endif; ?>
 </div>
 
-<p style="margin-top:16px;"><a href="<?= h(path('admin/index.php')) ?>" class="btn btn-primary" style="padding:8px 16px;">← Admin Panel</a></p>
-
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

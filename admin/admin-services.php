@@ -82,10 +82,15 @@ $svcUrl = static function (array $overrides = []) use ($search, $category, $page
     return '?' . $qs;
 };
 
+$hideAdminPageHeader = true;
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="admin-svc">
+  <a href="<?= h(admin_path('index.php')) ?>" class="admin-back-link" style="margin-bottom:14px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Admin Panel</span>
+  </a>
   <header class="admin-svc-header">
     <div>
       <h1>Services catalog</h1>
@@ -274,7 +279,6 @@ require_once __DIR__ . '/../layouts/header.php';
     <?php endif; ?>
   </div>
 
-  <p class="admin-svc-back"><a href="<?= h(path('admin/index.php')) ?>" class="btn" style="background:var(--bg);border:1px solid var(--border);color:var(--text);">← Admin Panel</a></p>
 </div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

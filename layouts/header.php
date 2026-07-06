@@ -192,9 +192,15 @@ $ogLocale = Seo::ogLocale($dashLang);
 
   <header class="mob-header" id="mobHeader" aria-label="Mobile navigation">
     <div class="mob-header-bar">
+      <?php if ($isAdminArea && $currentPage !== 'index'): ?>
+      <a href="<?= h($backUrl ?? admin_path('index.php')) ?>" class="mob-header-back" aria-label="<?= h($backLabel ?? 'Admin Panel') ?>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <?php else: ?>
       <button type="button" class="mob-header-menu" id="mobHeaderMenuBtn" aria-label="Open menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
+      <?php endif; ?>
       <div class="mob-header-brand">
         <img src="<?= h(logo_url()) ?>" alt="" width="36" height="36">
         <div class="mob-header-brand-text">
@@ -279,3 +285,28 @@ $ogLocale = Seo::ogLocale($dashLang);
 <?php if ($flash): ?>
 <div class="alert alert-<?= $flash['type'] ?>" role="alert"><?= h($flash['message']) ?></div>
 <?php endif; ?>
+<?php
+if ($isAdminArea && $currentPage !== 'index' && empty($hideAdminPageHeader)) {
+    if (empty($pageSubtitle)) {
+        $adminPageHints = [
+            'admin-deposits' => 'Approve crypto deposits and recover failed on-chain payments.',
+            'admin-coupons' => 'Create discount codes for orders and deposit bonuses.',
+            'admin-orders' => 'Search and review all customer orders.',
+            'admin-users' => 'Manage accounts, balances, and roles.',
+            'admin-services' => 'Browse synced services from your provider.',
+            'admin-child-panels' => 'Provision, repair, and manage child panel orders.',
+            'admin-child-panel-users' => 'Users who own child panels on this server.',
+            'admin-settings' => 'Site, payments, email, API, and revenue settings.',
+            'admin-sync' => 'Sync services and balance from the upstream provider.',
+            'admin-mail' => 'Test SMTP and review outbound email logs.',
+            'admin-tickets' => 'Support tickets from customers.',
+            'admin-blog' => 'Publish and manage blog articles.',
+            'admin-blog-edit' => 'Write SEO content for the public blog.',
+        ];
+        if (isset($adminPageHints[$currentPage])) {
+            $pageSubtitle = $adminPageHints[$currentPage];
+        }
+    }
+    require dirname(__DIR__) . '/partials/admin-page-header.php';
+}
+?>

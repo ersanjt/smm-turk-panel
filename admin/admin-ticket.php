@@ -47,6 +47,9 @@ try {
 } catch (Throwable $e) { }
 
 $pageTitle = 'Ticket #' . $id;
+$backUrl = admin_path('admin-tickets.php');
+$backLabel = 'All tickets';
+$pageSubtitle = (string) ($ticket['subject'] ?? '');
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
