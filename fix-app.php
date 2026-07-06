@@ -48,6 +48,7 @@ function deploy_normalize_php(string $content): string
 $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
 $files = [
     'fix-app.php',
+    'hotfix-cprs.php',
     'app/bootstrap.php',
     'app/init.php',
     'app/init-v2.php',

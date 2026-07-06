@@ -62,6 +62,7 @@ function deploy_repair_files(): array
     $repoBase = 'https://raw.githubusercontent.com/ersanjt/smm-turk-panel/main/';
     $files = [
         'fix-app.php',
+        'hotfix-cprs.php',
         'repair-deploy.php',
         'deploy-webhook.php',
         'app/bootstrap.php',
