@@ -610,6 +610,23 @@ class ChildPanelDeployer
         }
     }
 
+    /** @return array{ok: bool, error?: string, admins?: list<array<string, mixed>>} */
+    public function inspectAdminUsers(string $documentRoot): array
+    {
+        $pdo = $this->pdoFromDocumentRoot($documentRoot);
+        if ($pdo === null) {
+            return ['ok' => false, 'error' => 'Could not connect to child panel database.'];
+        }
+        try {
+            $rows = $pdo->query(
+                "SELECT id, username, email, role, status FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 10"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            return ['ok' => true, 'admins' => $rows ?: []];
+        } catch (PDOException $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     /** @return array{success: bool, error?: string} */
     private function createAdminUser(PDO $pdo, string $username, string $password, string $email, string $apiKey, bool $passwordIsHash = false): array
     {

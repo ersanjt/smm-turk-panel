@@ -885,7 +885,15 @@ class ChildPanelManager
         $documentRoot = trim((string) ($panel['document_root'] ?? ''));
         $deployError = null;
 
-        $passwordMeta = $this->resolveDeployPassword($panelId, $panel, $adminPlainPassword);
+        if ($forceDeploy && ($panel['provision_status'] ?? '') === self::PROVISION_READY) {
+            $this->syncAdminFromParentAccount($panelId, null);
+            $panel = $this->db->fetch(
+                'SELECT cp.*, u.username, u.email FROM child_panels cp JOIN users u ON u.id = cp.user_id WHERE cp.id = ?',
+                [$panelId]
+            ) ?: $panel;
+        }
+
+        $passwordMeta = $this->resolveDeployPassword($panelId, $panel, null);
         $adminPlainPassword = $passwordMeta['password'];
         $adminPasswordHash = $passwordMeta['hash'];
 
@@ -981,19 +989,23 @@ class ChildPanelManager
         );
         $this->appendLog($panelId, 'Panel live at ' . $panelUrl);
 
-        $to = $panel['admin_email'] ?? $panel['email'] ?? '';
+        $panelForMail = $this->db->fetch(
+            'SELECT cp.*, u.username, u.email FROM child_panels cp JOIN users u ON u.id = cp.user_id WHERE cp.id = ?',
+            [$panelId]
+        ) ?: $panel;
+        $to = $panelForMail['admin_email'] ?? $panelForMail['email'] ?? '';
         if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
             try {
                 $mail = new Mail();
-                $mailPassword = $this->usesParentLogin($panel) ? '' : $adminPlainPassword;
+                $mailPassword = $this->usesParentLogin($panelForMail) ? '' : $adminPlainPassword;
                 $mail->sendChildPanelReady(
                     $to,
-                    (string) $panel['username'],
+                    (string) $panelForMail['username'],
                     $domain,
                     $panelUrl,
                     $parentApi,
                     $apiKey,
-                    (string) $panel['admin_username'],
+                    (string) $panelForMail['admin_username'],
                     $mailPassword
                 );
             } catch (Throwable $e) {
