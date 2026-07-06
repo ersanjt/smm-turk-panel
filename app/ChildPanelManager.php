@@ -1061,9 +1061,15 @@ class ChildPanelManager
     public function isFullyDeployed(array $panel): bool
     {
         $ps = $panel['provision_status'] ?? '';
-        return ($panel['status'] ?? '') === self::STATUS_ACTIVE
-            && $ps === self::PROVISION_READY
-            && trim((string) ($panel['document_root'] ?? '')) !== '';
+        if (($panel['status'] ?? '') !== self::STATUS_ACTIVE || $ps !== self::PROVISION_READY) {
+            return false;
+        }
+        $documentRoot = trim((string) ($panel['document_root'] ?? ''));
+        if ($documentRoot === '') {
+            return false;
+        }
+        $check = (new ChildPanelDeployer())->documentRootReady($documentRoot);
+        return $check['ok'];
     }
 
     public function canCancel(array $panel, bool $isAdmin = false): bool

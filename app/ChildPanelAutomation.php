@@ -32,6 +32,7 @@ class ChildPanelAutomation
         $stats['users_synced'] = $this->syncAllEndUsers();
         $stats['low_balance_alerts'] = $this->notifyLowResellerBalances();
         $stats['api_repairs'] = $this->repairParentApiSettings();
+        $stats['docroot_repairs'] = $this->repairBrokenDocumentRoots();
 
         $renewal = new ChildPanelRenewal();
         $renewalStats = $renewal->process();
@@ -47,7 +48,8 @@ class ChildPanelAutomation
             . ' orders_parent=' . ($stats['parent_orders'] ?? 0)
             . ' orders_child=' . ($stats['child_orders'] ?? 0)
             . ' deposits=' . ($stats['parent_deposits'] ?? 0)
-            . ' alerts=' . ($stats['low_balance_alerts'] ?? 0),
+            . ' alerts=' . ($stats['low_balance_alerts'] ?? 0)
+            . ' docroot_repairs=' . ($stats['docroot_repairs'] ?? 0),
             'automation'
         );
 
@@ -159,6 +161,31 @@ class ChildPanelAutomation
             }
         }
         return $fixed;
+    }
+
+    /** Re-deploy panels whose document root is missing panel files (403 Forbidden). */
+    public function repairBrokenDocumentRoots(): int
+    {
+        $deployer = new ChildPanelDeployer();
+        $repaired = 0;
+        foreach ($this->activePanels() as $panel) {
+            $documentRoot = trim((string) ($panel['document_root'] ?? ''));
+            if ($documentRoot === '') {
+                $documentRoot = $deployer->docrootForDomain((string) ($panel['domain'] ?? ''));
+            }
+            $check = $deployer->documentRootReady($documentRoot);
+            if ($check['ok']) {
+                continue;
+            }
+            $result = $this->cpm->provision((int) $panel['id'], null, true);
+            if ($result['success']) {
+                $repaired++;
+                Logger::log('Repaired empty docroot: ' . ($panel['domain'] ?? ''), 'automation');
+            } else {
+                Logger::log('Docroot repair failed ' . ($panel['domain'] ?? '') . ': ' . ($result['error'] ?? ''), 'automation');
+            }
+        }
+        return $repaired;
     }
 
     public function notifyLowResellerBalances(): int

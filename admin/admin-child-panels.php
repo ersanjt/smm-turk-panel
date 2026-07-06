@@ -142,14 +142,19 @@ require_once __DIR__ . '/../layouts/header.php';
               <span class="badge <?= $psBadge ?>"><?= h($ps) ?></span>
               <?php if (!empty($p['ns_verified'])): ?><br><span style="font-size:10px;color:#16a34a;">NS ok</span><?php endif; ?>
               <?php if (!empty($p['provision_error'])): ?><br><span style="font-size:10px;color:var(--primary);" title="<?= h($p['provision_error']) ?>">⚠ WHM</span><?php endif; ?>
+              <?php if ($st === 'active' && $ps === 'ready' && !$docCheck['ok']): ?>
+              <br><span style="font-size:10px;color:#b45309;" title="Missing: <?= h(implode(', ', $docCheck['missing'] ?? [])) ?>">⚠ 403 — files missing</span>
+              <?php endif; ?>
             </td>
             <td data-label="Price">$<?= number_format((float) $p['price'], 2) ?></td>
             <td data-label="Status"><span class="badge <?= $badge ?>"><?= h($st) ?></span></td>
             <td data-label="Date" style="font-size:12px;color:var(--text-muted);"><?= h(date('Y-m-d H:i', strtotime($p['created_at'] ?? 'now'))) ?></td>
             <td data-label="Actions" class="td-actions">
               <?php
-              $needsDeploy = $ps !== 'ready' || (empty($p['document_root']) && $st === 'active');
-              $canRepair = $st === 'active' && $ps === 'ready';
+              $docroot = trim((string) ($p['document_root'] ?? ''));
+              $docCheck = $docroot !== '' ? (new ChildPanelDeployer())->documentRootReady($docroot) : ['ok' => false, 'missing' => ['directory']];
+              $needsDeploy = $ps !== 'ready' || (empty($p['document_root']) && $st === 'active') || ($st === 'active' && $ps === 'ready' && !$docCheck['ok']);
+              $canRepair = $st === 'active' && ($ps === 'ready' || $needsDeploy);
               if ($st === 'pending' || $needsDeploy || $canRepair):
               ?>
               <form method="POST" style="display:inline;">

@@ -130,12 +130,49 @@ class ChildPanelDeployer
 
         @mkdir($documentRoot . '/storage/logs', 0755, true);
         @mkdir($documentRoot . '/uploads', 0755, true);
+        $this->fixPermissions($documentRoot);
 
         return [
             'success' => true,
             'document_root' => $documentRoot,
             'db_name' => $dbResult['db_name'] ?? '',
         ];
+    }
+
+    /** @return array{ok: bool, missing?: list<string>, document_root: string} */
+    public function documentRootReady(string $documentRoot): array
+    {
+        $documentRoot = rtrim($documentRoot, '/\\');
+        if ($documentRoot === '' || !is_dir($documentRoot)) {
+            return ['ok' => false, 'document_root' => $documentRoot, 'missing' => ['directory']];
+        }
+        $required = ['home.php', 'index.php', 'config.php', '.htaccess'];
+        $missing = [];
+        foreach ($required as $file) {
+            if (!is_file($documentRoot . '/' . $file)) {
+                $missing[] = $file;
+            }
+        }
+        return ['ok' => $missing === [], 'document_root' => $documentRoot, 'missing' => $missing];
+    }
+
+    public function fixPermissions(string $documentRoot): void
+    {
+        if ($documentRoot === '' || !is_dir($documentRoot)) {
+            return;
+        }
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($documentRoot, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            foreach ($iterator as $item) {
+                @chmod($item->getPathname(), $item->isDir() ? 0755 : 0644);
+            }
+            @chmod($documentRoot, 0755);
+        } catch (Throwable $e) {
+            /* best effort */
+        }
     }
 
     /** @return array{success: bool, error?: string} */
