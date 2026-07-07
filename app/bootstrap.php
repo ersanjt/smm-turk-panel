@@ -75,7 +75,7 @@ if (php_sapi_name() !== 'cli') {
     header('X-XSS-Protection: 1; mode=block');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     // CSP: enforce in production unless SMM_CSP_REPORT_ONLY is explicitly enabled
-    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://apis.google.com; frame-src https://accounts.google.com; manifest-src 'self'; worker-src 'self';";
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://apis.google.com https://cloudflareinsights.com; frame-src https://accounts.google.com; manifest-src 'self'; worker-src 'self';";
     $cspReportOnly = defined('SMM_CSP_REPORT_ONLY') && SMM_CSP_REPORT_ONLY;
     if ($cspReportOnly) {
         header("Content-Security-Policy-Report-Only: $csp");

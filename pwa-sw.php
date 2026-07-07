@@ -9,7 +9,7 @@ $precache = [
     $base . '/assets/img/logo-icon.svg',
 ];
 ?>
-const CACHE = 'smmturk-static-v1';
+const CACHE = 'smmturk-static-v2';
 const PRECACHE = <?= json_encode($precache) ?>;
 
 self.addEventListener('install', function (event) {
@@ -35,7 +35,11 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET') return;
+  // Let the browser load images normally (governed by img-src, not connect-src).
+  // Branding logos/favicons are dynamic and must not be cached by the worker.
+  if (req.destination === 'image') return;
   var url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.indexOf('/assets/') === -1) return;
   event.respondWith(
     caches.match(req).then(function (cached) {
