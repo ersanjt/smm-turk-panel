@@ -93,6 +93,7 @@ $files = [
     'partials/public-seo-head.php',
     'partials/landing-nav.php',
     'assets/css/earn.css',
+    'assets/css/blog.css',
     'assets/css/landing.css',
     'assets/js/landing.js',
     'DEPLOY_VERSION',

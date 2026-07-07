@@ -12,6 +12,10 @@ $baseBlogUrl = $siteUrl ? $siteUrl . path('blog') : path('blog');
 
 $categorySlug = isset($_GET['category']) ? trim(preg_replace('/[^a-z0-9\-]/', '', (string)$_GET['category'])) : '';
 $tagSlug      = isset($_GET['tag']) ? trim(preg_replace('/[^a-z0-9\-]/', '', (string)$_GET['tag'])) : '';
+$searchQuery  = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+if ($searchQuery !== '') {
+    $searchQuery = mb_substr($searchQuery, 0, 80);
+}
 $pageNum      = max(1, (int)($_GET['p'] ?? 1));
 $perPage      = 12;
 $offset       = ($pageNum - 1) * $perPage;
@@ -22,6 +26,13 @@ $pageTitle = function_exists('__') ? __('blog_title') : 'Blog';
 $pageDescription = function_exists('__') ? __('blog_meta_desc') : 'SMM Turk Blog — Social media marketing tips, SMM panel guides, Instagram, YouTube, TikTok growth.';
 $canonicalUrl = Seo::absoluteUrl(path('blog.php'));
 $filterActive = false;
+$seoIndexable = true;
+
+try {
+    $welcomeCredit = (float) (new GrowthEngine())->welcomeCreditAmount();
+} catch (Throwable $e) {
+    $welcomeCredit = 0.0;
+}
 
 if ($categorySlug !== '') {
     $cat = $db->fetch("SELECT id, name, meta_description FROM blog_categories WHERE slug = ?", [$categorySlug]);
@@ -51,6 +62,18 @@ if ($tagSlug !== '') {
         $canonicalUrl = Seo::absoluteUrl(path('blog.php') . '?tag=' . rawurlencode($tagSlug));
     }
     $filterActive = true;
+}
+
+if ($searchQuery !== '') {
+    $where[] = '(a.title LIKE ? OR a.excerpt LIKE ?)';
+    $like = '%' . $searchQuery . '%';
+    $params[] = $like;
+    $params[] = $like;
+    $filterActive = true;
+    $seoIndexable = false;
+    $pageTitle = __('blog_search_title');
+    $pageDescription = sprintf('%s — %s', __('blog_search_title'), $siteName);
+    $canonicalUrl = Seo::absoluteUrl(path('blog.php'));
 }
 
 $whereSql = implode(' AND ', $where);
@@ -152,16 +175,20 @@ function blog_category_initial(?string $name): string {
     <p><?= h($pageDescription) ?></p>
     <?php if (!$filterActive): ?>
     <div class="blog-hero-stats">
-      <div class="blog-hero-stat"><strong><?= (int) $totalPublished ?></strong><span>Articles</span></div>
-      <div class="blog-hero-stat"><strong><?= count($categories) ?></strong><span>Categories</span></div>
-      <div class="blog-hero-stat"><strong>Free</strong><span>Guides & tips</span></div>
+      <div class="blog-hero-stat"><strong><?= (int) $totalPublished ?></strong><span><?= h(__('blog_stat_articles')) ?></span></div>
+      <div class="blog-hero-stat"><strong><?= count($categories) ?></strong><span><?= h(__('blog_stat_categories')) ?></span></div>
+      <div class="blog-hero-stat"><strong><?= h(__('blog_stat_free')) ?></strong><span><?= h(__('blog_stat_free_sub')) ?></span></div>
     </div>
     <?php else: ?>
-    <p style="margin-top:8px;font-size:14px;opacity:.85;">
-      <a href="<?= h(path('blog.php')) ?>" style="color:#fff;text-decoration:underline;">← <?= function_exists('__') ? h(__('blog_all')) : 'All articles' ?></a>
-      · <?= (int) $total ?> result<?= $total !== 1 ? 's' : '' ?>
+    <p class="blog-hero-filter">
+      <a href="<?= h(path('blog.php')) ?>">← <?= h(__('blog_all')) ?></a>
+      · <?= (int) $total ?> <?= h($total === 1 ? __('blog_result') : __('blog_results')) ?><?php if ($searchQuery !== ''): ?> · “<?= h($searchQuery) ?>”<?php endif; ?>
     </p>
     <?php endif; ?>
+    <form class="blog-search" method="get" action="<?= h(path('blog.php')) ?>" role="search">
+      <input type="search" name="q" value="<?= h($searchQuery) ?>" placeholder="<?= h(__('blog_search_ph')) ?>" aria-label="<?= h(__('blog_search_ph')) ?>" maxlength="80">
+      <button type="submit"><?= h(__('blog_search_btn')) ?></button>
+    </form>
   </div>
 </header>
 
@@ -189,6 +216,10 @@ function blog_category_initial(?string $name): string {
 </div>
 <?php endif; ?>
 
+<?php if (!$filterActive && $pageNum === 1): ?>
+<p class="blog-intro"><?= h(sprintf(__('blog_intro'), $siteName)) ?></p>
+<?php endif; ?>
+
 <?php if ($featured): ?>
 <?php
   $fUrl = blog_post_url($featured);
@@ -208,7 +239,7 @@ function blog_category_initial(?string $name): string {
     <div class="meta"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($featured['category_slug'])) ?>"><?= h($featured['category_name']) ?></a></div>
     <?php endif; ?>
     <h2><a href="<?= h($fUrl) ?>"><?= h($featured['title']) ?></a></h2>
-    <div class="meta"><?= h($fDate) ?><?php if (!empty($featured['reading_time_min'])): ?> · <?= (int)$featured['reading_time_min'] ?> min read<?php endif; ?></div>
+    <div class="meta"><?= h($fDate) ?><?php if (!empty($featured['reading_time_min'])): ?> · <?= (int)$featured['reading_time_min'] ?> <?= h(__('blog_min_read')) ?><?php endif; ?></div>
     <?php if (!empty($featured['excerpt'])): ?><p class="excerpt"><?= h($featured['excerpt']) ?></p><?php endif; ?>
     <a href="<?= h($fUrl) ?>" class="read-more"><?= function_exists('__') ? h(__('blog_read_more')) : 'Read article' ?> →</a>
   </div>
@@ -217,7 +248,8 @@ function blog_category_initial(?string $name): string {
 
 <?php if (empty($gridArticles) && !$featured): ?>
 <div class="blog-empty">
-  <p><?= function_exists('__') ? h(__('blog_no_posts')) : 'No posts yet.' ?></p>
+  <p><?= $searchQuery !== '' ? h(__('blog_search_none')) : (function_exists('__') ? h(__('blog_no_posts')) : 'No posts yet.') ?></p>
+  <?php if ($filterActive): ?><p style="margin-top:10px;"><a href="<?= h(path('blog.php')) ?>" class="read-more">← <?= h(__('blog_all')) ?></a></p><?php endif; ?>
 </div>
 <?php else: ?>
 <div class="blog-grid">
@@ -230,7 +262,7 @@ function blog_category_initial(?string $name): string {
     <div class="blog-card-cat"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($a['category_slug'])) ?>"><?= h($a['category_name']) ?></a></div>
     <?php endif; ?>
     <h2><a href="<?= h($postUrl) ?>"><?= h($a['title']) ?></a></h2>
-    <div class="meta"><?= h($dateStr) ?><?php if (!empty($a['reading_time_min'])): ?> · <?= (int)$a['reading_time_min'] ?> min<?php endif; ?></div>
+    <div class="meta"><?= h($dateStr) ?><?php if (!empty($a['reading_time_min'])): ?> · <?= (int)$a['reading_time_min'] ?> <?= h(__('blog_min')) ?><?php endif; ?></div>
     <?php if (!empty($a['excerpt'])): ?><p class="excerpt"><?= h($a['excerpt']) ?></p><?php endif; ?>
     <div class="blog-card-footer">
       <?php if (!empty($a['tags'])): ?>
@@ -253,6 +285,7 @@ function blog_category_initial(?string $name): string {
         $prevUrl = path('blog.php') . '?p=' . ($pageNum - 1);
         if ($categorySlug) $prevUrl .= '&category=' . rawurlencode($categorySlug);
         if ($tagSlug) $prevUrl .= '&tag=' . rawurlencode($tagSlug);
+        if ($searchQuery !== '') $prevUrl .= '&q=' . rawurlencode($searchQuery);
     ?>
     <a href="<?= h($prevUrl) ?>">← <?= function_exists('__') ? h(__('blog_prev')) : 'Previous' ?></a>
     <?php endif; ?>
@@ -260,11 +293,13 @@ function blog_category_initial(?string $name): string {
         $pUrl = path('blog.php') . '?p=' . $i;
         if ($categorySlug) $pUrl .= '&category=' . rawurlencode($categorySlug);
         if ($tagSlug) $pUrl .= '&tag=' . rawurlencode($tagSlug);
+        if ($searchQuery !== '') $pUrl .= '&q=' . rawurlencode($searchQuery);
     ?><a href="<?= h($pUrl) ?>" class="<?= $i === $pageNum ? 'current' : '' ?>"><?= $i ?></a><?php endfor; ?>
     <?php if ($pageNum < $totalPages):
         $nextUrl = path('blog.php') . '?p=' . ($pageNum + 1);
         if ($categorySlug) $nextUrl .= '&category=' . rawurlencode($categorySlug);
         if ($tagSlug) $nextUrl .= '&tag=' . rawurlencode($tagSlug);
+        if ($searchQuery !== '') $nextUrl .= '&q=' . rawurlencode($searchQuery);
     ?>
     <a href="<?= h($nextUrl) ?>"><?= function_exists('__') ? h(__('blog_next')) : 'Next' ?> →</a>
     <?php endif; ?>
@@ -273,10 +308,13 @@ function blog_category_initial(?string $name): string {
 
 <div class="blog-cta">
   <div>
-    <h3>Ready to grow your social media?</h3>
-    <p>Join <?= h($siteName) ?> — add funds with crypto and start ordering in minutes.</p>
+    <h3><?= h(__('blog_cta_title')) ?></h3>
+    <p><?= h(sprintf(__('blog_cta_desc'), $siteName)) ?></p>
+    <?php if ($welcomeCredit > 0): ?>
+    <p class="blog-cta-bonus">🎁 <?= h(sprintf(__('blog_cta_bonus'), number_format($welcomeCredit, 2))) ?></p>
+    <?php endif; ?>
   </div>
-  <a href="<?= h(path('login.php')) ?>?mode=register" class="blog-cta-btn"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Create free account' ?></a>
+  <a href="<?= h(register_path()) ?>" class="blog-cta-btn"><?= h(__('blog_cta_btn')) ?></a>
 </div>
 
 </main>
