@@ -24,7 +24,24 @@ RSYNC_EXCLUDES=(
 
 rsync_to_web() {
   local src="$1"
-  rsync -av --delete "${RSYNC_EXCLUDES[@]}" --chmod=D755,F644 "$src" "$WEB_DIR/"
+  local child_excludes=()
+
+  # Protect child panel document roots from rsync --delete (they live under public_html/DOMAIN/)
+  if [ -d "$WEB_DIR" ]; then
+    for d in "$WEB_DIR"/*/; do
+      [ -d "$d" ] || continue
+      base=$(basename "$d")
+      case "$base" in
+        admin|api|app|assets|lang|layouts|migrations|partials|scripts|storage|uploads|docs|tmp) continue ;;
+      esac
+      if [ -f "${d}config.php" ]; then
+        child_excludes+=(--exclude="${base}/")
+        echo "Protecting child panel: $base"
+      fi
+    done
+  fi
+
+  rsync -av --delete "${RSYNC_EXCLUDES[@]}" "${child_excludes[@]}" --chmod=D755,F644 "$src" "$WEB_DIR/"
 }
 
 git_updated=0

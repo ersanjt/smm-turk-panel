@@ -89,7 +89,8 @@ if (php_sapi_name() !== 'cli') {
     $maintenance = $db->getSetting('maintenance_mode');
     if ($maintenance === '1' && !$auth->isAdmin()) {
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn()) || preg_match('#/login(\.php)?(?:\?|$)#', $uri) || preg_match('#/login-2fa(?:\.php)?(?:\?|$)#', $uri);
+        $allow = (strpos($uri, '/admin/') !== false && $auth->isLoggedIn())
+            || preg_match('#/(login|login-2fa|forgot-password|reset-password|verify-email)(\.php)?(?:\?|$|/)#', $uri);
         if (!$allow) {
             header('HTTP/1.1 503 Service Unavailable');
             header('Retry-After: 300');

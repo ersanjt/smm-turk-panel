@@ -141,10 +141,23 @@ if (is_file($legacyImpl)) {
     $repaired[] = '(deleted) app/ChildPanelRemoteSettingsImpl.php';
 }
 
+$deployScriptUpdated = false;
+$deployScriptPath = dirname(__DIR__) . '/deploy-smm.sh';
+$deployScriptSrc = $repoBase . 'scripts/deploy-cpanel.sh';
+$deployScriptBody = @file_get_contents($deployScriptSrc, false, $ctx);
+if ($deployScriptBody !== false && $deployScriptBody !== '') {
+    if (@file_put_contents($deployScriptPath, $deployScriptBody) !== false) {
+        @chmod($deployScriptPath, 0755);
+        $deployScriptUpdated = true;
+        $repaired[] = '(updated) ../deploy-smm.sh';
+    }
+}
+
 echo json_encode([
     'ok' => $errors === [] && $repaired !== [],
     'repaired' => $repaired,
     'errors' => $errors,
+    'deploy_script_updated' => $deployScriptUpdated,
     'stub_line52' => is_readable(__DIR__ . '/app/ChildPanelRemoteSettings.php')
         ? trim((string) (file(__DIR__ . '/app/ChildPanelRemoteSettings.php')[51] ?? 'n/a'))
         : null,

@@ -222,7 +222,7 @@ class ChildPanelDeployer
         if ($documentRoot === '' || !is_dir($documentRoot)) {
             return ['ok' => false, 'document_root' => $documentRoot, 'missing' => ['directory']];
         }
-        $required = ['home.php', 'index.php', 'config.php', '.htaccess'];
+        $required = ['home.php', 'index.php', 'config.php', '.htaccess', 'reset-password.php', 'forgot-password.php'];
         $missing = [];
         foreach ($required as $file) {
             if (!is_file($documentRoot . '/' . $file)) {
