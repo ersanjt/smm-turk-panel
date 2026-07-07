@@ -32,20 +32,6 @@ if ($loggedIn) {
     $seoTitle = __('earn_meta_title');
     $seoDescription = __('earn_meta_desc');
     $metaKeywords = __('earn_keywords');
-    $jsonLdGraph = [
-        Seo::organizationSchema($seoDescription, $lang),
-        Seo::websiteSchema($seoDescription),
-        Seo::webPageSchema(__('earn_hero_h1'), $seoDescription, Seo::pageCanonical($baseCanonical, $lang), $lang),
-        Seo::breadcrumbSchema([
-            ['name' => __('blog_nav_home'), 'url' => Seo::absoluteUrl(home_path())],
-            ['name' => __('nav_earn'), 'url' => $baseCanonical],
-        ], $lang),
-        Seo::faqSchema([
-            ['name' => __('earn_child_title'), 'text' => __('earn_child_desc')],
-            ['name' => __('earn_aff_title'), 'text' => sprintf(__('earn_aff_desc'), $refPct)],
-            ['name' => __('earn_api_title'), 'text' => __('earn_api_desc')],
-        ], $lang),
-    ];
     $extraCssHrefs = [asset_url('assets/css/earn.css')];
 }
 
@@ -103,7 +89,33 @@ $incomePaths = [
     ],
 ];
 
+$comparePaths = [
+    ['id' => 'child-panel', 'sub' => __('earn_child_sub'), 'effort' => __('earn_compare_child_effort'), 'income' => __('earn_compare_child_income'), 'best' => __('earn_compare_child_best')],
+    ['id' => 'affiliate', 'sub' => __('earn_aff_sub'), 'effort' => __('earn_compare_aff_effort'), 'income' => __('earn_compare_aff_income'), 'best' => __('earn_compare_aff_best')],
+    ['id' => 'api', 'sub' => __('earn_api_sub'), 'effort' => __('earn_compare_api_effort'), 'income' => __('earn_compare_api_income'), 'best' => __('earn_compare_api_best')],
+];
+
+$faqs = [
+    ['q' => __('earn_child_title'), 'a' => __('earn_child_desc')],
+    ['q' => __('earn_aff_title'), 'a' => sprintf(__('earn_aff_desc'), $refPct)],
+    ['q' => __('earn_api_title'), 'a' => __('earn_api_desc')],
+    ['q' => __('earn_faq_q_earn'), 'a' => __('earn_faq_a_earn')],
+    ['q' => __('earn_faq_q_skills'), 'a' => __('earn_faq_a_skills')],
+    ['q' => __('earn_faq_q_pay'), 'a' => __('earn_faq_a_pay')],
+    ['q' => __('earn_faq_q_combine'), 'a' => __('earn_faq_a_combine')],
+];
+
 if (!$loggedIn):
+    $jsonLdGraph = [
+        Seo::organizationSchema($seoDescription, $lang),
+        Seo::websiteSchema($seoDescription),
+        Seo::webPageSchema(__('earn_hero_h1'), $seoDescription, Seo::pageCanonical($baseCanonical, $lang), $lang),
+        Seo::breadcrumbSchema([
+            ['name' => __('blog_nav_home'), 'url' => Seo::absoluteUrl(home_path())],
+            ['name' => __('nav_earn'), 'url' => $baseCanonical],
+        ], $lang),
+        Seo::faqSchema(array_map(static fn($f) => ['name' => $f['q'], 'text' => $f['a']], $faqs), $lang),
+    ];
     $promo = $growth->promoBar();
 ?>
 <!DOCTYPE html>
@@ -176,6 +188,33 @@ if (!$loggedIn):
     </div>
   </section>
 
+  <section class="earn-section earn-compare-section" aria-labelledby="earn-compare-heading">
+    <p class="section-label" id="earn-compare-heading"><?= h(__('earn_compare_label')) ?></p>
+    <h2 class="earn-section-title"><?= h(__('earn_compare_title')) ?></h2>
+    <div class="earn-compare-wrap">
+      <table class="earn-compare">
+        <thead>
+          <tr>
+            <th><?= h(__('earn_compare_c_path')) ?></th>
+            <th><?= h(__('earn_compare_c_effort')) ?></th>
+            <th><?= h(__('earn_compare_c_income')) ?></th>
+            <th><?= h(__('earn_compare_c_best')) ?></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($comparePaths as $c): ?>
+          <tr>
+            <th scope="row"><a href="#<?= h($c['id']) ?>"><?= h($c['sub']) ?></a></th>
+            <td data-label="<?= h(__('earn_compare_c_effort')) ?>"><?= h($c['effort']) ?></td>
+            <td data-label="<?= h(__('earn_compare_c_income')) ?>"><?= h($c['income']) ?></td>
+            <td data-label="<?= h(__('earn_compare_c_best')) ?>"><?= h($c['best']) ?></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <section class="earn-flow" aria-labelledby="earn-flow-heading">
     <p class="section-label"><?= h(__('earn_flow_label')) ?></p>
     <h2 id="earn-flow-heading" class="earn-section-title"><?= h(__('earn_flow_title')) ?></h2>
@@ -197,6 +236,48 @@ if (!$loggedIn):
         <p><?= __('earn_flow_s4') ?></p>
       </div>
     </div>
+  </section>
+
+  <section class="earn-section earn-calc-section" aria-labelledby="earn-calc-heading">
+    <p class="section-label" id="earn-calc-heading"><?= h(__('earn_calc_label')) ?></p>
+    <h2 class="earn-section-title"><?= h(__('earn_calc_title')) ?></h2>
+    <p class="earn-calc-desc"><?= h(__('earn_calc_desc')) ?></p>
+    <div class="earn-calc" id="earnCalc">
+      <div class="earn-calc-controls">
+        <div class="earn-calc-field">
+          <label for="calcCustomers"><?= h(__('earn_calc_customers')) ?> <span class="earn-calc-out" data-out="customers">25</span></label>
+          <input type="range" id="calcCustomers" min="1" max="500" step="1" value="25">
+        </div>
+        <div class="earn-calc-field">
+          <label for="calcOrders"><?= h(__('earn_calc_orders')) ?> <span class="earn-calc-out" data-out="orders">4</span></label>
+          <input type="range" id="calcOrders" min="1" max="50" step="1" value="4">
+        </div>
+        <div class="earn-calc-field">
+          <label for="calcSpend"><?= h(__('earn_calc_spend')) ?> <span class="earn-calc-out" data-out="spend">5</span></label>
+          <input type="range" id="calcSpend" min="1" max="100" step="1" value="5">
+        </div>
+        <div class="earn-calc-field">
+          <label for="calcMarkup"><?= h(__('earn_calc_markup')) ?> <span class="earn-calc-out" data-out="markup">30</span></label>
+          <input type="range" id="calcMarkup" min="5" max="200" step="5" value="30">
+        </div>
+      </div>
+      <div class="earn-calc-result">
+        <div class="earn-calc-rows">
+          <div class="earn-calc-row"><span><?= h(__('earn_calc_revenue')) ?></span><strong data-out="revenue">$0</strong></div>
+          <div class="earn-calc-row"><span><?= h(__('earn_calc_cost')) ?></span><strong data-out="cost">$0</strong></div>
+        </div>
+        <div class="earn-calc-profit">
+          <span><?= h(__('earn_calc_profit')) ?></span>
+          <strong data-out="profit">$0</strong>
+        </div>
+        <?php if (!$loggedIn): ?>
+        <a href="<?= h(register_path()) ?>" class="earn-card-cta earn-calc-cta"><?= h(__('earn_child_cta_guest')) ?></a>
+        <?php else: ?>
+        <a href="<?= h(path('child-panel.php')) ?>" class="earn-card-cta earn-calc-cta"><?= h(__('earn_child_cta_user')) ?></a>
+        <?php endif; ?>
+      </div>
+    </div>
+    <p class="earn-calc-note"><?= h(__('earn_calc_note')) ?></p>
   </section>
 
   <section class="earn-section" aria-labelledby="earn-stats-heading">
@@ -228,6 +309,22 @@ if (!$loggedIn):
     </div>
   </section>
 
+  <section class="earn-section earn-faq-section" aria-labelledby="earn-faq-heading">
+    <p class="section-label" id="earn-faq-heading"><?= h(__('earn_faq_label')) ?></p>
+    <h2 class="earn-section-title"><?= h(__('earn_faq_title')) ?></h2>
+    <div class="earn-faq">
+      <?php foreach ($faqs as $i => $f): ?>
+      <div class="earn-faq-item<?= $i === 0 ? ' open' : '' ?>">
+        <button type="button" class="earn-faq-q" aria-expanded="<?= $i === 0 ? 'true' : 'false' ?>">
+          <span><?= h($f['q']) ?></span>
+          <span class="earn-faq-ico" aria-hidden="true">+</span>
+        </button>
+        <div class="earn-faq-a"><p><?= h($f['a']) ?></p></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+
   <?php if (!$loggedIn): ?>
   <section class="earn-section earn-section-cta">
     <div class="cta-block">
@@ -238,6 +335,59 @@ if (!$loggedIn):
   </section>
   <?php endif; ?>
 </div>
+
+<script>
+(function () {
+  var calc = document.getElementById('earnCalc');
+  if (calc) {
+    var ids = { customers: 'calcCustomers', orders: 'calcOrders', spend: 'calcSpend', markup: 'calcMarkup' };
+    var inputs = {};
+    Object.keys(ids).forEach(function (k) { inputs[k] = document.getElementById(ids[k]); });
+    var money = function (n) {
+      return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    };
+    var setOut = function (key, val) {
+      calc.querySelectorAll('[data-out="' + key + '"]').forEach(function (el) { el.textContent = val; });
+    };
+    var render = function () {
+      var customers = +inputs.customers.value;
+      var orders = +inputs.orders.value;
+      var spend = +inputs.spend.value;
+      var markup = +inputs.markup.value;
+      setOut('customers', customers);
+      setOut('orders', orders);
+      setOut('spend', '$' + spend);
+      setOut('markup', markup + '%');
+      var revenue = customers * orders * spend;
+      var cost = revenue / (1 + markup / 100);
+      var profit = revenue - cost;
+      setOut('revenue', money(revenue));
+      setOut('cost', money(cost));
+      setOut('profit', money(profit));
+    };
+    Object.keys(inputs).forEach(function (k) {
+      if (inputs[k]) inputs[k].addEventListener('input', render);
+    });
+    render();
+  }
+
+  document.querySelectorAll('.earn-faq-q').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var item = btn.closest('.earn-faq-item');
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.earn-faq-item').forEach(function (i) {
+        i.classList.remove('open');
+        var b = i.querySelector('.earn-faq-q');
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+})();
+</script>
 
 <?php if ($loggedIn): ?>
 <script>
