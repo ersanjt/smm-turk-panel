@@ -67,6 +67,7 @@ $files = [
     'admin/admin-child-panels.php',
     'admin/admin-coupons.php',
     'child-panel.php',
+    'partials/child-panel-manage.php',
     'api-page.php',
     'repair-panel.php',
     'home.php',

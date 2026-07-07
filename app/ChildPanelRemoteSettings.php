@@ -307,6 +307,96 @@ class ChildPanelRemoteSettings
         return ['success' => true, 'path' => $relativePath];
     }
 
+    /**
+     * Live business stats read directly from the child panel database.
+     *
+     * @return array{
+     *   available: bool,
+     *   customers: int,
+     *   customers_active: int,
+     *   orders_total: int,
+     *   orders_completed: int,
+     *   orders_pending: int,
+     *   revenue: float,
+     *   revenue_30d: float,
+     *   deposits_total: float,
+     *   deposits_pending: int,
+     *   customer_balance: float,
+     *   orders_7d: int,
+     *   recent_orders: list<array<string, mixed>>
+     * }
+     */
+    public function panelStats(string $documentRoot): array
+    {
+        $empty = [
+            'available' => false,
+            'customers' => 0, 'customers_active' => 0,
+            'orders_total' => 0, 'orders_completed' => 0, 'orders_pending' => 0,
+            'revenue' => 0.0, 'revenue_30d' => 0.0,
+            'deposits_total' => 0.0, 'deposits_pending' => 0,
+            'customer_balance' => 0.0, 'orders_7d' => 0,
+            'recent_orders' => [],
+        ];
+
+        $pdo = $this->deployer->pdoFromDocumentRoot($documentRoot);
+        if ($pdo === null) {
+            return $empty;
+        }
+
+        try {
+            $out = $empty;
+            $out['available'] = true;
+
+            $row = $pdo->query(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(status = 'active') AS active,
+                    COALESCE(SUM(balance), 0) AS balance
+                 FROM users WHERE role = 'user'"
+            )->fetch(PDO::FETCH_ASSOC) ?: [];
+            $out['customers'] = (int) ($row['total'] ?? 0);
+            $out['customers_active'] = (int) ($row['active'] ?? 0);
+            $out['customer_balance'] = (float) ($row['balance'] ?? 0);
+
+            $row = $pdo->query(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(status = 'Completed') AS completed,
+                    SUM(status IN ('Pending','Processing','In progress')) AS pending,
+                    COALESCE(SUM(charge), 0) AS revenue,
+                    COALESCE(SUM(CASE WHEN created_at >= (NOW() - INTERVAL 30 DAY) THEN charge ELSE 0 END), 0) AS revenue_30d,
+                    SUM(created_at >= (NOW() - INTERVAL 7 DAY)) AS orders_7d
+                 FROM orders"
+            )->fetch(PDO::FETCH_ASSOC) ?: [];
+            $out['orders_total'] = (int) ($row['total'] ?? 0);
+            $out['orders_completed'] = (int) ($row['completed'] ?? 0);
+            $out['orders_pending'] = (int) ($row['pending'] ?? 0);
+            $out['revenue'] = (float) ($row['revenue'] ?? 0);
+            $out['revenue_30d'] = (float) ($row['revenue_30d'] ?? 0);
+            $out['orders_7d'] = (int) ($row['orders_7d'] ?? 0);
+
+            $row = $pdo->query(
+                "SELECT
+                    COALESCE(SUM(CASE WHEN type = 'deposit' AND status = 'completed' THEN amount ELSE 0 END), 0) AS deposits_total,
+                    SUM(type = 'deposit' AND status = 'pending') AS deposits_pending
+                 FROM transactions"
+            )->fetch(PDO::FETCH_ASSOC) ?: [];
+            $out['deposits_total'] = (float) ($row['deposits_total'] ?? 0);
+            $out['deposits_pending'] = (int) ($row['deposits_pending'] ?? 0);
+
+            $stmt = $pdo->query(
+                "SELECT o.service_name, o.charge, o.status, o.created_at, u.username
+                 FROM orders o LEFT JOIN users u ON u.id = o.user_id
+                 ORDER BY o.id DESC LIMIT 6"
+            );
+            $out['recent_orders'] = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+
+            return $out;
+        } catch (Throwable $e) {
+            return $empty;
+        }
+    }
+
     public function panelWebhookUrl(string $panelUrl, string $gateway): string
     {
         return rtrim($panelUrl, '/') . '/payment-webhook.php?gateway=' . rawurlencode($gateway);

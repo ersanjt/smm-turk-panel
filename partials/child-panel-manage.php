@@ -20,6 +20,7 @@ $settings = $documentRoot !== '' ? $cprs->readSettings($documentRoot) : [];
 $google = $documentRoot !== '' ? $cprs->readGoogleOAuth($documentRoot) : ['client_id' => '', 'client_secret' => '', 'configured' => false];
 $panelCustomers = $endUsers->listForOwner((int) ($user['id'] ?? 0), $panelId, 50);
 $customerCount = $endUsers->countForOwner((int) ($user['id'] ?? 0), $panelId);
+$stats = $documentRoot !== '' ? $cprs->panelStats($documentRoot) : ['available' => false];
 
 function cp_s(array $settings, string $key): string {
     return htmlspecialchars($settings[$key] ?? '', ENT_QUOTES);
@@ -34,6 +35,7 @@ function cp_s(array $settings, string $key): string {
   <div class="cp-manage-tabs" role="tablist">
     <?php
     $tabs = [
+        'overview' => 'Overview',
         'branding' => 'Branding',
         'general'  => 'General',
         'wallets'  => 'Wallets',
@@ -45,12 +47,85 @@ function cp_s(array $settings, string $key): string {
     ];
     foreach ($tabs as $tid => $label):
     ?>
-    <button type="button" class="cp-manage-tab<?= $tid === 'branding' ? ' active' : '' ?>" data-cp-tab="<?= h($tid) ?>" data-cp-panel="<?= $panelId ?>"><?= h($label) ?></button>
+    <button type="button" class="cp-manage-tab<?= $tid === 'overview' ? ' active' : '' ?>" data-cp-tab="<?= h($tid) ?>" data-cp-panel="<?= $panelId ?>"><?= h($label) ?></button>
     <?php endforeach; ?>
   </div>
 
+  <!-- Overview -->
+  <div class="cp-manage-pane active" data-cp-pane="overview" data-cp-panel="<?= $panelId ?>">
+    <?php if (empty($stats['available'])): ?>
+    <p class="cp-status-hint">Live stats will appear once your panel database is reachable.</p>
+    <?php else:
+      $ordersTotal = max(1, (int) $stats['orders_total']);
+      $completionRate = round(((int) $stats['orders_completed'] / $ordersTotal) * 100);
+    ?>
+    <div class="cp-stats-grid">
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Customers</div>
+        <div class="cp-mini-value"><?= number_format((int) $stats['customers']) ?></div>
+        <div class="cp-mini-sub"><?= number_format((int) $stats['customers_active']) ?> active</div>
+      </div>
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Revenue (all time)</div>
+        <div class="cp-mini-value">$<?= number_format((float) $stats['revenue'], 2) ?></div>
+        <div class="cp-mini-sub">$<?= number_format((float) $stats['revenue_30d'], 2) ?> last 30d</div>
+      </div>
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Orders</div>
+        <div class="cp-mini-value"><?= number_format((int) $stats['orders_total']) ?></div>
+        <div class="cp-mini-sub"><?= number_format((int) $stats['orders_7d']) ?> in last 7d</div>
+      </div>
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Completed</div>
+        <div class="cp-mini-value"><?= $completionRate ?>%</div>
+        <div class="cp-mini-sub"><?= number_format((int) $stats['orders_pending']) ?> pending</div>
+      </div>
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Deposits received</div>
+        <div class="cp-mini-value">$<?= number_format((float) $stats['deposits_total'], 2) ?></div>
+        <div class="cp-mini-sub"><?= number_format((int) $stats['deposits_pending']) ?> pending</div>
+      </div>
+      <div class="cp-mini-stat">
+        <div class="cp-mini-label">Customer balances</div>
+        <div class="cp-mini-value">$<?= number_format((float) $stats['customer_balance'], 2) ?></div>
+        <div class="cp-mini-sub">held on your panel</div>
+      </div>
+    </div>
+
+    <?php if (!empty($stats['recent_orders'])): ?>
+    <div style="margin-top:16px;">
+      <strong style="font-size:12px;">Recent orders</strong>
+      <div class="table-wrap" style="margin-top:8px;max-height:260px;">
+        <table class="table table-mobile-cards" style="font-size:12px;">
+          <thead><tr><th>Customer</th><th>Service</th><th>Charge</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+          <?php foreach ($stats['recent_orders'] as $o):
+              $ost = (string) ($o['status'] ?? '');
+              $obadge = match (true) {
+                  $ost === 'Completed' => 'badge-green',
+                  in_array($ost, ['Cancelled', 'Refunded'], true) => 'badge-red',
+                  default => 'badge-orange',
+              };
+          ?>
+          <tr>
+            <td data-label="Customer"><?= h((string) ($o['username'] ?? '—')) ?></td>
+            <td data-label="Service"><?= h(mb_substr((string) ($o['service_name'] ?? ''), 0, 40)) ?></td>
+            <td data-label="Charge">$<?= number_format((float) ($o['charge'] ?? 0), 2) ?></td>
+            <td data-label="Status"><span class="badge <?= $obadge ?>" style="font-size:10px;"><?= h($ost) ?></span></td>
+            <td data-label="Date"><?= h(date('Y-m-d', strtotime((string) ($o['created_at'] ?? 'now')))) ?></td>
+          </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <?php endif; ?>
+    <p class="cp-status-hint" style="margin-top:12px;">Revenue is what your customers paid you. Your cost is deducted from your SMM Turk balance per order.</p>
+    <?php endif; ?>
+  </div>
+
   <!-- Branding -->
-  <div class="cp-manage-pane active" data-cp-pane="branding" data-cp-panel="<?= $panelId ?>">
+  <div class="cp-manage-pane" data-cp-pane="branding" data-cp-panel="<?= $panelId ?>">
     <form method="POST" enctype="multipart/form-data" class="cp-manage-form">
       <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
       <input type="hidden" name="panel_id" value="<?= $panelId ?>">

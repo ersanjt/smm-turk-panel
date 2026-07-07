@@ -317,6 +317,12 @@ body.theme-dark .cp-manage, body.panel-follows.theme-dark .cp-manage { backgroun
 .cp-brand-preview img { max-width:100%; max-height:64px; display:block; }
 .cp-brand-preview-sm img { max-height:32px; }
 .cp-open-panel { margin-top:10px; }
+.cp-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.cp-mini-stat { border:1px solid var(--border); border-radius:10px; padding:12px 14px; background:var(--bg); }
+.cp-mini-label { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-bottom:6px; }
+.cp-mini-value { font-size:20px; font-weight:700; color:var(--text); line-height:1.1; }
+.cp-mini-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+@media (max-width: 640px) { .cp-stats-grid { grid-template-columns:repeat(2,1fr); } }
 @media (max-width: 768px) {
   .cp-hero { flex-direction: column; gap: 10px; }
   .cp-stat { min-width: 0; width: 100%; }
