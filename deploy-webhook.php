@@ -85,6 +85,7 @@ function deploy_repair_files(): array
         'reset-password.php',
         'verify-email.php',
         'blog.php',
+        'services.php',
         'pricing.php',
         'earn.php',
         'robots.php',

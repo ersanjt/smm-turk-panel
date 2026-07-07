@@ -432,16 +432,21 @@ require_once __DIR__ . '/layouts/header.php';
 
 .svc-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.svc-card-header-right {
+.svc-card-header-main {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.svc-card-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 .svc-card-platform-icon {
@@ -466,54 +471,71 @@ require_once __DIR__ . '/layouts/header.php';
   line-height: 1;
 }
 .svc-card-id-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(227,10,23,.12), rgba(227,10,23,.06));
-  border: 1px solid rgba(227,10,23,.2);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 5px 10px;
+  min-height: 28px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(227,10,23,.12), rgba(227,10,23,.06));
+  border: 1px solid rgba(227,10,23,.2);
   font-family: 'Syne', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--primary);
   flex-shrink: 0;
+  white-space: nowrap;
 }
-.svc-card-cat {
+.svc-card-tier {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 700;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted);
-  flex-shrink: 0;
+  line-height: 1.4;
+  white-space: nowrap;
 }
-.svc-card-cat .cat-icon { font-size: 13px; }
+.svc-card-tier-one {
+  background: rgba(59,130,246,.12);
+  border: 1px solid rgba(59,130,246,.28);
+  color: #2563eb;
+}
+.svc-card-tier-pro {
+  background: rgba(234,179,8,.14);
+  border: 1px solid rgba(234,179,8,.32);
+  color: #b45309;
+}
+.svc-card-cat {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .svc-card-refill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
   background: rgba(34,197,94,.12);
   border: 1px solid rgba(34,197,94,.3);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
   color: #16a34a;
   flex-shrink: 0;
 }
 
 .svc-card-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text);
   line-height: 1.45;
@@ -572,18 +594,26 @@ require_once __DIR__ . '/layouts/header.php';
   align-items: center;
   gap: 8px;
 }
+.svc-card-header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .svc-card-new {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 7px;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: #fff;
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.4;
+  white-space: nowrap;
   box-shadow: 0 2px 10px rgba(227,10,23,.35);
 }
 
@@ -598,7 +628,7 @@ require_once __DIR__ . '/layouts/header.php';
   gap: 16px;
   padding: 16px 20px;
 }
-.svc-list-view .svc-card-header { flex: 0 0 auto; }
+.svc-list-view .svc-card-header { flex: 0 0 auto; max-width: 300px; }
 .svc-list-view .svc-card-name {
   flex: 1 1 280px;
   min-height: 0;
@@ -678,8 +708,7 @@ require_once __DIR__ . '/layouts/header.php';
   .svc-platform-btn { flex-shrink: 0; width: 44px; height: 44px; }
   .svc-cat-pill { padding: 10px 14px; font-size: 12px; }
   .svc-card { padding: 16px; }
-  .svc-card-header-right { justify-content: flex-start; }
-  .svc-card-name { font-size: 13px; }
+  .svc-card-name { font-size: 14px; }
   .svc-card-rate { font-size: 16px; }
   .svc-results-bar { flex-direction: column; align-items: flex-start; }
   .svc-view-toggle button { min-height: 44px; padding: 10px 16px; }
@@ -711,9 +740,17 @@ body.theme-dark .svc-card-platform-icon {
   border-color: rgba(255,255,255,.1);
 }
 body.theme-dark .svc-card-cat {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.1);
   color: var(--text-muted);
+}
+body.theme-dark .svc-card-tier-one {
+  background: rgba(59,130,246,.18);
+  border-color: rgba(59,130,246,.4);
+  color: #60a5fa;
+}
+body.theme-dark .svc-card-tier-pro {
+  background: rgba(234,179,8,.18);
+  border-color: rgba(234,179,8,.4);
+  color: #fbbf24;
 }
 body.theme-dark .svc-card-id-badge {
   background: rgba(227,10,23,.18);
@@ -864,15 +901,19 @@ echo ProviderRegistry::serviceTierStrip('services.php', $tier, $search, $tierExt
     $cardTier = ProviderRegistry::tierFromProvider($s['provider'] ?? ProviderRegistry::PRIMARY);
     $cardTierLabel = $cardTier === 'pro' ? ProviderRegistry::BRAND_PRO : ProviderRegistry::BRAND_ONE;
   ?>
+  <?php $catFull = ProviderRegistry::displayCategoryName($s['category'], $tier); ?>
   <article class="svc-card" data-reveal>
-    <?php if ($isNew): ?><span class="svc-card-new">New</span><?php endif; ?>
-    <span class="svc-card-tier svc-card-tier-<?= h($cardTier) ?>"><?= h($cardTierLabel) ?></span>
     <div class="svc-card-header">
-      <span class="svc-card-platform-icon" aria-hidden="true"><?= platformSvgBrand($cardPlatformKey, 26) ?></span>
-      <div class="svc-card-header-right">
+      <div class="svc-card-header-main">
+        <span class="svc-card-platform-icon" aria-hidden="true"><?= platformSvgBrand($cardPlatformKey, 26) ?></span>
+        <div class="svc-card-header-text">
+          <span class="svc-card-tier svc-card-tier-<?= h($cardTier) ?>"><?= h($cardTierLabel) ?></span>
+          <span class="svc-card-cat" title="<?= h($catFull) ?>"><?= h($catFull) ?></span>
+        </div>
+      </div>
+      <div class="svc-card-header-side">
+        <?php if ($isNew): ?><span class="svc-card-new">New</span><?php endif; ?>
         <span class="svc-card-id-badge">#<?= $s['service_id'] ?></span>
-        <span class="svc-card-cat"><span class="cat-icon"><?= h(ProviderRegistry::displayCategoryName($s['category'], $tier)) ?></span></span>
-        <?php if (!empty($s['refill'])): ?><span class="svc-card-refill">Refill</span><?php endif; ?>
       </div>
     </div>
     <h2 class="svc-card-name"><?= h(mb_substr($s['name'], 0, 200)) ?></h2>
@@ -881,6 +922,7 @@ echo ProviderRegistry::serviceTierStrip('services.php', $tier, $search, $tierExt
       <div class="svc-card-minmax">
         <span class="min">Min <?= number_format($s['min']) ?></span>
         <span class="max">Max <?= number_format($s['max']) ?></span>
+        <?php if (!empty($s['refill'])): ?><span class="svc-card-refill">Refill</span><?php endif; ?>
       </div>
     </div>
     <div class="svc-card-cta">
