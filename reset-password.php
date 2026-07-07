@@ -69,7 +69,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <div class="auth-box">
   <div class="auth-logo">
     <img src="<?= h(logo_url()) ?>" alt="" width="48" height="48">
-    <span class="logo">SMM <span>TURK</span></span>
+    <span class="logo"><?= site_name_logo_html() ?></span>
   </div>
   <div class="tagline">Set your new password</div>
   <?php if ($success): ?>

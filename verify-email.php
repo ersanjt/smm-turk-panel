@@ -119,7 +119,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
 <div class="box">
   <div class="box-logo">
     <img src="<?= h(logo_url()) ?>" alt="" width="48" height="48">
-    <span class="logo">SMM <span>TURK</span></span>
+    <span class="logo"><?= site_name_logo_html() ?></span>
   </div>
   <div class="msg <?= $success ? 'ok' : 'err' ?>"><?= htmlspecialchars($message) ?></div>
   <?php if ($showResend): ?>

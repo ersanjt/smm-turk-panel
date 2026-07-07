@@ -196,7 +196,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
   <a href="<?= h(home_path()) ?>" class="auth-back">← Back to Home</a>
   <div class="auth-logo">
     <img src="<?= h(logo_url()) ?>" alt="" width="52" height="52">
-    <span class="logo">SMM <span>TURK</span></span>
+    <span class="logo"><?= site_name_logo_html() ?></span>
   </div>
   <div class="tagline">Social Media Marketing Panel</div>
 

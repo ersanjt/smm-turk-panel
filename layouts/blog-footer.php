@@ -1,7 +1,7 @@
 <footer class="blog-footer" role="contentinfo">
     <div class="blog-footer-inner">
         <div>
-            <div class="blog-footer-brand">SMM <span>TURK</span></div>
+            <div class="blog-footer-brand"><?= site_name_logo_html() ?></div>
             <p><?= h($siteName ?? 'SMM Turk') ?> — cheapest SMM panel for Instagram, YouTube, TikTok growth. Crypto deposits, reseller API, 24/7 support.</p>
         </div>
         <div>

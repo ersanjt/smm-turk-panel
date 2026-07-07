@@ -107,7 +107,7 @@ foreach ($jsonLdExtra as $block) {
     <div class="blog-nav-inner">
         <a href="<?= h(home_path()) ?>" class="blog-nav-logo">
             <img src="<?= h(logo_url()) ?>" alt="<?= h($siteName) ?>" width="40" height="40">
-            SMM <span>TURK</span>
+            <?= site_name_logo_html() ?>
         </a>
         <div class="blog-nav-links">
             <a href="<?= h(home_path()) ?>"<?= $blogNavActive === 'home' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>

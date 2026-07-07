@@ -64,7 +64,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135de
   <a href="<?= h(path('login.php')) ?>" style="display:block;text-align:center;margin-bottom:8px;font-size:12px;color:#6b4a50;">← Back to Login</a>
   <div class="auth-logo">
     <img src="<?= h(logo_url()) ?>" alt="" width="48" height="48">
-    <span class="logo">SMM <span>TURK</span></span>
+    <span class="logo"><?= site_name_logo_html() ?></span>
   </div>
   <div class="tagline">Reset your password</div>
   <?php if ($error): ?>

@@ -362,6 +362,40 @@ function is_child_panel(): bool {
     return defined('SMM_CHILD_PANEL') && SMM_CHILD_PANEL;
 }
 
+/** Split site name for two-tone logo (last word accented). */
+function site_name_logo_parts(): array {
+    $name = site_name();
+    $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    if ($words === []) {
+        return ['prefix' => '', 'accent' => 'SMM Turk'];
+    }
+    if (count($words) === 1) {
+        return ['prefix' => '', 'accent' => $words[0]];
+    }
+    $accent = array_pop($words);
+    return ['prefix' => implode(' ', $words), 'accent' => $accent];
+}
+
+/** Logo markup with last word in accent tag (sidebar, landing, auth pages). */
+function site_name_logo_html(string $accentTag = 'span'): string {
+    $parts = site_name_logo_parts();
+    $open = '<' . $accentTag . '>';
+    $close = '</' . $accentTag . '>';
+    if ($parts['prefix'] === '') {
+        return $open . h($parts['accent']) . $close;
+    }
+    return h($parts['prefix']) . ' ' . $open . h($parts['accent']) . $close;
+}
+
+/** Logo markup with last word bold (topbar). */
+function site_name_logo_bold_html(): string {
+    $parts = site_name_logo_parts();
+    if ($parts['prefix'] === '') {
+        return '<b>' . h($parts['accent']) . '</b>';
+    }
+    return h($parts['prefix']) . ' <b>' . h($parts['accent']) . '</b>';
+}
+
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */
 function og_image_url(?string $override = null): string {
     if ($override !== null && trim($override) !== '') {

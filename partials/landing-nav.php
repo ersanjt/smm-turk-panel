@@ -31,7 +31,7 @@ $ctaLabel = $registrationEnabled ? __('nav_sign_up') : __('nav_sign_in');
         <a href="<?= h(home_path()) ?>" class="nav-logo" aria-label="<?= h($siteName) ?> Home">
             <span class="nav-logo-icon"><img src="<?= h(logo_url()) ?>" alt="" width="44" height="44" fetchpriority="high"></span>
             <span class="nav-logo-copy">
-                <span class="nav-logo-text">SMM <span>TURK</span></span>
+                <span class="nav-logo-text"><?= site_name_logo_html() ?></span>
                 <span class="nav-logo-tag">SMM Panel</span>
             </span>
         </a>

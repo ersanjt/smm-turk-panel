@@ -84,7 +84,7 @@ $ogLocale = Seo::ogLocale($dashLang);
   <div class="sidebar-logo">
     <a href="<?= h(dashboard_path()) ?>">
       <span class="logo-icon"><img src="<?= h(logo_url()) ?>" alt="" width="36" height="36"></span>
-      <span class="logo-text">SMM <span>TURK</span></span>
+      <span class="logo-text"><?= site_name_logo_html() ?></span>
     </a>
   </div>
   <div class="sidebar-welcome">
@@ -208,7 +208,7 @@ $ogLocale = Seo::ogLocale($dashLang);
       <div class="mob-header-brand">
         <img src="<?= h(logo_url()) ?>" alt="" width="36" height="36">
         <div class="mob-header-brand-text">
-          <span class="mob-header-site">SMM TURK</span>
+          <span class="mob-header-site"><?= h($siteName) ?></span>
           <span class="mob-header-page"><?= h($pageTitle ?? 'Dashboard') ?></span>
         </div>
       </div>
@@ -246,7 +246,7 @@ $ogLocale = Seo::ogLocale($dashLang);
   <div class="topbar topbar-desktop">
     <div class="topbar-left">
       <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <a href="<?= h(dashboard_path()) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(logo_url()) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text">SMM <b>TURK</b></span></a>
+      <a href="<?= h(dashboard_path()) ?>" class="topbar-mob-logo" aria-label="<?= h($siteName) ?>"><img src="<?= h(logo_url()) ?>" alt="" width="32" height="32"><span class="topbar-mob-logo-text"><?= site_name_logo_bold_html() ?></span></a>
       <div class="topbar-stats" role="group" aria-label="Account summary">
         <a href="<?= h(path('add-funds.php')) ?>" class="topbar-stat topbar-stat-balance">
           <span class="topbar-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
