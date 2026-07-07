@@ -357,6 +357,11 @@ function site_name(): string {
     return $cached = (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 }
 
+/** True when running as a deployed reseller (child) panel. */
+function is_child_panel(): bool {
+    return defined('SMM_CHILD_PANEL') && SMM_CHILD_PANEL;
+}
+
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */
 function og_image_url(?string $override = null): string {
     if ($override !== null && trim($override) !== '') {

@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/_init.php';
+if (is_child_panel()) {
+    redirect(admin_path('index.php'));
+}
 $pageTitle = 'Child Panels';
 $db = Database::getInstance();
 $cpm = new ChildPanelManager();

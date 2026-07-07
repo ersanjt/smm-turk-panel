@@ -116,10 +116,12 @@ $ogLocale = Seo::ogLocale($dashLang);
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       New Order
     </a>
+    <?php if (!is_child_panel()): ?>
     <a class="nav-item <?= $currentPage === 'child-panel' ? 'active' : '' ?>" href="<?= h(path('child-panel.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       Child Panel
     </a>
+    <?php endif; ?>
     <a class="nav-item <?= $currentPage === 'mass-order' ? 'active' : '' ?>" href="<?= h(path('mass-order.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Mass Order
@@ -140,10 +142,12 @@ $ogLocale = Seo::ogLocale($dashLang);
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       FAQ
     </a>
+    <?php if (!is_child_panel()): ?>
     <a class="nav-item <?= $currentPage === 'api-page' ? 'active' : '' ?>" href="<?= h(path('api-page.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
       API
     </a>
+    <?php endif; ?>
     <a class="nav-item <?= $currentPage === 'tickets' || $currentPage === 'ticket' ? 'active' : '' ?>" href="<?= h(path('tickets.php')) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Tickets

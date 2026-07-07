@@ -18,7 +18,9 @@
             <div class="blog-footer-links">
                 <a href="<?= h(register_path()) ?>"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Sign Up' ?></a>
                 <a href="<?= h(login_next_path('add-funds.php')) ?>">Add Funds</a>
+                <?php if (!function_exists('is_child_panel') || !is_child_panel()): ?>
                 <a href="<?= h(login_next_path('api-page.php')) ?>">API</a>
+                <?php endif; ?>
                 <a href="<?= h(path('terms.php')) ?>"><?= function_exists('__') ? h(__('nav_terms')) : 'Terms' ?></a>
             </div>
         </div>

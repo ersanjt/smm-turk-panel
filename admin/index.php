@@ -81,7 +81,7 @@ if ($pendingDeposits > 0) {
 if ($openTickets > 0) {
     $dashAlerts[] = ['text' => $openTickets . ' open ticket(s)', 'url' => 'admin/admin-tickets.php', 'tone' => 'info'];
 }
-if ($pendingChildPanels > 0) {
+if ($pendingChildPanels > 0 && !is_child_panel()) {
     $dashAlerts[] = ['text' => $pendingChildPanels . ' child panel(s) pending', 'url' => 'admin/admin-child-panels.php', 'tone' => 'info'];
 }
 
@@ -92,12 +92,16 @@ $quickLinks = [
     ['url' => 'admin/admin-sync.php', 'label' => 'Sync Services', 'icon' => 'sync', 'style' => 'dark'],
     ['url' => 'admin/admin-tickets.php', 'label' => 'Tickets' . ($openTickets > 0 ? " ($openTickets)" : ''), 'icon' => 'tickets', 'style' => $openTickets > 0 ? 'urgent' : 'outline'],
     ['url' => 'admin/admin-deposits.php', 'label' => 'Deposits' . ($pendingDeposits > 0 ? " ($pendingDeposits)" : ''), 'icon' => 'deposit', 'style' => $pendingDeposits > 0 ? 'urgent' : 'outline'],
-    ['url' => 'admin/admin-coupons.php', 'label' => 'Coupons', 'icon' => 'clipboard', 'style' => 'outline'],
-    ['url' => 'admin/admin-child-panels.php', 'label' => 'Child Panels' . ($pendingChildPanels > 0 ? " ($pendingChildPanels)" : ''), 'icon' => 'server', 'style' => $pendingChildPanels > 0 ? 'urgent' : 'outline'],
     ['url' => 'admin/admin-settings.php', 'label' => 'Settings', 'icon' => 'settings', 'style' => 'outline'],
     ['url' => 'admin/admin-mail.php', 'label' => 'Test Email', 'icon' => 'message', 'style' => 'outline'],
     ['url' => 'admin/admin-blog.php', 'label' => 'Manage Blog' . ($blogArticles > 0 ? " ($blogArticles)" : ''), 'icon' => 'clipboard', 'style' => 'outline'],
 ];
+if (!is_child_panel()) {
+    array_splice($quickLinks, 6, 0, [
+        ['url' => 'admin/admin-coupons.php', 'label' => 'Coupons', 'icon' => 'clipboard', 'style' => 'outline'],
+        ['url' => 'admin/admin-child-panels.php', 'label' => 'Child Panels' . ($pendingChildPanels > 0 ? " ($pendingChildPanels)" : ''), 'icon' => 'server', 'style' => $pendingChildPanels > 0 ? 'urgent' : 'outline'],
+    ]);
+}
 
 $extraCssHref = asset_url('assets/css/admin-dashboard.css');
 require_once __DIR__ . '/../layouts/header.php';

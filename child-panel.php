@@ -2,6 +2,9 @@
 require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/ChildPanelRemoteSettings.php';
 $auth->requireLogin();
+if (is_child_panel()) {
+    redirect(dashboard_path());
+}
 $pageTitle = 'Child Panel';
 $db   = Database::getInstance();
 $user = $auth->getCurrentUser();

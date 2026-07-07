@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/_init.php';
+if (is_child_panel()) {
+    redirect(admin_path('index.php'));
+}
 $pageTitle = 'Coupons & Promos';
 $revenue = new RevenueEngine();
 $db = Database::getInstance();

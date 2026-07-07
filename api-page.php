@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/app/init.php';
 $auth->requireLogin();
+if (is_child_panel()) {
+    redirect(dashboard_path());
+}
 $pageTitle = 'API Documentation';
 $pageDescription = 'SMM Turk reseller API — place orders, check status, refill, cancel, and balance via JSON POST.';
 $user = $auth->getCurrentUser();
