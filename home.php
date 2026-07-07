@@ -18,7 +18,7 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $homePath = home_path();
 $baseCanonical = $siteUrl ? Seo::absoluteUrl($homePath) : $homePath;

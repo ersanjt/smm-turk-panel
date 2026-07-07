@@ -341,6 +341,21 @@ function favicon_url(): string {
     return logo_url();
 }
 
+/** Display site name — custom value from settings (branding) or SITE_NAME constant. */
+function site_name(): string {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    if (class_exists('Database')) {
+        $custom = trim((string) (Database::getInstance()->getSetting('site_name') ?? ''));
+        if ($custom !== '') {
+            return $cached = $custom;
+        }
+    }
+    return $cached = (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
+}
+
 /** Default Open Graph / Twitter image (1200x630 PNG recommended). */
 function og_image_url(?string $override = null): string {
     if ($override !== null && trim($override) !== '') {

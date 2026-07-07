@@ -6,7 +6,7 @@ require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
 
 $lang = Lang::initPublic();
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $helpPath = path('help.php');
 $canonicalUrl = $siteUrl !== '' ? Seo::absoluteUrl($helpPath) : $helpPath;

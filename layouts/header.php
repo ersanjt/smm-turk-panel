@@ -21,7 +21,7 @@ if ($user && !empty($user['id'])) {
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 $isAdminArea = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/admin/');
 $isAdminPanelActive = $isAdminArea && !in_array($currentPage, ['admin-blog', 'admin-blog-edit'], true);
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 $canonicalPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $canonicalPath = clean_page_path($canonicalPath);

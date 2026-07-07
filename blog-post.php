@@ -6,7 +6,7 @@ require_once __DIR__ . '/app/init.php';
 require_once __DIR__ . '/app/Lang.php';
 $lang = Lang::initPublic();
 $db = Database::getInstance();
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 $siteUrl  = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 
 $slug = isset($_GET['slug']) ? trim(preg_replace('/[^a-z0-9\-]/', '', (string)$_GET['slug'])) : '';

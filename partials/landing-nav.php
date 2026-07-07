@@ -11,7 +11,7 @@ if (!isset($lang)) {
     $lang = class_exists('Lang', false) ? Lang::current() : 'tr';
 }
 if (!isset($siteName)) {
-    $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+    $siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 }
 $navActive = $navActive ?? '';
 

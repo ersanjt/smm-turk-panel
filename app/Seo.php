@@ -11,6 +11,9 @@ class Seo
 
     public static function siteName(): string
     {
+        if (function_exists('site_name')) {
+            return site_name();
+        }
         return defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
     }
 

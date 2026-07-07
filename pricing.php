@@ -18,7 +18,7 @@ $offers = $growth->offerLines();
 $highlights = $growth->pricingHighlights(2);
 $table = $growth->pricingTable(36);
 
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 $baseCanonical = Seo::absoluteUrl(path('pricing.php'));
 $minPrice = preg_replace('/[^0-9.]/', '', $stats['min_price']);
 $seoTitle = __('pricing_meta_title');

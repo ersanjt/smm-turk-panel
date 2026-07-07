@@ -2,7 +2,7 @@
   </div><!-- end content -->
   <footer class="footer">
     <div class="footer-inner">
-      <span class="footer-copy">© <?= date('Y') ?> <?= h(defined('SITE_NAME') ? SITE_NAME : 'SMM Turk') ?>. All Rights Reserved.</span>
+      <span class="footer-copy">© <?= date('Y') ?> <?= h(function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk')) ?>. All Rights Reserved.</span>
       <div class="footer-links">
       <?php
       $contactEmail = class_exists('Database') ? (Database::getInstance()->getSetting('contact_email') ?: '') : '';

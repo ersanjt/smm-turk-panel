@@ -27,7 +27,7 @@ if ($loggedIn) {
     require_once __DIR__ . '/layouts/header.php';
 } else {
     $lang = Lang::initPublic();
-    $siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+    $siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
     $baseCanonical = Seo::absoluteUrl(path('earn.php'));
     $seoTitle = __('earn_meta_title');
     $seoDescription = __('earn_meta_desc');

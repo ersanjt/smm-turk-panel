@@ -5,7 +5,7 @@
  * Required: $seoTitle, $seoDescription, $baseCanonical, $lang
  * Optional: $seoOgTitle, $seoOgDescription, $jsonLdGraph, $metaKeywords, $extraCssHrefs, $seoIndexable
  */
-$siteName = defined('SITE_NAME') ? SITE_NAME : Seo::siteName();
+$siteName = Seo::siteName();
 $seoOgTitle = $seoOgTitle ?? $seoTitle;
 $seoOgDescription = $seoOgDescription ?? $seoDescription;
 $seoIndexable = $seoIndexable ?? true;

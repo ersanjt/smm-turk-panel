@@ -6,7 +6,7 @@ if ($auth->isLoggedIn()) {
     redirect(url('dashboard.php'));
 }
 store_login_next($_GET['next'] ?? null);
-$siteName = defined('SITE_NAME') ? SITE_NAME : 'SMM Turk';
+$siteName = function_exists('site_name') ? site_name() : (defined('SITE_NAME') ? SITE_NAME : 'SMM Turk');
 
 $mode  = $_GET['mode'] ?? 'login';
 $error = '';
