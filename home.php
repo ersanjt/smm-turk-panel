@@ -197,31 +197,31 @@ $homeJsonLd = [
             <p><?= h(__('support_24_7_desc')) ?></p>
         </div>
     </div>
-    <p style="text-align:center;margin-top:20px;"><a href="<?= h(path('pricing.php')) ?>" style="color:var(--primary);font-weight:700;">View public price list →</a></p>
+    <p style="text-align:center;margin-top:20px;"><a href="<?= h(path('pricing.php')) ?>" style="color:var(--primary);font-weight:700;"><?= h(__('view_price_list')) ?> →</a></p>
 </section>
 
 <section id="earn" class="section" style="background: linear-gradient(180deg, var(--light-warm), var(--white)); padding: 60px 24px;">
-    <div class="section-label">💰 Income</div>
-    <h2 class="section-title">Earn money with SMM Turk</h2>
-    <p class="section-desc">Resell services, run your own panel, or refer friends — three ways to build income.</p>
+    <div class="section-label"><?= h(__('home_earn_label')) ?></div>
+    <h2 class="section-title"><?= h(__('earn_hero_h1')) ?></h2>
+    <p class="section-desc"><?= h(__('home_earn_desc')) ?></p>
     <div class="benefit-grid" style="margin-top:24px;">
         <div class="benefit-card">
             <div class="benefit-icon"><?= iconBox('server', 'primary') ?></div>
-            <div><h3>Child Panel</h3><p>Your own SMM website on your domain. Customers pay you; you earn markup on every order.</p></div>
+            <div><h3><?= h(__('home_earn_child_t')) ?></h3><p><?= h(__('home_earn_child_d')) ?></p></div>
         </div>
         <div class="benefit-card">
             <div class="benefit-icon"><?= iconBox('users', 'green') ?></div>
-            <div><h3>Affiliates</h3><p>Share your referral link and earn commission when friends place orders.</p></div>
+            <div><h3><?= h(__('home_earn_aff_t')) ?></h3><p><?= h(__('home_earn_aff_d')) ?></p></div>
         </div>
         <div class="benefit-card">
             <div class="benefit-icon"><?= iconBox('plug', 'blue') ?></div>
-            <div><h3>API Reseller</h3><p>Connect your app or agency tools via API. Wholesale prices, your retail rates.</p></div>
+            <div><h3><?= h(__('home_earn_api_t')) ?></h3><p><?= h(__('home_earn_api_d')) ?></p></div>
         </div>
     </div>
     <p style="text-align:center;margin-top:28px;">
-        <a href="<?= h(path('earn.php')) ?>" class="btn-cta">Learn how to earn →</a>
+        <a href="<?= h(path('earn.php')) ?>" class="btn-cta"><?= h(__('home_earn_learn')) ?> →</a>
         &nbsp;
-        <a href="<?= h(path('pricing.php')) ?>" class="btn-cta-outline" style="display:inline-block;padding:14px 28px;border:2px solid var(--primary);color:var(--primary);border-radius:12px;font-weight:700;text-decoration:none;">View prices</a>
+        <a href="<?= h(path('pricing.php')) ?>" class="btn-cta-outline" style="display:inline-block;padding:14px 28px;border:2px solid var(--primary);color:var(--primary);border-radius:12px;font-weight:700;text-decoration:none;"><?= h(__('earn_view_prices')) ?></a>
     </p>
 </section>
 
@@ -251,7 +251,7 @@ $homeJsonLd = [
         <div class="stat-item">
             <div class="icon"><?= iconBox('users', 'blue') ?></div>
             <div class="stat-value"><?= h($stats['users']) ?></div>
-            <div class="stat-label">Active users</div>
+            <div class="stat-label"><?= h(__('stat_active_users')) ?></div>
         </div>
     </div>
 </section>

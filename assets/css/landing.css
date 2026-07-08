@@ -606,10 +606,15 @@
             }
             .nav-mobile { display: block; pointer-events: none; }
             .nav-open .nav-mobile { pointer-events: auto; }
-            .hero { padding: 80px 16px 100px; min-height: auto; padding-top: max(80px, env(safe-area-inset-top)); padding-bottom: max(100px, env(safe-area-inset-bottom)); }
-            .hero-inner { gap: 32px; }
-            .hero h1 { font-size: clamp(26px, 5vw, 36px); }
-            .hero-desc { font-size: 15px; }
+            .hero { padding: 76px 16px 88px; min-height: auto; padding-top: calc(72px + env(safe-area-inset-top)); }
+            .hero-inner { gap: 24px; }
+            .hero-copy { text-align: center; }
+            .hero h1 { font-size: clamp(26px, 6.5vw, 34px); margin-bottom: 14px; }
+            .hero-badge { margin-bottom: 14px; }
+            .hero-desc { font-size: 15px; margin-bottom: 12px; }
+            /* Keep the mobile hero action-focused: show the lead line + offers, drop extra marketing paragraphs */
+            .hero-desc:nth-of-type(2), .hero-desc:nth-of-type(3) { display: none; }
+            .hero-copy .hero-offers { justify-content: center; margin: 12px 0 4px; }
             .hero-form-box { padding: 24px 20px; }
             .section { padding: 48px 16px; padding-bottom: max(100px, env(safe-area-inset-bottom)); }
             .benefit-grid { grid-template-columns: 1fr; gap: 16px; }
