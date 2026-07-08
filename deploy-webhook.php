@@ -100,6 +100,7 @@ function deploy_repair_files(): array
         'layouts/footer.php',
         'partials/public-seo-head.php',
         'partials/landing-nav.php',
+        'partials/landing-footer.php',
         'partials/child-panel-manage.php',
         'app/ChildPanelRemoteSettings.php',
         'child-panel.php',

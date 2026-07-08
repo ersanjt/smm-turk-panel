@@ -9,7 +9,7 @@ $precache = [
     $base . '/assets/img/logo-icon.svg',
 ];
 ?>
-const CACHE = 'smmturk-static-v2';
+const CACHE = 'smmturk-static-v3';
 const PRECACHE = <?= json_encode($precache) ?>;
 
 self.addEventListener('install', function (event) {

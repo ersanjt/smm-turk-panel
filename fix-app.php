@@ -98,6 +98,7 @@ $files = [
     'layouts/blog-header.php',
     'partials/public-seo-head.php',
     'partials/landing-nav.php',
+    'partials/landing-footer.php',
     'partials/a11y.php',
     'assets/css/earn.css',
     'assets/css/blog.css',
