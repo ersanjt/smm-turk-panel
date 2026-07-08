@@ -61,6 +61,8 @@ $ctaLabel = $registrationEnabled ? __('nav_sign_up') : __('nav_sign_in');
             <a href="<?= h($ctaHref) ?>" class="nav-btn"><?= h($ctaLabel) ?> →</a>
         </div>
 
+        <a href="<?= h($ctaHref) ?>" class="nav-cta-mobile"><?= h($ctaLabel) ?></a>
+
         <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMobilePanel">
             <span class="nav-toggle-bar" aria-hidden="true"></span>
             <span class="nav-toggle-bar" aria-hidden="true"></span>
