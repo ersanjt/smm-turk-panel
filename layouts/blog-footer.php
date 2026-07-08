@@ -25,5 +25,6 @@ $footerIsChild = function_exists('is_child_panel') && is_child_panel();
 
 <script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
 <script src="<?= h(asset_url('assets/js/pwa.js')) ?>" defer></script>
+<?php require __DIR__ . '/../partials/a11y.php'; ?>
 </body>
 </html>

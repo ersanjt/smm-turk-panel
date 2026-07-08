@@ -308,5 +308,6 @@ body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif
 </div>
 </div>
 
+<?php require __DIR__ . '/partials/a11y.php'; ?>
 </body>
 </html>

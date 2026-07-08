@@ -127,5 +127,6 @@ $jsonLdGraph = [
     <a href="<?= h(home_path()) ?>"><?= h($siteName) ?></a> · <a href="<?= h(path('terms.php')) ?>"><?= h(__('nav_terms')) ?></a> · <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
 </footer>
 <script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
+<?php require __DIR__ . '/partials/a11y.php'; ?>
 </body>
 </html>
