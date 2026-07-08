@@ -412,7 +412,7 @@ function og_image_url(?string $override = null): string {
     if (defined('OG_IMAGE_URL') && trim((string) OG_IMAGE_URL) !== '') {
         return og_image_url(trim((string) OG_IMAGE_URL));
     }
-    return og_image_url('assets/img/og-default.png');
+    return og_image_url('assets/img/og-cover.png');
 }
 
 /** HMAC token for cron/maintenance scripts (use in crontab: php cron-sync.php OR ?token=...) */
