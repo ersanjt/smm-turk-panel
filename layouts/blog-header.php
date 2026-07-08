@@ -97,29 +97,16 @@ foreach ($jsonLdExtra as $block) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/landing.css')) ?>">
+    <link rel="stylesheet" href="<?= h(asset_url('assets/css/ui-pro.css')) ?>">
     <link rel="stylesheet" href="<?= h(asset_url('assets/css/blog.css')) ?>">
     <script type="application/ld+json"><?= Seo::jsonLd($schemaGraph) ?></script>
     <?php if (!empty($extraStyles)): ?><style><?= $extraStyles ?></style><?php endif; ?>
     <?php if (!empty($extraCssHref)): ?><link rel="stylesheet" href="<?= h($extraCssHref) ?>"><?php endif; ?>
 </head>
-<body class="blog-page">
-<nav class="blog-nav" role="navigation">
-    <div class="blog-nav-inner">
-        <a href="<?= h(home_path()) ?>" class="blog-nav-logo">
-            <img src="<?= h(logo_url()) ?>" alt="<?= h($siteName) ?>" width="40" height="40">
-            <?= site_name_logo_html() ?>
-        </a>
-        <div class="blog-nav-links">
-            <a href="<?= h(home_path()) ?>"<?= $blogNavActive === 'home' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_home')) : 'Home' ?></a>
-            <a href="<?= h(path('blog.php')) ?>"<?= $blogNavActive === 'blog' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('blog_nav_blog')) : 'Blog' ?></a>
-            <a href="<?= h(path('help.php')) ?>"<?= $blogNavActive === 'help' ? ' class="active"' : '' ?>><?= function_exists('__') ? h(__('help_nav')) : 'Help' ?></a>
-            <span class="blog-nav-lang" aria-label="Language">
-                <?php $navLangs = Lang::allowed(); foreach ($navLangs as $i => $navLang): ?>
-                <a href="<?= h(Lang::urlFor($navLang)) ?>" class="blog-nav-lang-link<?= $lang === $navLang ? ' active' : '' ?>" hreflang="<?= h(Seo::hreflangCode($navLang)) ?>"><?= strtoupper($navLang) ?></a><?php if ($i < count($navLangs) - 1): ?><span class="blog-nav-lang-sep" aria-hidden="true">|</span><?php endif; ?>
-                <?php endforeach; ?>
-            </span>
-            <a href="<?= h(route_path('login.php')) ?>"><?= function_exists('__') ? h(__('nav_sign_in')) : 'Sign In' ?></a>
-            <a href="<?= h(register_path()) ?>" class="blog-nav-cta"><?= function_exists('__') ? h(__('nav_sign_up')) : 'Get Started' ?></a>
-        </div>
-    </div>
-</nav>
+<body class="blog-page" data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
+<script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
+<?php
+$navActive = in_array($blogNavActive, ['blog', 'help', 'pricing', 'earn', 'terms'], true) ? $blogNavActive : '';
+require dirname(__DIR__) . '/partials/landing-nav.php';
+?>

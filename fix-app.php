@@ -82,6 +82,8 @@ $files = [
     'og-image.php',
     'newsletter-subscribe.php',
     'partials/blog-newsletter.php',
+    'help.php',
+    'terms.php',
     'services.php',
     'pricing.php',
     'earn.php',
@@ -98,8 +100,11 @@ $files = [
     'partials/landing-nav.php',
     'assets/css/earn.css',
     'assets/css/blog.css',
+    'assets/css/help.css',
     'assets/css/landing.css',
+    'assets/css/ui-pro.css',
     'assets/js/landing.js',
+    'assets/js/pwa.js',
     'DEPLOY_VERSION',
 ];
 

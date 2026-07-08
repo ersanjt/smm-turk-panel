@@ -12,6 +12,27 @@
   --blog-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Dark mode — mirrors the landing theme toggle so blog + help stay consistent */
+body.theme-dark {
+  --blog-primary: #FF5566;
+  --blog-primary-dark: #E30A17;
+  --blog-primary-soft: rgba(255, 85, 102, 0.14);
+  --blog-dark: #f0e9eb;
+  --blog-muted: #b39aa0;
+  --blog-light: #0d090b;
+  --blog-white: #161214;
+  --blog-border: #2a2023;
+}
+body.theme-dark.blog-page {
+  background: var(--blog-light);
+  color: var(--blog-dark);
+}
+body.theme-dark .blog-featured-visual {
+  background: linear-gradient(135deg, rgba(255, 85, 102, 0.12), rgba(0, 0, 0, 0.2));
+}
+body.theme-dark .blog-cta-btn { background: #f0e9eb; }
+body.theme-dark .blog-empty { background: var(--blog-white); }
+
 .blog-page * { box-sizing: border-box; }
 .blog-page {
   font-family: 'Plus Jakarta Sans', sans-serif;
