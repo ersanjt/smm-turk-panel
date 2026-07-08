@@ -30,7 +30,7 @@ body.theme-dark.blog-page {
 body.theme-dark .blog-featured-visual {
   background: linear-gradient(135deg, rgba(255, 85, 102, 0.12), rgba(0, 0, 0, 0.2));
 }
-body.theme-dark .blog-cta-btn { background: #f0e9eb; }
+body.theme-dark .blog-cta-btn { background: #fff; color: #B90812; }
 body.theme-dark .blog-empty { background: var(--blog-white); }
 
 .blog-page * { box-sizing: border-box; }
@@ -475,9 +475,12 @@ body.theme-dark .blog-empty { background: var(--blog-white); }
 }
 .blog-cta-btn {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
   padding: 12px 24px;
   background: #fff;
-  color: var(--blog-primary);
+  color: #B90812;
   font-weight: 800;
   font-size: 14px;
   border-radius: 12px;
