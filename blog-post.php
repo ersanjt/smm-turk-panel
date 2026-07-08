@@ -42,13 +42,32 @@ $tags = $db->fetchAll(
     [$post['id']]
 );
 
+$related = [];
+try {
+    $related = $db->fetchAll(
+        "SELECT a.slug, a.title, a.excerpt, a.published_at, a.reading_time_min, c.name AS category_name, c.slug AS category_slug,
+                (a.category_id = ?) AS same_cat,
+                (SELECT COUNT(*) FROM blog_article_tags at
+                    WHERE at.article_id = a.id
+                      AND at.tag_id IN (SELECT tag_id FROM blog_article_tags WHERE article_id = ?)) AS shared_tags
+         FROM blog_articles a
+         LEFT JOIN blog_categories c ON c.id = a.category_id
+         WHERE a.id <> ? AND a.status = 'published' AND a.published_at IS NOT NULL AND a.published_at <= NOW()
+         ORDER BY shared_tags DESC, same_cat DESC, a.published_at DESC
+         LIMIT 3",
+        [(int) $post['category_id'], (int) $post['id'], (int) $post['id']]
+    );
+} catch (Throwable $e) {
+    $related = [];
+}
+
 $pageTitle = $post['title'];
 $pageDescription = $post['meta_description'] ?: ($post['excerpt'] ?: strip_tags(mb_substr($post['body'], 0, 160)));
 $metaKeywords = $post['meta_keywords'];
 $canonicalUrl = Seo::absoluteUrl(path('blog.php') . '/' . rawurlencode($post['slug']));
 $pageImage = $post['featured_image']
     ? Seo::absoluteUrl($post['featured_image'])
-    : og_image_url();
+    : Seo::absoluteUrl(path('og-image.php') . '?slug=' . rawurlencode($post['slug']));
 $ogType = 'article';
 $articlePublished = $post['published_at'];
 $articleModified = $post['updated_at'] ?? $post['published_at'];
@@ -105,7 +124,7 @@ require __DIR__ . '/layouts/blog-header.php';
     <h1><?= h($post['title']) ?></h1>
     <div class="article-meta">
         <span><?= $post['published_at'] ? date('F j, Y', strtotime($post['published_at'])) : '' ?></span>
-        <?php if (!empty($post['reading_time_min'])): ?><span>· <?= (int)$post['reading_time_min'] ?> min read</span><?php endif; ?>
+        <?php if (!empty($post['reading_time_min'])): ?><span>· <?= (int)$post['reading_time_min'] ?> <?= h(__('blog_min_read')) ?></span><?php endif; ?>
         <span>· <?= h($siteName) ?></span>
     </div>
 
@@ -125,6 +144,32 @@ require __DIR__ . '/layouts/blog-header.php';
         <?= $post['body'] ?>
     </div>
 </article>
+
+<?php if (!empty($related)): ?>
+<section class="blog-related" aria-labelledby="blog-related-title">
+  <h2 id="blog-related-title" class="blog-related-title"><?= h(__('blog_related')) ?></h2>
+  <div class="blog-grid">
+    <?php foreach ($related as $r):
+        $rUrl = path('blog') . '/' . rawurlencode($r['slug']);
+        $rDate = $r['published_at'] ? date('M j, Y', strtotime($r['published_at'])) : '';
+    ?>
+    <article class="blog-card">
+      <?php if (!empty($r['category_name'])): ?>
+      <div class="blog-card-cat"><a href="<?= h(path('blog.php') . '?category=' . rawurlencode($r['category_slug'])) ?>"><?= h($r['category_name']) ?></a></div>
+      <?php endif; ?>
+      <h2><a href="<?= h($rUrl) ?>"><?= h($r['title']) ?></a></h2>
+      <div class="meta"><?= h($rDate) ?><?php if (!empty($r['reading_time_min'])): ?> · <?= (int) $r['reading_time_min'] ?> <?= h(__('blog_min')) ?><?php endif; ?></div>
+      <?php if (!empty($r['excerpt'])): ?><p class="excerpt"><?= h($r['excerpt']) ?></p><?php endif; ?>
+      <div class="blog-card-footer">
+        <a href="<?= h($rUrl) ?>" class="read-more"><?= h(__('blog_read_more')) ?> →</a>
+      </div>
+    </article>
+    <?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php require __DIR__ . '/partials/blog-newsletter.php'; ?>
 
 <div class="blog-cta" style="margin-top:40px;">
   <?php

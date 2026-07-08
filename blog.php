@@ -306,6 +306,8 @@ function blog_category_initial(?string $name): string {
 </nav>
 <?php endif; ?>
 
+<?php require __DIR__ . '/partials/blog-newsletter.php'; ?>
+
 <div class="blog-cta">
   <div>
     <h3><?= h(__('blog_cta_title')) ?></h3>

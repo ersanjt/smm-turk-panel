@@ -40,6 +40,8 @@ require_once __DIR__ . '/ChildPanelRenewal.php';
 RevenueEngine::ensureSchema(Database::getInstance());
 require_once __DIR__ . '/GrowthEngine.php';
 GrowthEngine::ensureSchema(Database::getInstance());
+require_once __DIR__ . '/Newsletter.php';
+Newsletter::ensureSchema(Database::getInstance());
 require_once __DIR__ . '/UserOnboarding.php';
 require_once __DIR__ . '/WhmProvisioner.php';
 require_once __DIR__ . '/Seo.php';
