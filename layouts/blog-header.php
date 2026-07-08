@@ -104,7 +104,7 @@ foreach ($jsonLdExtra as $block) {
     <?php if (!empty($extraStyles)): ?><style><?= $extraStyles ?></style><?php endif; ?>
     <?php if (!empty($extraCssHref)): ?><link rel="stylesheet" href="<?= h($extraCssHref) ?>"><?php endif; ?>
 </head>
-<body class="blog-page" data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
+<body class="blog-page<?= !empty($bodyClassExtra) ? ' ' . h($bodyClassExtra) : '' ?>" data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
 <script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
 <?php
 $navActive = in_array($blogNavActive, ['blog', 'help', 'pricing', 'earn', 'terms'], true) ? $blogNavActive : '';

@@ -14,6 +14,7 @@ $canonicalUrl = $siteUrl !== '' ? Seo::absoluteUrl($helpPath) : $helpPath;
 $pageTitle = __('help_title');
 $pageDescription = __('help_meta_desc');
 $blogNavActive = 'help';
+$bodyClassExtra = 'help-page';
 $seoHreflang = true;
 $seoHreflangBase = $canonicalUrl;
 $extraCssHref = asset_url('assets/css/help.css');
@@ -64,11 +65,11 @@ $helpSections = [
     ],
     [
         'id' => 'earn',
-        'title' => 'Earn money',
-        'body' => 'Start a child panel on your domain, share affiliate links, or integrate our API to resell SMM services at your own prices.',
-        'items' => ['Child panel from $5/month', 'Affiliate commission on referrals', 'API for developers & agencies'],
+        'title' => __('help_section_earn'),
+        'body' => __('help_earn_body'),
+        'items' => [__('help_earn_1'), __('help_earn_2'), __('help_earn_3')],
         'link' => path('earn.php'),
-        'link_label' => 'Earn money guide',
+        'link_label' => __('help_earn_link'),
         'icon' => 'funds',
     ],
     [
@@ -214,5 +215,33 @@ function help_icon(string $name): string
   </div>
 
 </main>
+
+<script>
+(function () {
+  var links = document.querySelectorAll('.help-sidebar nav a[href^="#"]');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var map = {};
+  links.forEach(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      links.forEach(function (a) { a.classList.remove('is-active'); });
+      var link = map[e.target.id];
+      if (link) {
+        link.classList.add('is-active');
+        link.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  }, { rootMargin: '-30% 0px -55% 0px', threshold: 0 });
+  Object.keys(map).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+})();
+</script>
 
 <?php require_once __DIR__ . '/layouts/blog-footer.php'; ?>
