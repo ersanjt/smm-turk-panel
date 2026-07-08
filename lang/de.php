@@ -80,6 +80,7 @@ return [
     'footer_api' => 'API',
     'footer_support' => 'Support',
     'footer_copyright' => 'Alle Rechte vorbehalten',
+    'footer_quick_links' => 'Schnelllinks',
     'features' => 'Funktionen',
     'benefits' => 'Vorteile',
     'services_nav' => 'Dienste',

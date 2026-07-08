@@ -583,13 +583,26 @@
             .benefit-card { padding: 20px; flex-direction: column; align-items: center; text-align: center; }
             .cta-block { padding: 32px 20px; margin: 32px 0; border-radius: 20px; }
             .mob-footer-bar { display: flex; }
-            .footer { padding: 28px 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-bottom: max(36px, calc(24px + env(safe-area-inset-bottom))); }
-            .footer-nav-label { display: block; }
-            .footer-links { gap: 0; display: flex; flex-direction: column; align-items: stretch; margin-bottom: 28px; max-width: 320px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,.04); border-radius: 16px; padding: 8px; border: 1px solid rgba(255,255,255,.06); }
-            .footer-links a { padding: 16px 20px; min-height: 52px; font-size: 15px; font-weight: 600; width: 100%; justify-content: center; border-radius: 12px; transition: background .2s, color .2s; border: none; color: rgba(255,255,255,.9); }
-            .footer-links a:hover { background: rgba(255,255,255,.08); color: #fff; }
-            .footer-links a:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,.06); }
+            /* Dedicated mobile footer: app-like tile grid + clearance for the fixed action bar */
+            .footer { text-align: center; padding: 32px 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+            .footer-nav-label { display: block; margin-bottom: 14px; }
+            .footer-links {
+                gap: 10px; display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
+                margin: 0 auto 24px; max-width: 340px; background: none; border: none; padding: 0;
+            }
+            .footer-links a {
+                padding: 14px 12px; min-height: 54px; font-size: 14px; font-weight: 600;
+                width: 100%; justify-content: center; border-radius: 14px;
+                background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.09);
+                color: rgba(255,255,255,.92); transition: background .2s, color .2s, transform .15s ease;
+            }
+            .footer-links a:hover, .footer-links a:active { background: rgba(255,255,255,.12); color: #fff; transform: translateY(-1px); }
+            .footer-links a:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,.09); }
+            .footer-links a:last-child:nth-child(odd) { grid-column: 1 / -1; }
             .footer-copy { font-size: 12px; color: rgba(255,255,255,.45); padding: 0 8px; line-height: 1.6; }
+            body.theme-dark .footer-links { background: none; border: none; }
+            body.theme-dark .footer-links a { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+            body.theme-dark .footer-links a:hover, body.theme-dark .footer-links a:active { background: rgba(255, 85, 102, 0.14); }
         }
         @media (max-width: 1100px) and (min-width: 769px) {
             .nav-menu { gap: 0; }
@@ -608,9 +621,9 @@
             .section-title { font-size: clamp(22px, 4vw, 28px); }
             .mob-footer-bar { padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); flex-direction: row; }
             .mob-footer-bar .mob-footer-btn { min-width: 120px; padding: 12px 16px; font-size: 14px; }
-            .footer { padding: 24px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(28px, calc(20px + env(safe-area-inset-bottom))); }
-            .footer-links { padding: 6px; margin-bottom: 24px; }
-            .footer-links a { padding: 14px 18px; min-height: 48px; font-size: 14px; }
+            .footer { padding: 28px 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+            .footer-links { padding: 0; gap: 8px; margin-bottom: 22px; max-width: 300px; }
+            .footer-links a { padding: 13px 10px; min-height: 50px; font-size: 13.5px; }
             .footer-copy { font-size: 11px; padding: 0 4px; }
         }
         @media (max-width: 360px) {

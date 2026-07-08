@@ -80,6 +80,7 @@ return [
     'footer_api' => 'API',
     'footer_support' => 'Destek',
     'footer_copyright' => 'Tüm Hakları Saklıdır',
+    'footer_quick_links' => 'Hızlı Bağlantılar',
     'features' => 'Özellikler',
     'benefits' => 'Avantajlar',
     'services_nav' => 'Hizmetler',
