@@ -123,7 +123,7 @@ if (!$loggedIn):
 <head>
 <?php require __DIR__ . '/partials/public-seo-head.php'; ?>
 </head>
-<body>
+<body data-sw="<?= h(path('pwa-sw.php')) ?>" data-sw-scope="<?= h(base_path() !== '' ? base_path() . '/' : '/') ?>">
 <script>(function(){var k='smmturk_theme',d=localStorage.getItem(k)==='dark'||(!localStorage.getItem(k)&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.body.classList.add('theme-dark');})();</script>
 <?php if ($promo['enabled']): ?>
 <div class="growth-promo-bar"><span><?= h($promo['text']) ?></span><a href="<?= h($promo['cta_url']) ?>"><?= h($promo['cta_label']) ?></a></div>
@@ -407,30 +407,9 @@ document.querySelectorAll('.earn-copy-btn').forEach(function (btn) {
 </script>
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>
 <?php else: ?>
-<footer class="footer earn-footer" role="contentinfo">
-  <div class="footer-links">
-    <a href="<?= h(home_path()) ?>"><?= h(__('blog_nav_home')) ?></a>
-    <a href="<?= h(path('pricing.php')) ?>"><?= h(__('nav_prices')) ?></a>
-    <a href="<?= h(path('help.php')) ?>"><?= h(__('help_title')) ?></a>
-    <a href="<?= h(register_path()) ?>"><?= h(__('nav_sign_up')) ?></a>
-  </div>
-  <div class="footer-copy">© <?= date('Y') ?> <?= h($siteName ?? 'SMM Turk') ?>. All rights reserved.</div>
-</footer>
+<?php require __DIR__ . '/partials/landing-footer.php'; ?>
 <script src="<?= h(asset_url('assets/js/landing.js')) ?>" defer></script>
-<script>
-document.querySelectorAll('.earn-copy-btn').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    var id = btn.getAttribute('data-copy-target');
-    var el = id ? document.getElementById(id) : null;
-    if (!el) return;
-    var done = btn.getAttribute('data-copy-done') || 'Copied!';
-    var orig = btn.textContent;
-    navigator.clipboard.writeText(el.value).then(function () {
-      btn.textContent = done + '!';
-      setTimeout(function () { btn.textContent = orig; }, 2000);
-    });
-  });
-});
-</script>
+<script src="<?= h(asset_url('assets/js/pwa.js')) ?>" defer></script>
+<?php require __DIR__ . '/partials/a11y.php'; ?>
 </body></html>
 <?php endif; ?>
