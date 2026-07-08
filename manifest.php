@@ -6,6 +6,18 @@ $lang = Lang::initPublic();
 $siteName = Seo::siteName();
 $start = home_path();
 $scope = base_path() !== '' ? base_path() . '/' : '/';
+$customLogo = class_exists('Database') ? trim((string) (Database::getInstance()->getSetting('site_logo') ?? '')) : '';
+if ($customLogo !== '') {
+    $manifestIcons = [
+        ['src' => logo_url(), 'sizes' => 'any', 'type' => 'image/png', 'purpose' => 'any'],
+    ];
+} else {
+    $manifestIcons = [
+        ['src' => asset_url('assets/img/logo-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => asset_url('assets/img/logo-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => asset_url('assets/img/logo-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+    ];
+}
 echo json_encode([
     'name' => $siteName,
     'short_name' => $siteName,
@@ -18,12 +30,5 @@ echo json_encode([
     'background_color' => '#1a0a0e',
     'theme_color' => '#E30A17',
     'orientation' => 'portrait-primary',
-    'icons' => [
-        [
-            'src' => logo_url(),
-            'sizes' => 'any',
-            'type' => 'image/svg+xml',
-            'purpose' => 'any',
-        ],
-    ],
+    'icons' => $manifestIcons,
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

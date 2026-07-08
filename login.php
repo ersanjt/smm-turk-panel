@@ -133,7 +133,7 @@ if (empty($_SESSION['csrf_token'])) {
 <link rel="canonical" href="<?= h(url('login.php')) ?>">
 <?= Seo::geoMetaTags('en') ?>
 <?php endif; ?>
-<link rel="icon" type="image/svg+xml" href="<?= h(logo_url()) ?>">
+<link rel="icon" type="image/png" href="<?= h(logo_url()) ?>">
 <link rel="apple-touch-icon" href="<?= h(logo_url()) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
