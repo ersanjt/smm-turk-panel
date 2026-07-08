@@ -95,6 +95,8 @@ return [
     'footer_support' => 'Support',
     'footer_copyright' => 'Alle Rechte vorbehalten',
     'footer_quick_links' => 'Schnelllinks',
+    'welcome' => 'Willkommen',
+    'account_settings' => 'Kontoeinstellungen',
     'features' => 'Funktionen',
     'benefits' => 'Vorteile',
     'services_nav' => 'Dienste',

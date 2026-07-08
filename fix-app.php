@@ -104,6 +104,7 @@ $files = [
     'assets/css/blog.css',
     'assets/css/help.css',
     'assets/css/terms.css',
+    'assets/css/panel-follows.css',
     'assets/css/landing.css',
     'assets/css/ui-pro.css',
     'assets/css/a11y.css',

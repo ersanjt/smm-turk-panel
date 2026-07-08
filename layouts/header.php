@@ -87,13 +87,13 @@ $ogLocale = Seo::ogLocale($dashLang);
       <span class="logo-text"><?= site_name_logo_html() ?></span>
     </a>
   </div>
-  <div class="sidebar-welcome">
+  <a href="<?= h(route_path('account-settings.php')) ?>" class="sidebar-welcome sidebar-welcome-link" title="<?= h(__('account_settings') ?: 'Account settings') ?>" aria-label="<?= h(__('account_settings') ?: 'Account settings') ?>">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="sidebar-welcome-text">
-      <div class="welcome-label">Welcome</div>
+      <div class="welcome-label"><?= h(__('welcome') ?: 'Welcome') ?></div>
       <div class="welcome-name"><?= h($user['username'] ?? '') ?></div>
     </div>
-  </div>
+  </a>
   <a href="<?= h(route_path('account-settings.php', [], 'profile-photo')) ?>" class="sidebar-user sidebar-user-link" title="Account settings" aria-label="Open account settings">
     <div class="user-avatar"><?php if (!empty($user['avatar']) && trim($user['avatar']) !== ''): ?><img src="<?= h(path('uploads/' . trim($user['avatar']))) ?>" alt="" loading="lazy"><?php else: ?><?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?><?php endif; ?></div>
     <div class="sidebar-user-info">

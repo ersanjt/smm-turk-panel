@@ -90,6 +90,8 @@ return [
     'cta_join' => 'Join thousands of marketers. Sign up free. Deposits are crypto only (ETH, USDT, BTC, etc.).',
     'cta_btn' => 'Create Free Account',
     'footer_quick_links' => 'Quick links',
+    'welcome' => 'Welcome',
+    'account_settings' => 'Account settings',
     'footer_login' => 'Login',
     'footer_signup' => 'Sign Up',
     'footer_api' => 'API',

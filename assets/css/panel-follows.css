@@ -47,6 +47,21 @@ body.panel-follows .sidebar-welcome {
   align-items: center;
   gap: 12px;
 }
+a.sidebar-welcome-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background .2s, transform .2s;
+}
+a.sidebar-welcome-link:hover {
+  background: rgba(227, 10, 23, 0.06);
+  transform: translateX(2px);
+}
+a.sidebar-welcome-link:focus-visible {
+  outline: 2px solid var(--primary-light, #ff5566);
+  outline-offset: 2px;
+}
 
 body.panel-follows .sidebar-welcome .user-avatar {
   width: 48px;
