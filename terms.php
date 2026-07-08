@@ -21,30 +21,52 @@ $jsonLd = Seo::breadcrumbSchema([
     ['name' => $pageTitle, 'url' => $canonicalUrl],
 ], $lang);
 
+$extraCssHref = asset_url('assets/css/terms.css');
+$bodyClassExtra = 'terms-page';
+
+$termsSections = [
+    ['icon' => 'server', 'title' => __('terms_s1_title'), 'body' => __('terms_s1_body')],
+    ['icon' => 'wallet', 'title' => __('terms_s2_title'), 'body' => __('terms_s2_body')],
+    ['icon' => 'clipboard', 'title' => __('terms_s3_title'), 'body' => __('terms_s3_body')],
+    ['icon' => 'shield', 'title' => __('terms_s4_title'), 'body' => __('terms_s4_body')],
+    ['icon' => 'message', 'title' => __('terms_s5_title'), 'body' => $auth->isLoggedIn() ? __('terms_s5_body_in') : __('terms_s5_body_out')],
+];
+
 require_once __DIR__ . '/layouts/blog-header.php';
 ?>
 
-<main class="blog-article-wrap" role="main">
-<article>
-  <nav class="blog-breadcrumb" aria-label="Breadcrumb">
-    <a href="<?= h(home_path()) ?>"><?= h(__('blog_nav_home')) ?></a> · <?= h($pageTitle) ?>
-  </nav>
-  <h1><?= h($pageTitle) ?></h1>
-  <div class="article-body">
-    <p>By using <?= h($siteName) ?> you agree to the following terms.</p>
-    <h2>1. Service</h2>
-    <p>We provide social media marketing (SMM) services. Orders are processed by our provider. Start times and delivery speeds vary by service.</p>
-    <h2>2. Account &amp; Payment</h2>
-    <p>You must provide accurate information. Balance is shown in USD. <strong>Deposits are cryptocurrency only</strong> (e.g. BTC, ETH, USDT, BNB, SOL). Refunds are only given when we are at fault. Chargebacks may result in account suspension.</p>
-    <h2>3. Orders</h2>
-    <p>Ensure links and profiles are public before ordering. Do not change links or account settings after placing an order.</p>
-    <h2>4. Prohibited Use</h2>
-    <p>You may not use our services for illegal content, spam, or to violate platform rules. We may suspend or ban accounts that abuse the service.</p>
-    <h2>5. Contact</h2>
-    <p>For support, <?= $auth->isLoggedIn() ? 'open a ticket from your dashboard or' : 'sign in and open a ticket, or' ?> contact us via the email shown in the footer.</p>
+<header class="terms-hero">
+  <div class="terms-hero-inner">
+    <nav class="terms-breadcrumb" aria-label="Breadcrumb">
+      <a href="<?= h(home_path()) ?>"><?= h(__('blog_nav_home')) ?></a> <span>·</span> <?= h($pageTitle) ?>
+    </nav>
+    <div class="terms-hero-badge">📄 <?= h(__('terms_hero_badge')) ?></div>
+    <h1><?= h($pageTitle) ?></h1>
+    <p class="terms-hero-intro"><?= h(sprintf(__('terms_intro'), $siteName)) ?></p>
+    <p class="terms-updated"><?= h(__('terms_updated')) ?>: <?= h(date('Y-m-d', filemtime(__FILE__))) ?></p>
   </div>
-  <a href="<?= h(home_path()) ?>" class="blog-back-link">← <?= h(__('blog_nav_home')) ?></a>
-</article>
+</header>
+
+<main class="terms-wrap" role="main">
+  <ol class="terms-list">
+    <?php foreach ($termsSections as $i => $sec): ?>
+    <li class="terms-card">
+      <div class="terms-card-num"><?= $i + 1 ?></div>
+      <div class="terms-card-body">
+        <div class="terms-card-head">
+          <span class="terms-card-icon"><?= icon($sec['icon'], 20) ?></span>
+          <h2><?= h($sec['title']) ?></h2>
+        </div>
+        <p><?= h($sec['body']) ?></p>
+      </div>
+    </li>
+    <?php endforeach; ?>
+  </ol>
+
+  <div class="terms-footer-actions">
+    <a href="<?= h(home_path()) ?>" class="terms-back-link">← <?= h(__('blog_nav_home')) ?></a>
+    <a href="<?= h(register_path()) ?>" class="terms-agree-btn"><?= h(__('nav_sign_up')) ?> →</a>
+  </div>
 </main>
 
 <?php require_once __DIR__ . '/layouts/blog-footer.php'; ?>

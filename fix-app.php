@@ -103,6 +103,7 @@ $files = [
     'assets/css/earn.css',
     'assets/css/blog.css',
     'assets/css/help.css',
+    'assets/css/terms.css',
     'assets/css/landing.css',
     'assets/css/ui-pro.css',
     'assets/css/a11y.css',
