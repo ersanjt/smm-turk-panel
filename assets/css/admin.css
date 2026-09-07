@@ -57,6 +57,70 @@
   min-width: 0;
 }
 
+.admin-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px 0;
+}
+
+.admin-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  min-height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-status-chip strong {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.admin-status-chip:hover,
+.admin-status-chip.is-active {
+  border-color: rgba(227, 10, 23, .28);
+  background: rgba(227, 10, 23, .08);
+  color: var(--primary);
+}
+
+.admin-status-chip.is-active strong {
+  color: var(--primary);
+}
+
+body.theme-dark .admin-status-chip {
+  background: rgba(255, 255, 255, .04);
+  border-color: rgba(255, 255, 255, .1);
+}
+
+body.theme-dark .admin-status-chip:hover,
+body.theme-dark .admin-status-chip.is-active {
+  background: rgba(255, 85, 102, .12);
+  border-color: rgba(255, 85, 102, .3);
+}
+
+.admin-missing-provider {
+  color: #b45309;
+  font-weight: 700;
+}
+
+body.theme-dark .admin-missing-provider {
+  color: #fbbf24;
+}
+
+.admin-empty-cell {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
 .admin-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -266,6 +330,11 @@ body.theme-dark .admin-card-warning {
   .admin-search-form .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .admin-status-chips {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .admin-page-head {

@@ -163,6 +163,11 @@ class OrderManager {
         return ['Pending', 'Processing', 'In progress'];
     }
 
+    public function isCancellable(?string $status): bool
+    {
+        return in_array((string) $status, self::cancellableStatuses(), true);
+    }
+
     /**
      * Cancel an unfinished order and refund the charge to the buyer.
      * Tries the provider first when a provider order id exists.
@@ -195,14 +200,13 @@ class OrderManager {
             return ['success' => false, 'error' => 'This order was already refunded.'];
         }
 
+        $providerWarning = '';
         if (!empty($order['provider_order_id'])) {
-            $api = ProviderRegistry::apiForOrder($this->db, $orderId);
-            if ($api) {
-                $providerResp = $api->cancel([(int) $order['provider_order_id']]);
-                $providerItem = is_array($providerResp) ? ($providerResp[0] ?? null) : null;
-                if (is_array($providerItem) && isset($providerItem['cancel']['error'])) {
-                    $msg = trim((string) $providerItem['cancel']['error']);
-                    return ['success' => false, 'error' => $msg !== '' ? $msg : 'Provider rejected the cancel request.'];
+            $cancelResult = $this->requestProviderCancel($orderId, (int) $order['provider_order_id']);
+            if (!$cancelResult['ok']) {
+                $providerWarning = $cancelResult['error'] ?? 'Provider rejected the cancel request.';
+                if (!$asAdmin || $status !== 'Pending') {
+                    return ['success' => false, 'error' => $providerWarning];
                 }
             }
         }
@@ -285,7 +289,11 @@ class OrderManager {
             }
         }
 
-        return ['success' => true, 'refunded' => $charge];
+        $out = ['success' => true, 'refunded' => $charge];
+        if ($providerWarning !== '') {
+            $out['warning'] = $providerWarning;
+        }
+        return $out;
     }
 
     private function refundCharge(int $userId, float $charge): void {
@@ -385,10 +393,10 @@ class OrderManager {
                          FROM orders o JOIN users u ON u.id = o.user_id WHERE o.id = ?",
                         [$order['id']]
                     );
-                    $newStatus = (string) ($status->status ?? '');
+                    $newStatus = $this->normalizeProviderStatus((string) ($status->status ?? ''));
                     $oldStatus = (string) ($row['status'] ?? '');
-                    if ($newStatus === '') {
-                        $newStatus = $oldStatus !== '' ? $oldStatus : 'Pending';
+                    if ($newStatus === '' || !$this->isKnownOrderStatus($newStatus)) {
+                        continue;
                     }
                     $startCount = (int) ($status->start_count ?? 0);
                     $remains = (int) ($status->remains ?? 0);
@@ -402,8 +410,8 @@ class OrderManager {
                         );
                         $updated++;
                     }
-                    if ($row && $oldStatus !== $newStatus && in_array($newStatus, ['Completed', 'Canceled', 'Cancelled', 'Partial', 'Refunded'], true)) {
-                        if (in_array($newStatus, ['Canceled', 'Cancelled', 'Refunded'], true)) {
+                    if ($row && $oldStatus !== $newStatus && in_array($newStatus, ['Completed', 'Cancelled', 'Partial', 'Refunded'], true)) {
+                        if (in_array($newStatus, ['Cancelled', 'Refunded'], true)) {
                             $this->creditOrderRefund(
                                 (int) $order['id'],
                                 (int) $row['user_id'],
@@ -463,6 +471,124 @@ class OrderManager {
         if ($status) { $where .= " AND status = ?"; $params[] = $status; }
         $row = $this->db->fetch("SELECT COUNT(*) as cnt FROM orders $where", $params);
         return (int)($row['cnt'] ?? 0);
+    }
+
+    /**
+     * Pull one order's status from the upstream provider.
+     *
+     * @return array{success:bool, error?:string, status?:string, changed?:bool}
+     */
+    public function refreshOrderStatus(int $orderId): array
+    {
+        $order = $this->db->fetch(
+            "SELECT id, provider_order_id, status FROM orders WHERE id = ?",
+            [$orderId]
+        );
+        if (!$order) {
+            return ['success' => false, 'error' => 'Order not found.'];
+        }
+        $pid = (int) ($order['provider_order_id'] ?? 0);
+        if ($pid <= 0) {
+            return ['success' => false, 'error' => 'No provider order ID — this order was never accepted upstream.'];
+        }
+        $api = ProviderRegistry::apiForOrder($this->db, $orderId);
+        if (!$api) {
+            return ['success' => false, 'error' => 'Provider API is not configured.'];
+        }
+        $status = $api->status($pid);
+        if (!$status || isset($status->error)) {
+            $msg = is_object($status) && isset($status->error) ? (string) $status->error : 'Provider did not return a status.';
+            return ['success' => false, 'error' => $msg];
+        }
+        $newStatus = $this->normalizeProviderStatus((string) ($status->status ?? ''));
+        if ($newStatus === '' || !$this->isKnownOrderStatus($newStatus)) {
+            return ['success' => false, 'error' => 'Provider returned an unrecognized status.'];
+        }
+        $oldStatus = (string) $order['status'];
+        $this->db->execute(
+            "UPDATE orders SET status = ?, start_count = ?, remains = ? WHERE id = ?",
+            [$newStatus, $status->start_count ?? 0, $status->remains ?? 0, $orderId]
+        );
+        return [
+            'success' => true,
+            'status' => $newStatus,
+            'changed' => $oldStatus !== $newStatus,
+        ];
+    }
+
+    /** @return list<string> */
+    private function knownOrderStatuses(): array
+    {
+        return ['Pending', 'Processing', 'In progress', 'Completed', 'Partial', 'Cancelled', 'Refunded'];
+    }
+
+    private function isKnownOrderStatus(string $status): bool
+    {
+        return in_array($status, $this->knownOrderStatuses(), true);
+    }
+
+    private function normalizeProviderStatus(string $status): string
+    {
+        $raw = trim($status);
+        if ($raw === '') {
+            return '';
+        }
+        if (strcasecmp($raw, 'canceled') === 0 || strcasecmp($raw, 'cancelled') === 0) {
+            return 'Cancelled';
+        }
+        $allowed = $this->knownOrderStatuses();
+        foreach ($allowed as $allowedStatus) {
+            if (strcasecmp($allowedStatus, $raw) === 0) {
+                return $allowedStatus;
+            }
+        }
+        return $raw;
+    }
+
+    /** @return array{ok:bool, error?:string} */
+    private function requestProviderCancel(int $orderId, int $providerOrderId): array
+    {
+        $api = ProviderRegistry::apiForOrder($this->db, $orderId);
+        if (!$api) {
+            return ['ok' => false, 'error' => 'Provider API is not configured.'];
+        }
+        try {
+            $providerResp = $api->cancel([$providerOrderId]);
+        } catch (Throwable $e) {
+            Logger::log("provider cancel failed #{$orderId}: " . $e->getMessage(), 'orders');
+            return ['ok' => false, 'error' => 'Provider cancel request failed.'];
+        }
+        if (!is_array($providerResp)) {
+            return ['ok' => false, 'error' => 'Provider did not accept the cancel request.'];
+        }
+        if (isset($providerResp['error'])) {
+            $err = trim((string) $providerResp['error']);
+            if ($this->isBenignProviderCancelError($err)) {
+                return ['ok' => true];
+            }
+            return ['ok' => false, 'error' => $err !== '' ? $err : 'Provider refused to cancel.'];
+        }
+        $item = $providerResp[0] ?? null;
+        if (is_array($item) && isset($item['cancel']['error'])) {
+            $err = trim((string) $item['cancel']['error']);
+            if ($this->isBenignProviderCancelError($err)) {
+                return ['ok' => true];
+            }
+            return ['ok' => false, 'error' => $err !== '' ? $err : 'Provider refused to cancel.'];
+        }
+        return ['ok' => true];
+    }
+
+    private function isBenignProviderCancelError(string $error): bool
+    {
+        $e = strtolower($error);
+        if ($e === '') {
+            return false;
+        }
+        return str_contains($e, 'already')
+            || str_contains($e, 'not found')
+            || str_contains($e, 'incorrect order')
+            || str_contains($e, 'invalid order');
     }
 
     public function syncServices(?string $onlyProvider = null): array {

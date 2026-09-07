@@ -53,6 +53,8 @@ google-services.json
 *.p12
 *.jks
 *.keystore
+secrets/
+.secrets/
 
 # Android / iOS build artifacts
 android-app/.gradle/
@@ -62,5 +64,3 @@ android-app/branding-tmp/
 android-app/local.properties
 ios-app/build/
 ios-app/DerivedData/
-secrets/
-.secrets/
