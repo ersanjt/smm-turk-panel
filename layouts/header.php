@@ -35,7 +35,7 @@ $dashLang = Lang::initUser();
 $ogLocale = Seo::ogLocale($dashLang);
 ?>
 <!DOCTYPE html>
-<html lang="<?= h(Seo::htmlLang($dashLang)) ?>">
+<html lang="<?= h(Seo::htmlLang($dashLang)) ?>"<?= $isAdminArea ? ' class="notranslate" translate="no"' : '' ?>>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -302,6 +302,7 @@ if ($isAdminArea && $currentPage !== 'index' && empty($hideAdminPageHeader)) {
         $adminPageHints = [
             'admin-deposits' => 'Approve crypto deposits and recover failed on-chain payments.',
             'admin-coupons' => 'Create discount codes for orders and deposit bonuses.',
+            'admin-packages' => 'One-click starter bundles shown on the New Order page.',
             'admin-orders' => 'Search, sync, and manage customer orders.',
             'admin-users' => 'Manage accounts, balances, and roles.',
             'admin-services' => 'Browse synced services from your provider.',
