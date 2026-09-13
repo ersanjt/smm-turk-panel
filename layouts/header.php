@@ -302,7 +302,7 @@ if ($isAdminArea && $currentPage !== 'index' && empty($hideAdminPageHeader)) {
         $adminPageHints = [
             'admin-deposits' => 'Approve crypto deposits and recover failed on-chain payments.',
             'admin-coupons' => 'Create discount codes for orders and deposit bonuses.',
-            'admin-orders' => 'Search, sync, and cancel unfinished customer orders.',
+            'admin-orders' => 'Search, sync, and manage customer orders.',
             'admin-users' => 'Manage accounts, balances, and roles.',
             'admin-services' => 'Browse synced services from your provider.',
             'admin-child-panels' => 'Provision, repair, and manage child panel orders.',
